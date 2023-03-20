@@ -7,7 +7,7 @@ description = "A trie library implemented double arrays"
 readme = "README.md"
 homepage = "https://www.tetengo.org/"
 repository = "https://github.com/tetengo/tetengo_trie"
-license-file = "LICENSE"
+license = "MIT"
 keywords = ["trie", "double_array", "common_prefix_search", "assoc_container"]
 categories = ["algorithms", "text-processing"]
 
