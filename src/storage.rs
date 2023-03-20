@@ -5,6 +5,7 @@
 use std::any::Any;
 use std::io::Write;
 
+/// # Storage
 pub trait Storage: Clone {
     /// Returns the base-check size.
     ///
