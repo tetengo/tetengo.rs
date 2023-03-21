@@ -1,8 +1,4 @@
-//! # Tetengo Trie
-//!
-//! A trie library implement with double arrays.
-//!
-//! Copyright 2023 kaoru <https://www.tetengo.org/>
+#![doc = include_str!("../README.md")]
 
 pub mod storage;
 
