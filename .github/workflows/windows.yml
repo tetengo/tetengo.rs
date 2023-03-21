@@ -1,0 +1,78 @@
+# GitHub Actions Workflow
+# Build on Windows
+# Copyright 2023 kaoru  https://www.tetengo.org/
+
+name: Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ * ]
+    tags:     [ v* ]
+  pull_request:
+    branches: [ main ]
+
+env:
+
+jobs:
+  format:
+    name:    cargo fmt
+    runs-on: windows-2022
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: cargo fmt
+      shell: cmd
+      run: |
+        cargo fmt --check --verbose
+  
+  lint:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    name:    cargo clippy
+    runs-on: windows-2022
+    steps:
+    - name: cargo clippy
+      shell: cmd
+      run: |
+        cargo clippy
+  
+  build_and_test:
+    name:    cargo build & test
+    runs-on: windows-2022
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: cargo build
+      shell: cmd
+      run: |
+        cargo build --release --verbose
+    
+    - name: cargo test
+      shell: cmd
+      run: |
+        cargo test --release --verbose
+  
+  document:
+    name:    cargo build & test
+    runs-on: windows-2022
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: cargo doc
+      shell: cmd
+      run: |
+        cargo doc --verbose
+  
