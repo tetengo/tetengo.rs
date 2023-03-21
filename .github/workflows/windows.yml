@@ -7,7 +7,7 @@ name: Windows
 on:
   workflow_dispatch:
   push:
-    branches: [ * ]
+    branches: [ main, github_actions ]
     tags:     [ v* ]
   pull_request:
     branches: [ main ]
