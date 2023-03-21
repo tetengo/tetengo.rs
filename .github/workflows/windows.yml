@@ -30,14 +30,14 @@ jobs:
         cargo fmt --check --verbose
   
   lint:
+    name:    cargo clippy
+    runs-on: windows-2022
+    steps:
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: recursive
     
-    name:    cargo clippy
-    runs-on: windows-2022
-    steps:
     - name: cargo clippy
       shell: cmd
       run: |
