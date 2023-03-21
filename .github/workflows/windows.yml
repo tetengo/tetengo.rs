@@ -14,7 +14,7 @@ on:
 
 jobs:
   verify_project:
-    name:    cargo fmt
+    name:    cargo verify-project
     runs-on: windows-2022
     steps:
     - name: Checkout
