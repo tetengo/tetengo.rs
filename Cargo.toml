@@ -1,6 +1,6 @@
 [package]
 name = "tetengo_trie"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["kaoru"]
 edition = "2021"
 description = "A trie library implemented double arrays"
