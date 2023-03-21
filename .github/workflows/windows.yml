@@ -61,7 +61,7 @@ jobs:
         cargo test --release --verbose
   
   document:
-    name:    cargo build & test
+    name:    cargo doc
     runs-on: windows-2022
     steps:
     - name: Checkout
