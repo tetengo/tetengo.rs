@@ -13,6 +13,20 @@ on:
     branches: [ main ]
 
 jobs:
+  verify_project:
+    name:    cargo fmt
+    runs-on: windows-2022
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: cargo verify-project
+      shell: cmd
+      run: |
+        cargo verify-project --verbose
+  
   format:
     name:    cargo fmt
     runs-on: windows-2022
@@ -41,6 +55,20 @@ jobs:
       run: |
         cargo clippy
   
+  document:
+    name:    cargo doc
+    runs-on: windows-2022
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: cargo doc
+      shell: cmd
+      run: |
+        cargo doc --verbose
+  
   build_and_test:
     name:    cargo build & test
     runs-on: windows-2022
@@ -59,18 +87,4 @@ jobs:
       shell: cmd
       run: |
         cargo test --release --verbose
-  
-  document:
-    name:    cargo doc
-    runs-on: windows-2022
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
-    
-    - name: cargo doc
-      shell: cmd
-      run: |
-        cargo doc --verbose
   

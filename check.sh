@@ -8,5 +8,5 @@ cargo verify-project
 cargo fmt --check
 cargo clippy
 cargo doc
-cargo check --all-targets
+cargo build --all-targets
 cargo test --all-targets

@@ -14,7 +14,7 @@ if errorlevel 1 exit /b 1
 cargo doc
 if errorlevel 1 exit /b 1
 
-cargo check --all-targets
+cargo build --all-targets
 if errorlevel 1 exit /b 1
 
 cargo test --all-targets
