@@ -49,7 +49,7 @@ The source files of this library are available on GitHub.
 
 ---
 
-Copyright (C) 2023 kaoru <https://www.tetengo.org/>
+Copyright (C) 2023 kaoru  <https://www.tetengo.org/>
 
 This product is released under the MIT license.
 See [the LICENSE
