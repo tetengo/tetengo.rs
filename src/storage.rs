@@ -1,6 +1,6 @@
 //! # Storage
 //!
-//! Copyright 2023 kaoru <https://www.tetengo.org/>
+//! Copyright 2023 kaoru  <https://www.tetengo.org/>
 
 use std::any::Any;
 use std::io::Write;
