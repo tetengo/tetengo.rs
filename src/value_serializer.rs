@@ -53,3 +53,20 @@ impl ValueSerializer {
         self.fixed_value_size
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::mem::size_of;
+
+    use super::*;
+
+    #[test]
+    fn new() {
+        {
+            let _ = ValueSerializer::new(|_value: &dyn Any| return Vec::new(), size_of::<i32>());
+        }
+        {
+            let _ = ValueSerializer::new(|_: &dyn Any| return vec![3, 1, 4], 0);
+        }
+    }
+}
