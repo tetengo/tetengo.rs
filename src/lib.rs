@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 pub mod storage;
+pub mod value_serializer;
 
 /*
 pub fn add(left: usize, right: usize) -> usize {
