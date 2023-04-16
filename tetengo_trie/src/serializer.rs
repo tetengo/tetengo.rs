@@ -20,5 +20,5 @@ pub trait Serializer {
        ## Returns
        * The serialized object.
     */
-    fn serialize<'a>(&self, object: &'a Self::Object) -> &'a [u8];
+    fn serialize(&self, object: &Self::Object) -> Vec<u8>;
 }

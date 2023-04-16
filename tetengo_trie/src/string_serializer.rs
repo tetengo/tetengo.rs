@@ -24,8 +24,8 @@ impl StringSerializer {
 impl Serializer for StringSerializer {
     type Object = str;
 
-    fn serialize<'a>(&self, object: &'a str) -> &'a [u8] {
-        object.as_bytes()
+    fn serialize(&self, object: &str) -> Vec<u8> {
+        object.as_bytes().to_vec()
     }
 }
 
@@ -41,7 +41,7 @@ mod tests {
         let expected_serialized = "Sakuramachi";
         let serialized = serializer.serialize(object);
         assert_eq!(
-            std::str::from_utf8(serialized).unwrap_or_default(),
+            std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
             expected_serialized
         );
         assert!(!serialized.iter().any(|&b| b == 0x00u8));
