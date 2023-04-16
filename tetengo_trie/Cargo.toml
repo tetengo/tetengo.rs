@@ -1,16 +1,14 @@
 [package]
 name = "tetengo_trie"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["kaoru"]
 edition = "2021"
 description = "A trie library implemented double arrays"
 readme = "README.md"
 homepage = "https://www.tetengo.org/"
-repository = "https://github.com/tetengo/tetengo_trie"
+repository = "https://github.com/tetengo/tetengo.rs"
 license = "MIT"
 keywords = ["trie", "double_array", "common_prefix_search", "assoc_container"]
 categories = ["algorithms", "text-processing"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
