@@ -21,12 +21,19 @@
     ## Type Parameters
     * `Object` - An object type.
 */
+#[derive(Debug)]
 pub struct DefaultSerializer<Object> {
     _fe_escape: bool,
     _phantom: std::marker::PhantomData<Object>,
 }
 
 impl DefaultSerializer<&str> {
+    /**
+       # Creates a default serializer.
+
+       ## Arguments
+       * `_` - Ignored.
+    */
     pub fn new(_: bool) -> Self {
         DefaultSerializer {
             _fe_escape: false,
@@ -34,6 +41,15 @@ impl DefaultSerializer<&str> {
         }
     }
 
+    /**
+       # Serializes an object.
+
+       ## Arguments
+       * `object` - An object.
+
+       ## Returns
+       * The serialized object.
+    */
     pub fn serialize<'a>(&self, object: &'a str) -> &'a str {
         object
     }
