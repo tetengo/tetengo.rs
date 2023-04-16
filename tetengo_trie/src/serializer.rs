@@ -9,10 +9,7 @@
 */
 pub trait Serializer {
     /// An object type.
-    type Object;
-
-    /// A serialized object type.
-    type Serialized;
+    type Object: ?Sized;
 
     /**
        # Serializes an object.
@@ -23,5 +20,5 @@ pub trait Serializer {
        ## Returns
        * The serialized object.
     */
-    fn serialize(&self, object: Self::Object) -> Self::Serialized;
+    fn serialize<'a>(&self, object: &'a Self::Object) -> &'a [u8];
 }
