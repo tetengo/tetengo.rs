@@ -177,10 +177,32 @@ fn from_bytes<Object: ObjectTrait<Object>>(serialized: &[u8], fe_escape: bool) -
 }
 
 fn from_bytes_with_escape<Object: ObjectTrait<Object>>(serialized: &[u8]) -> Object {
-    from_bytes_without_escape(serialized)
+    assert!(size_of::<Object>() <= serialized.len() && serialized.len() <= 2 * size_of::<Object>());
+    let mut object = Object::from(0);
+    let mut serialized = serialized.iter();
+    while let Some(byte) = serialized.next() {
+        object <<= 8;
+        if *byte == 0xFDu8 {
+            if let Some(byte2) = serialized.next() {
+                if *byte2 == 0xFDu8 || *byte2 == 0xFEu8 {
+                    object |= Object::from(*byte2);
+                } else {
+                    panic!("Invalid serialized bytes.");
+                }
+            } else {
+                panic!("Invalid serialized bytes.");
+            }
+        } else if *byte == 0xFEu8 {
+            object |= Object::from(0x00u8);
+        } else  {
+            object |= Object::from(*byte);
+        }
+    }
+    object
 }
 
 fn from_bytes_without_escape<Object: ObjectTrait<Object>>(serialized: &[u8]) -> Object {
+    assert!(size_of::<Object>() <= serialized.len() && serialized.len() <= 2 * size_of::<Object>());
     let mut object = Object::from(0);
     for byte in serialized {
         object <<= 8;
@@ -245,6 +267,14 @@ mod tests {
             let deserializer = DefaultDeserializer::<i32>::new(false);
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
+            let expected_object = 0x001234AB;
+            let object = deserializer.deserialize(&serialized);
+            assert_eq!(object, expected_object);
+        }
+        {
+            let deserializer = DefaultDeserializer::<i32>::new(true);
+
+            let serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
             let object = deserializer.deserialize(&serialized);
             assert_eq!(object, expected_object);
