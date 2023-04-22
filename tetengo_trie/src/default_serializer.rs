@@ -4,9 +4,11 @@
     Copyright 2023 kaoru  <https://www.tetengo.org/>
 */
 
-use std::ops::ShrAssign;
+use std::marker::PhantomData;
+use std::mem::size_of;
+use std::ops::{BitAnd, BitOrAssign, ShlAssign, ShrAssign};
 
-use crate::serializer::Serializer;
+use crate::serializer::{Deserializer, Serializer};
 
 /**
     # A trait alias for Object.
@@ -15,12 +17,24 @@ use crate::serializer::Serializer;
     * `Object` - An object type.
 */
 pub trait ObjectTrait<Object>:
-    Copy + ShrAssign<u128> + std::ops::BitAnd<Object, Output = Object> + From<u8> + Into<i128>
+    Copy
+    + ShlAssign<u128>
+    + ShrAssign<u128>
+    + BitAnd<Object, Output = Object>
+    + BitOrAssign<Object>
+    + From<u8>
+    + Into<i128>
 {
 }
 
 impl<T, U> ObjectTrait<U> for T where
-    T: Copy + ShrAssign<u128> + std::ops::BitAnd<U, Output = U> + From<u8> + Into<i128>
+    T: Copy
+        + ShlAssign<u128>
+        + ShrAssign<u128>
+        + BitAnd<U, Output = U>
+        + BitOrAssign<U>
+        + From<u8>
+        + Into<i128>
 {
 }
 
@@ -44,7 +58,7 @@ impl<T, U> ObjectTrait<U> for T where
 #[derive(Debug)]
 pub struct DefaultSerializer<Object: ObjectTrait<Object>> {
     fe_escape: bool,
-    _phantom: std::marker::PhantomData<Object>,
+    _phantom: PhantomData<Object>,
 }
 
 impl<Object: ObjectTrait<Object>> DefaultSerializer<Object> {
@@ -57,7 +71,7 @@ impl<Object: ObjectTrait<Object>> DefaultSerializer<Object> {
     pub fn new(fe_escape: bool) -> Self {
         DefaultSerializer {
             fe_escape,
-            _phantom: std::marker::PhantomData,
+            _phantom: PhantomData,
         }
     }
 }
@@ -67,6 +81,52 @@ impl<Object: ObjectTrait<Object>> Serializer for DefaultSerializer<Object> {
 
     fn serialize(&self, object: &Object) -> Vec<u8> {
         to_bytes(object, self.fe_escape)
+    }
+}
+
+/**
+   # A default deserializer.
+
+   When the argument `fe_escape` of the constructor is true, binary bytes are
+   deserialized as following:
+
+   |original byte|serialized byte|
+   |-|-|
+   |0x00     |0xFE       (0b11111110)            |
+   |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
+   |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
+   |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
+   |0xFF     |0xFF       (0b11111111)            |
+
+   ## Type Parameters
+   * `Object` - An object type.
+*/
+#[derive(Debug)]
+pub struct DefaultDeserializer<Object: ObjectTrait<Object>> {
+    fe_escape: bool,
+    _phantom: PhantomData<Object>,
+}
+
+impl<Object: ObjectTrait<Object>> DefaultDeserializer<Object> {
+    /**
+       # Creates a default deserializer.
+
+       ## Arguments
+       * `fe_escape` - Set true to escape 0xFE.
+    */
+    pub fn new(fe_escape: bool) -> Self {
+        DefaultDeserializer {
+            fe_escape,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<Object: ObjectTrait<Object>> Deserializer for DefaultDeserializer<Object> {
+    type Object = Object;
+
+    fn deserialize(&self, bytes: &[u8]) -> Object {
+        from_bytes(bytes, self.fe_escape)
     }
 }
 
@@ -95,9 +155,9 @@ fn to_bytes_with_escape<Object: ObjectTrait<Object>>(object: &Object) -> Vec<u8>
 
 fn to_bytes_without_escape<Object: ObjectTrait<Object>>(object: &Object) -> Vec<u8> {
     let mut bytes = vec![];
-    bytes.reserve(std::mem::size_of::<Object>());
+    bytes.reserve(size_of::<Object>());
     let mut object = *object;
-    for _ in 0..std::mem::size_of::<Object>() {
+    for _ in 0..size_of::<Object>() {
         let byte_object = object & Object::from(0xFFu8);
         let u128_object: i128 = byte_object.into();
         let u8_object = u128_object as u8;
@@ -106,6 +166,27 @@ fn to_bytes_without_escape<Object: ObjectTrait<Object>>(object: &Object) -> Vec<
     }
     bytes.reverse();
     bytes
+}
+
+fn from_bytes<Object: ObjectTrait<Object>>(serialized: &[u8], fe_escape: bool) -> Object {
+    if fe_escape {
+        from_bytes_with_escape(serialized)
+    } else {
+        from_bytes_without_escape(serialized)
+    }
+}
+
+fn from_bytes_with_escape<Object: ObjectTrait<Object>>(serialized: &[u8]) -> Object {
+    from_bytes_without_escape(serialized)
+}
+
+fn from_bytes_without_escape<Object: ObjectTrait<Object>>(serialized: &[u8]) -> Object {
+    let mut object = Object::from(0);
+    for byte in serialized {
+        object <<= 8;
+        object |= Object::from(*byte);
+    }
+    object
 }
 
 #[cfg(test)]
@@ -119,17 +200,17 @@ mod tests {
     #[test]
     fn serialize() {
         {
-            let serializer = DefaultSerializer::<u32>::new(false);
+            let serializer = DefaultSerializer::<i32>::new(false);
 
-            let object = 0x001234ABu32;
+            let object = 0x001234AB;
             let expected_serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
         }
         {
-            let serializer = DefaultSerializer::<u32>::new(true);
+            let serializer = DefaultSerializer::<i32>::new(true);
 
-            let object = 0x001234ABu32;
+            let object = 0x001234AB;
             let expected_serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
@@ -140,7 +221,7 @@ mod tests {
         {
             let serializer = DefaultSerializer::<u32>::new(false);
 
-            let object = 0xFCFDFEFFu32;
+            let object = 0xFCFDFEFF;
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
@@ -148,13 +229,25 @@ mod tests {
         {
             let serializer = DefaultSerializer::<u32>::new(true);
 
-            let object = 0xFCFDFEFFu32;
+            let object = 0xFCFDFEFF;
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
             assert!(!serialized
                 .iter()
                 .any(|&b| b == 0x00u8 /* tetengo::trie::double_array::key_terminator() */));
+        }
+    }
+
+    #[test]
+    fn deserialize() {
+        {
+            let deserializer = DefaultDeserializer::<i32>::new(false);
+
+            let serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
+            let expected_object = 0x001234AB;
+            let object = deserializer.deserialize(&serialized);
+            assert_eq!(object, expected_object);
         }
     }
 }
