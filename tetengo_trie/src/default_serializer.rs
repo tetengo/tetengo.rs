@@ -238,7 +238,7 @@ mod tests {
             assert_eq!(serialized, expected_serialized);
             assert!(!serialized
                 .iter()
-                .any(|&b| b == 0x00u8 /* tetengo::trie::double_array::key_terminator() */));
+                .any(|&b| b == 0x00u8 /* TODO: tetengo::trie::double_array::key_terminator() */));
         }
         {
             let serializer = DefaultSerializer::<u32>::new(false);
@@ -257,7 +257,7 @@ mod tests {
             assert_eq!(serialized, expected_serialized);
             assert!(!serialized
                 .iter()
-                .any(|&b| b == 0x00u8 /* tetengo::trie::double_array::key_terminator() */));
+                .any(|&b| b == 0x00u8 /* TODO: tetengo::trie::double_array::key_terminator() */));
         }
     }
 
