@@ -8,7 +8,12 @@ use std::ops::ShrAssign;
 
 use crate::serializer::Serializer;
 
-/// A trait alias for Object.
+/**
+    # A trait alias for Object.
+
+    ## Type Parameters
+    * `Object` - An object type.
+*/
 pub trait ObjectTrait<Object>:
     Copy + ShrAssign<u128> + std::ops::BitAnd<Object, Output = Object> + From<u8> + Into<i128>
 {
