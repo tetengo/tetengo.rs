@@ -194,7 +194,7 @@ fn from_bytes_with_escape<Object: ObjectTrait<Object>>(serialized: &[u8]) -> Obj
             }
         } else if *byte == 0xFEu8 {
             object |= Object::from(0x00u8);
-        } else  {
+        } else {
             object |= Object::from(*byte);
         }
     }
@@ -276,6 +276,22 @@ mod tests {
 
             let serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
+            let object = deserializer.deserialize(&serialized);
+            assert_eq!(object, expected_object);
+        }
+        {
+            let deserializer = DefaultDeserializer::<u32>::new(false);
+
+            let serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
+            let expected_object = 0xFCFDFEFF;
+            let object = deserializer.deserialize(&serialized);
+            assert_eq!(object, expected_object);
+        }
+        {
+            let deserializer = DefaultDeserializer::<u32>::new(true);
+
+            let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
+            let expected_object = 0xFCFDFEFF;
             let object = deserializer.deserialize(&serialized);
             assert_eq!(object, expected_object);
         }
