@@ -28,7 +28,7 @@ pub trait Serializer {
 */
 pub trait Deserializer {
     /// An object type.
-    type Object: ?Sized;
+    type Object;
 
     /**
        # Deserializes an object.
