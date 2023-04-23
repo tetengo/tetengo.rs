@@ -24,6 +24,23 @@ pub trait Serializer {
 }
 
 /**
+  # Deserialization Error
+*/
+#[derive(Clone, Debug, thiserror::Error)]
+pub enum DeserializationError {
+    /// Invalid length of the serialized object.
+    #[error("Invalid length of the serialized object.")]
+    InvalidSeralizedLength,
+
+    /// Invalid UTF-8 sequence.
+    #[error("Invalid length of the serialized object.")]
+    FromUtf8Error(#[from] std::string::FromUtf8Error),
+}
+
+/// Result
+pub type Result<T> = anyhow::Result<T>;
+
+/**
    # Deserializer
 */
 pub trait Deserializer {
@@ -39,5 +56,5 @@ pub trait Deserializer {
        ## Returns
        * The deserialized object.
     */
-    fn deserialize(&self, serialized: &[u8]) -> Self::Object;
+    fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object>;
 }

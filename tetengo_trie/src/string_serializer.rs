@@ -4,7 +4,7 @@
     Copyright 2023 kaoru  <https://www.tetengo.org/>
 */
 
-use crate::serializer::{Deserializer, Serializer};
+use crate::serializer::{Deserializer, Result, Serializer};
 
 /**
     # String Serializer
@@ -47,8 +47,8 @@ impl StringDeserializer {
 impl Deserializer for StringDeserializer {
     type Object = String;
 
-    fn deserialize(&self, bytes: &[u8]) -> String {
-        String::from_utf8(bytes.to_vec()).unwrap_or_default()
+    fn deserialize(&self, bytes: &[u8]) -> Result<String> {
+        String::from_utf8(bytes.to_vec()).map_err(Into::into)
     }
 }
 
@@ -76,7 +76,7 @@ mod tests {
 
         let serialized = "Sakuramachi".as_bytes();
         let expected_object = "Sakuramachi";
-        let object = deserializer.deserialize(serialized);
+        let object = deserializer.deserialize(serialized).unwrap();
         assert_eq!(object.as_str(), expected_object);
     }
 }

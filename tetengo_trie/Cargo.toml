@@ -12,3 +12,5 @@ keywords = ["trie", "double_array", "common_prefix_search", "assoc_container"]
 categories = ["algorithms", "text-processing"]
 
 [dependencies]
+anyhow = "1.0.70"
+thiserror = "1.0.40"

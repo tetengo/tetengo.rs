@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 use std::mem::size_of;
 use std::ops::{BitAnd, BitOrAssign, ShlAssign, ShrAssign};
 
-use crate::serializer::{Deserializer, Serializer};
+use crate::serializer::{Deserializer, Result, Serializer};
 
 /**
     # Trait for Integer.
@@ -125,7 +125,7 @@ impl<Object: Integer<Object>> IntegerDeserializer<Object> {
 impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
     type Object = Object;
 
-    fn deserialize(&self, bytes: &[u8]) -> Object {
+    fn deserialize(&self, bytes: &[u8]) -> Result<Object> {
         from_bytes(bytes, self.fe_escape)
     }
 }
@@ -168,7 +168,7 @@ fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> 
     bytes
 }
 
-fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Object {
+fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Result<Object> {
     if fe_escape {
         from_bytes_with_escape(serialized)
     } else {
@@ -176,7 +176,7 @@ fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Ob
     }
 }
 
-fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Object {
+fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
     assert!(size_of::<Object>() <= serialized.len() && serialized.len() <= 2 * size_of::<Object>());
     let mut object = Object::from(0);
     let mut serialized = serialized.iter();
@@ -198,17 +198,17 @@ fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Object 
             object |= Object::from(*byte);
         }
     }
-    object
+    Ok(object)
 }
 
-fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Object {
+fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
     assert!(size_of::<Object>() <= serialized.len() && serialized.len() <= 2 * size_of::<Object>());
     let mut object = Object::from(0);
     for byte in serialized {
         object <<= 8;
         object |= Object::from(*byte);
     }
-    object
+    Ok(object)
 }
 
 #[cfg(test)]
@@ -268,7 +268,7 @@ mod tests {
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
-            let object = deserializer.deserialize(&serialized);
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -276,7 +276,7 @@ mod tests {
 
             let serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
-            let object = deserializer.deserialize(&serialized);
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -284,7 +284,7 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
-            let object = deserializer.deserialize(&serialized);
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -292,7 +292,7 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
-            let object = deserializer.deserialize(&serialized);
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
     }
