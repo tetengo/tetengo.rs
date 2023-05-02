@@ -4,8 +4,10 @@
     Copyright 2023 kaoru  <https://www.tetengo.org/>
 */
 
+use std::error;
+
 /**
-   # Serializer
+    # Serializer
 */
 pub trait Serializer {
     /// An object type.
@@ -24,37 +26,38 @@ pub trait Serializer {
 }
 
 /**
-  # Deserialization Error
+    # Deserialization Error
 */
-#[derive(Clone, Debug, thiserror::Error)]
-pub enum DeserializationError {
-    /// Invalid length of the serialized object.
-    #[error("Invalid length of the serialized object.")]
-    InvalidSeralizedLength,
+pub trait DeserializationError: error::Error {}
 
-    /// Invalid UTF-8 sequence.
-    #[error("Invalid length of the serialized object.")]
-    FromUtf8Error(#[from] std::string::FromUtf8Error),
-}
+/**
+    # Result
 
-/// Result
+    ## Type Parameters
+    * `T` - A type.
+*/
 pub type Result<T> = anyhow::Result<T>;
 
 /**
-   # Deserializer
+    # Deserializer
 */
 pub trait Deserializer {
-    /// An object type.
+    /**
+        # An object type.
+    */
     type Object;
 
     /**
-       # Deserializes an object.
+        # Deserializes an object.
 
-       ## Arguments
-       * `serialized` - A serialized object.
+        ## Arguments
+        * `serialized` - A serialized object.
 
-       ## Returns
-       * The deserialized object.
+        ## Returns
+        * The deserialized object.
+
+        ## Errors
+        * `DeserializationError` - Failed to deserialize.
     */
     fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object>;
 }

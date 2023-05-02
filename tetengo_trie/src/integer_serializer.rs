@@ -4,11 +4,11 @@
     Copyright 2023 kaoru  <https://www.tetengo.org/>
 */
 
-use std::marker::PhantomData;
-use std::mem::size_of;
-use std::ops::{BitAnd, BitOrAssign, ShlAssign, ShrAssign};
+use std::marker;
+use std::mem;
+use std::ops;
 
-use crate::serializer::{Deserializer, Result, Serializer};
+use crate::serializer::{DeserializationError, Deserializer, Result, Serializer};
 
 /**
     # Trait for Integer.
@@ -18,10 +18,10 @@ use crate::serializer::{Deserializer, Result, Serializer};
 */
 pub trait Integer<Object>:
     Copy
-    + ShlAssign<u128>
-    + ShrAssign<u128>
-    + BitAnd<Object, Output = Object>
-    + BitOrAssign<Object>
+    + ops::ShlAssign<u128>
+    + ops::ShrAssign<u128>
+    + ops::BitAnd<Object, Output = Object>
+    + ops::BitOrAssign<Object>
     + From<u8>
     + Into<i128>
 {
@@ -29,10 +29,10 @@ pub trait Integer<Object>:
 
 impl<T, U> Integer<U> for T where
     T: Copy
-        + ShlAssign<u128>
-        + ShrAssign<u128>
-        + BitAnd<U, Output = U>
-        + BitOrAssign<U>
+        + ops::ShlAssign<u128>
+        + ops::ShrAssign<u128>
+        + ops::BitAnd<U, Output = U>
+        + ops::BitOrAssign<U>
         + From<u8>
         + Into<i128>
 {
@@ -58,7 +58,7 @@ impl<T, U> Integer<U> for T where
 #[derive(Debug)]
 pub struct IntegerSerializer<Object: Integer<Object>> {
     fe_escape: bool,
-    _phantom: PhantomData<Object>,
+    _phantom: marker::PhantomData<Object>,
 }
 
 impl<Object: Integer<Object>> IntegerSerializer<Object> {
@@ -71,7 +71,7 @@ impl<Object: Integer<Object>> IntegerSerializer<Object> {
     pub fn new(fe_escape: bool) -> Self {
         IntegerSerializer {
             fe_escape,
-            _phantom: PhantomData,
+            _phantom: marker::PhantomData,
         }
     }
 }
@@ -83,6 +83,17 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
         to_bytes(object, self.fe_escape)
     }
 }
+
+/**
+ *
+*/
+#[derive(Debug, thiserror::Error)]
+enum IntegerDeserialationError {
+    #[error("invalid serialized bytes")]
+    _InvalidSerializedBytes,
+}
+
+impl DeserializationError for IntegerDeserialationError {}
 
 /**
    # Integer Deserializer.
@@ -104,7 +115,7 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
 #[derive(Debug)]
 pub struct IntegerDeserializer<Object: Integer<Object>> {
     fe_escape: bool,
-    _phantom: PhantomData<Object>,
+    _phantom: marker::PhantomData<Object>,
 }
 
 impl<Object: Integer<Object>> IntegerDeserializer<Object> {
@@ -117,7 +128,7 @@ impl<Object: Integer<Object>> IntegerDeserializer<Object> {
     pub fn new(fe_escape: bool) -> Self {
         IntegerDeserializer {
             fe_escape,
-            _phantom: PhantomData,
+            _phantom: marker::PhantomData,
         }
     }
 }
@@ -155,9 +166,9 @@ fn to_bytes_with_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> {
 
 fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> {
     let mut bytes = vec![];
-    bytes.reserve(size_of::<Object>());
+    bytes.reserve(mem::size_of::<Object>());
     let mut object = *object;
-    for _ in 0..size_of::<Object>() {
+    for _ in 0..mem::size_of::<Object>() {
         let byte_object = object & Object::from(0xFFu8);
         let u128_object: i128 = byte_object.into();
         let u8_object = u128_object as u8;
@@ -177,7 +188,10 @@ fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Re
 }
 
 fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
-    assert!(size_of::<Object>() <= serialized.len() && serialized.len() <= 2 * size_of::<Object>());
+    assert!(
+        mem::size_of::<Object>() <= serialized.len()
+            && serialized.len() <= 2 * mem::size_of::<Object>()
+    );
     let mut object = Object::from(0);
     let mut serialized = serialized.iter();
     while let Some(byte) = serialized.next() {
@@ -202,7 +216,10 @@ fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<
 }
 
 fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
-    assert!(size_of::<Object>() <= serialized.len() && serialized.len() <= 2 * size_of::<Object>());
+    assert!(
+        mem::size_of::<Object>() <= serialized.len()
+            && serialized.len() <= 2 * mem::size_of::<Object>()
+    );
     let mut object = Object::from(0);
     for byte in serialized {
         object <<= 8;

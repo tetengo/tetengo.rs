@@ -54,6 +54,8 @@ impl Deserializer for StringDeserializer {
 
 #[cfg(test)]
 mod tests {
+    use std::string::FromUtf8Error;
+
     use super::*;
 
     #[test]
@@ -72,14 +74,27 @@ mod tests {
 
     #[test]
     fn deserialize() {
-        let deserializer = StringDeserializer::new();
+        {
+            let deserializer = StringDeserializer::new();
 
-        let serialized = "Sakuramachi".as_bytes();
-        let expected_object = "Sakuramachi";
-        let Ok(object) = deserializer.deserialize(serialized) else {
-            assert!(false);
-            return
-        };
-        assert_eq!(object.as_str(), expected_object);
+            let serialized = "Sakuramachi".as_bytes();
+            let expected_object = "Sakuramachi";
+            let Ok(object) = deserializer.deserialize(serialized) else {
+                assert!(false);
+                return
+            };
+            assert_eq!(object.as_str(), expected_object);
+        }
+        {
+            let deserializer = StringDeserializer::new();
+
+            let serialized = &[0xFFu8, 0xFFu8, 0xFFu8];
+            assert!(if let Err(e) = deserializer.deserialize(serialized) {
+                assert!(e.downcast_ref::<FromUtf8Error>().is_some());
+                true
+            } else {
+                false
+            });
+        }
     }
 }
