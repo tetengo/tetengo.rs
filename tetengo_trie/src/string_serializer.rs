@@ -90,8 +90,7 @@ mod tests {
 
             let serialized = &[0xFFu8, 0xFFu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(serialized) {
-                assert!(e.downcast_ref::<FromUtf8Error>().is_some());
-                true
+                e.downcast_ref::<FromUtf8Error>().is_some()
             } else {
                 false
             });
