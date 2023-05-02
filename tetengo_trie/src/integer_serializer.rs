@@ -11,7 +11,7 @@ use std::ops;
 use crate::serializer::{DeserializationError, Deserializer, Result, Serializer};
 
 /**
-    # Trait for Integer.
+    # Trait for Integer
 
     ## Type Parameters
     * `Object` - An object type.
@@ -85,7 +85,7 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
 }
 
 /**
- *
+    # Integer Deserialization Error
 */
 #[derive(Debug, thiserror::Error)]
 enum IntegerDeserialationError {
@@ -96,21 +96,21 @@ enum IntegerDeserialationError {
 impl DeserializationError for IntegerDeserialationError {}
 
 /**
-   # Integer Deserializer.
+    # Integer Deserializer
 
-   When the argument `fe_escape` of the constructor is true, binary bytes are
-   deserialized as following:
+    When the argument `fe_escape` of the constructor is true, binary bytes are
+    deserialized as following:
 
-   |original byte|serialized byte|
-   |-|-|
-   |0x00     |0xFE       (0b11111110)            |
-   |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
-   |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
-   |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
-   |0xFF     |0xFF       (0b11111111)            |
+    |original byte|serialized byte|
+    |-|-|
+    |0x00     |0xFE       (0b11111110)            |
+    |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
+    |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
+    |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
+    |0xFF     |0xFF       (0b11111111)            |
 
-   ## Type Parameters
-   * `Object` - An object type.
+    ## Type Parameters
+    * `Object` - An object type.
 */
 #[derive(Debug)]
 pub struct IntegerDeserializer<Object: Integer<Object>> {
@@ -120,10 +120,10 @@ pub struct IntegerDeserializer<Object: Integer<Object>> {
 
 impl<Object: Integer<Object>> IntegerDeserializer<Object> {
     /**
-       # Creates an integer deserializer.
+        # Creates an integer deserializer.
 
-       ## Arguments
-       * `fe_escape` - Set true to escape 0xFE.
+        ## Arguments
+        * `fe_escape` - Set true to escape 0xFE.
     */
     pub fn new(fe_escape: bool) -> Self {
         IntegerDeserializer {
