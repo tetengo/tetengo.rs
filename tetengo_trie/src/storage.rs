@@ -1,5 +1,5 @@
 /*!
- * # Storage
+ * A storage.
  *
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
@@ -8,97 +8,97 @@ use std::any::Any;
 use std::io::Write;
 
 /**
- * # Storage
+ * A storage.
  */
 pub trait Storage: Clone {
     /**
-     * # Returns the base-check size.
+     * Returns the base-check size.
      *
-     * ## Returns
+     * # Returns
      * The base-check size.
      */
     fn base_check_size(&self) -> usize;
 
     /**
-     * # Returns the base value.
+     * Returns the base value.
      *
-     * ## Arguments
+     * # Arguments
      * * `base_check_index` - A base-check index.
      *
-     * ## Returns
+     * # Returns
      * The base balue.
      */
     fn base_at(&self, base_check_index: usize) -> i32;
 
     /**
-     * # Sets a base value.
+     * Sets a base value.
      *
-     * ## Arguments
+     * # Arguments
      * * `base_check_index` - A base-check index.
      * * `base`             - A base value.
      */
     fn set_base_at(&mut self, base_check_index: usize, base: i32);
 
     /**
-     * # Return the check value.
+     * Return the check value.
      *
-     * ## Arguments
+     * # Arguments
      * * `base_check_index` - A base-check index.
      *
-     * ## Returns
+     * # Returns
      * The check value.
      */
     fn check_at(&self, base_check_index: usize) -> u8;
 
     /**
-     * #Sets a check value.
+     * Sets a check value.
      *
-     * ## Arguments
+     * # Arguments
      * * `base_check_index` - A base-check index.
      * * `check`            - A check value.
      */
     fn set_check_at(&mut self, base_check_index: usize, check: u8);
 
     /**
-     * # Returns the value count.
+     * Returns the value count.
      *
-     * ## Returns
+     * # Returns
      * The value count.
      */
     fn value_count(&self) -> usize;
 
     /**
-     * # Returns the value object.
+     * Returns the value object.
      *
-     * ## Arguments
+     * # Arguments
      * * `value_index` - A value index.
      *
-     * ## Returns
+     * # Returns
      * The value object. Or `None` if there is no corresponding value object.
      */
     fn value_at(&self, value_index: usize) -> Option<&dyn Any>;
 
     /**
-     * # Adds a value object.
+     * Adds a value object.
      *
-     * ## Arguments
+     * # Arguments
      * * `value_index` - A value index.
      * * `value`       - A value object.
      */
     fn add_value_at(&mut self, value_index: usize, value: dyn Any);
 
     /**
-     * # Returns the filling rate.
+     * Returns the filling rate.
      *
-     * ## Returns
+     * # Returns
      * The filling rate.
      */
     fn filling_rate(&self) -> f64;
 
     /**
-     * # Serializes this storage.
+     * Serializes this storage.
      *
-     * ## Arguments
+     * # Arguments
      * * `writer`           - A writer.
      * * `value_serializer` - A serializer for value objects.
      */

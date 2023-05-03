@@ -1,5 +1,5 @@
 /*!
- * # Serializer
+ * A serializer/deserializer.
  *
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
@@ -7,58 +7,58 @@
 use std::error;
 
 /**
- * # Serializer
+ * A serializer.
  */
 pub trait Serializer {
     /**
-     * # An object type.
+     * An object type.
      */
     type Object: ?Sized;
 
     /**
-     * # Serializes an object.
+     * Serializes an object.
      *
-     * ## Arguments
+     * # Arguments
      * * `object` - An object.
      *
-     * ## Returns
+     * # Returns
      * * The serialized object.
      */
     fn serialize(&self, object: &Self::Object) -> Vec<u8>;
 }
 
 /**
- * # Deserialization Error
+ * A deserialization error.
  */
 pub trait DeserializationError: error::Error {}
 
 /**
- * # Result
+ * A result type.
  *
- * ## Type Parameters
+ * # Type Parameters
  * * `T` - A type.
  */
 pub type Result<T> = anyhow::Result<T>;
 
 /**
- * # Deserializer
+ * A deserializer.
  */
 pub trait Deserializer {
     /**
-     * # An object type.
+     * An object type.
      */
     type Object;
 
     /**
-     * # Deserializes an object.
+     * Deserializes an object.
      *
-     * ## Arguments
+     * # Arguments
      * * `serialized` - A serialized object.
      *
-     * ## Returns
+     * # Returns
      * * The deserialized object.
      *
-     * ## Errors
+     * # Errors
      * * `DeserializationError` - Failed to deserialize.
      */
     fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object>;
