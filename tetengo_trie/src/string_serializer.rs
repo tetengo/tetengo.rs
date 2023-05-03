@@ -1,21 +1,21 @@
 /*!
-    # String Serializer
-
-    Copyright 2023 kaoru  <https://www.tetengo.org/>
-*/
+ * # String Serializer
+ *
+ * Copyright 2023 kaoru  <https://www.tetengo.org/>
+ */
 
 use crate::serializer::{Deserializer, Result, Serializer};
 
 /**
-    # String Serializer
-*/
+ * # String Serializer
+ */
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringSerializer;
 
 impl StringSerializer {
     /**
-       # Creates a string serializer.
-    */
+     * # Creates a string serializer.
+     */
     pub fn new() -> Self {
         StringSerializer {}
     }
@@ -30,15 +30,15 @@ impl Serializer for StringSerializer {
 }
 
 /**
-   # String Deserializer
-*/
+ * # String Deserializer
+ */
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringDeserializer;
 
 impl StringDeserializer {
     /**
-       # Creates a string deserializer.
-    */
+     * # Creates a string deserializer.
+     */
     pub fn new() -> Self {
         StringDeserializer {}
     }

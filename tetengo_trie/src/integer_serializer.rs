@@ -1,8 +1,8 @@
 /*!
-    # Integer Serializer
-
-    Copyright 2023 kaoru  <https://www.tetengo.org/>
-*/
+ * # Integer Serializer
+ *
+ * Copyright 2023 kaoru  <https://www.tetengo.org/>
+ */
 
 use std::marker;
 use std::mem;
@@ -11,11 +11,11 @@ use std::ops;
 use crate::serializer::{DeserializationError, Deserializer, Result, Serializer};
 
 /**
-    # Trait for Integer
-
-    ## Type Parameters
-    * `Object` - An object type.
-*/
+ * # Trait for Integer
+ *
+ * ## Type Parameters
+ * * `Object` - An object type.
+ */
 pub trait Integer<Object>:
     Copy
     + ops::ShlAssign<u128>
@@ -39,22 +39,22 @@ impl<T, U> Integer<U> for T where
 }
 
 /**
-    # Integer Serializer
-
-    When the argument `fe_escape` of the constructor is true, binary bytes are
-    serialized as following:
-
-    |original byte|serialized byte|
-    |-|-|
-    |0x00     |0xFE       (0b11111110)            |
-    |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
-    |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
-    |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
-    |0xFF     |0xFF       (0b11111111)            |
-
-    ## Type Parameters
-    * `Object` - An object type.
-*/
+ * # Integer Serializer
+ *
+ * When the argument `fe_escape` of the constructor is true, binary bytes are
+ * serialized as following:
+ *
+ * |original byte|serialized byte|
+ * |-|-|
+ * |0x00     |0xFE       (0b11111110)            |
+ * |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
+ * |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
+ * |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
+ * |0xFF     |0xFF       (0b11111111)            |
+ *
+ * ## Type Parameters
+ * * `Object` - An object type.
+ */
 #[derive(Debug)]
 pub struct IntegerSerializer<Object: Integer<Object>> {
     fe_escape: bool,
@@ -63,11 +63,11 @@ pub struct IntegerSerializer<Object: Integer<Object>> {
 
 impl<Object: Integer<Object>> IntegerSerializer<Object> {
     /**
-       # Creates an integer serializer.
-
-       ## Arguments
-       * `fe_escape` - Set true to escape 0xFE.
-    */
+     * # Creates an integer serializer.
+     *
+     * ## Arguments
+     * * `fe_escape` - Set true to escape 0xFE.
+     */
     pub fn new(fe_escape: bool) -> Self {
         IntegerSerializer {
             fe_escape,
@@ -85,19 +85,19 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
 }
 
 /**
-    # Integer Deserialization Error
-*/
+ * # Integer Deserialization Error
+ */
 #[derive(Clone, Copy, Debug, thiserror::Error)]
 pub enum IntegerDeserialationError {
     /**
-        # Invalid serialized length.
-    */
+     * # Invalid serialized length.
+     */
     #[error("invalid serialized length")]
     InvalidSerializedLength,
 
     /**
-        # Invalid serialized content.
-    */
+     * # Invalid serialized content.
+     */
     #[error("invalid serialized content")]
     InvalidSerializedContent,
 }
@@ -105,22 +105,22 @@ pub enum IntegerDeserialationError {
 impl DeserializationError for IntegerDeserialationError {}
 
 /**
-    # Integer Deserializer
-
-    When the argument `fe_escape` of the constructor is true, binary bytes are
-    deserialized as following:
-
-    |original byte|serialized byte|
-    |-|-|
-    |0x00     |0xFE       (0b11111110)            |
-    |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
-    |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
-    |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
-    |0xFF     |0xFF       (0b11111111)            |
-
-    ## Type Parameters
-    * `Object` - An object type.
-*/
+ * # Integer Deserializer
+ *
+ * When the argument `fe_escape` of the constructor is true, binary bytes are
+ * deserialized as following:
+ *
+ * |original byte|serialized byte|
+ * |-|-|
+ * |0x00     |0xFE       (0b11111110)            |
+ * |0x01-0xFC|0x01-0xFC  (0b00000001-0b11111100) |
+ * |0xFD     |0xFD, 0xFD (0b11111101, 0b11111101)|
+ * |0xFE     |0xFD, 0xFE (0b11111101, 0b11111110)|
+ * |0xFF     |0xFF       (0b11111111)            |
+ *
+ * ## Type Parameters
+ * * `Object` - An object type.
+ */
 #[derive(Debug)]
 pub struct IntegerDeserializer<Object: Integer<Object>> {
     fe_escape: bool,
@@ -129,11 +129,11 @@ pub struct IntegerDeserializer<Object: Integer<Object>> {
 
 impl<Object: Integer<Object>> IntegerDeserializer<Object> {
     /**
-        # Creates an integer deserializer.
-
-        ## Arguments
-        * `fe_escape` - Set true to escape 0xFE.
-    */
+     * # Creates an integer deserializer.
+     *
+     * ## Arguments
+     * * `fe_escape` - Set true to escape 0xFE.
+     */
     pub fn new(fe_escape: bool) -> Self {
         IntegerDeserializer {
             fe_escape,
