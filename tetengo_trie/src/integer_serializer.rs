@@ -87,11 +87,17 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
 /**
     # Integer Deserialization Error
 */
-#[derive(Debug, thiserror::Error)]
-enum IntegerDeserialationError {
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum IntegerDeserialationError {
+    /**
+        # Invalid serialized length.
+    */
     #[error("invalid serialized length")]
     InvalidSerializedLength,
 
+    /**
+        # Invalid serialized content.
+    */
     #[error("invalid serialized content")]
     InvalidSerializedContent,
 }
@@ -335,11 +341,7 @@ mod tests {
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
                 if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    if let IntegerDeserialationError::InvalidSerializedLength = f {
-                        true
-                    } else {
-                        false
-                    }
+                    matches!(f, IntegerDeserialationError::InvalidSerializedLength)
                 } else {
                     false
                 }
@@ -353,11 +355,7 @@ mod tests {
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
                 if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    if let IntegerDeserialationError::InvalidSerializedLength = f {
-                        true
-                    } else {
-                        false
-                    }
+                    matches!(f, IntegerDeserialationError::InvalidSerializedLength)
                 } else {
                     false
                 }
@@ -371,11 +369,7 @@ mod tests {
             let serialized = vec![0xFCu8, 0xFDu8, 0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
                 if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    if let IntegerDeserialationError::InvalidSerializedContent = f {
-                        true
-                    } else {
-                        false
-                    }
+                    matches!(f, IntegerDeserialationError::InvalidSerializedContent)
                 } else {
                     false
                 }
@@ -389,11 +383,7 @@ mod tests {
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFDu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
                 if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    if let IntegerDeserialationError::InvalidSerializedContent = f {
-                        true
-                    } else {
-                        false
-                    }
+                    matches!(f, IntegerDeserialationError::InvalidSerializedContent)
                 } else {
                     false
                 }
