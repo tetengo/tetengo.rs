@@ -5,14 +5,25 @@
 */
 
 use std::any::Any;
+use std::fmt;
 
 /**
     # Value Serializer
 */
+#[derive(Clone, Copy)]
 pub struct ValueSerializer {
     serialize: fn(value: &dyn Any) -> Vec<u8>,
 
     fixed_value_size: usize,
+}
+
+impl fmt::Debug for ValueSerializer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ValueSerializer")
+            .field("serialize", &"<fn>")
+            .field("fixed_value_size", &self.fixed_value_size)
+            .finish()
+    }
 }
 
 impl ValueSerializer {
