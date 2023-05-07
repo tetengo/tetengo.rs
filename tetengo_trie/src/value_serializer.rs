@@ -1,15 +1,15 @@
 /*!
-    # Value Serializer
-
-    Copyright 2023 kaoru  <https://www.tetengo.org/>
-*/
+ * A value serializer.
+ *
+ * Copyright 2023 kaoru  <https://www.tetengo.org/>
+ */
 
 use std::any::Any;
 use std::fmt;
 
 /**
-    # Value Serializer
-*/
+ * A value serializer.
+ */
 #[derive(Clone, Copy)]
 pub struct ValueSerializer {
     serialize: fn(value: &dyn Any) -> Vec<u8>,
@@ -28,12 +28,12 @@ impl fmt::Debug for ValueSerializer {
 
 impl ValueSerializer {
     /**
-        Creates a value serializer.
-
-        # Arguments
-        * `serialize`        - A serializing function.
-        * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
-    */
+     * Creates a value serializer.
+     *
+     * # Arguments
+     * * `serialize`        - A serializing function.
+     * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
+     */
     pub fn new(serialize: fn(value: &dyn Any) -> Vec<u8>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
@@ -42,24 +42,24 @@ impl ValueSerializer {
     }
 
     /**
-        Serializes a value.
-
-        # Arguments
-        * `value` - A value.
-
-        # Returns
-        The serialized value.
-    */
+     * Serializes a value.
+     *
+     * # Arguments
+     * * `value` - A value.
+     *
+     * # Returns
+     * The serialized value.
+     */
     pub fn serialize(&self, value: &dyn Any) -> Vec<u8> {
         (self.serialize)(value)
     }
 
     /**
-        Returns the fixed value size.
-
-        # Returns
-        The fixed value size.
-    */
+     * Returns the fixed value size.
+     *
+     * # Returns
+     * The fixed value size.
+     */
     pub fn fixed_value_size(&self) -> usize {
         self.fixed_value_size
     }
