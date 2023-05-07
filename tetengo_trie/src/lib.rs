@@ -3,8 +3,8 @@
 pub mod integer_serializer;
 pub mod serializer;
 pub mod storage;
-pub mod value_serializer;
 pub mod string_serializer;
+pub mod value_serializer;
 
 /*
 pub fn add(left: usize, right: usize) -> usize {
