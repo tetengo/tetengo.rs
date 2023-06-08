@@ -10,13 +10,13 @@ use std::fmt;
  * A value serializer.
  */
 #[derive(Clone, Copy)]
-pub struct ValueSerializer<T> {
+pub struct ValueSerializer<T: ?Sized> {
     serialize: fn(value: &T) -> Vec<u8>,
 
     fixed_value_size: usize,
 }
 
-impl<T> fmt::Debug for ValueSerializer<T> {
+impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
             .field("serialize", &"<fn>")
@@ -25,7 +25,7 @@ impl<T> fmt::Debug for ValueSerializer<T> {
     }
 }
 
-impl<T> ValueSerializer<T> {
+impl<T: ?Sized> ValueSerializer<T> {
     /**
      * Creates a value serializer.
      *
@@ -68,15 +68,58 @@ impl<T> ValueSerializer<T> {
 mod tests {
     use std::mem::size_of;
 
+    use crate::{integer_serializer::IntegerSerializer, serializer::Serializer};
+
     use super::*;
 
     #[test]
     fn new() {
         {
-            let _ = ValueSerializer::new(|_value: &i32| return Vec::new(), size_of::<i32>());
+            let _ = ValueSerializer::new(
+                |value: &i32| return IntegerSerializer::new(false).serialize(value),
+                size_of::<i32>(),
+            );
         }
         {
-            let _ = ValueSerializer::new(|_: &i32| return vec![3, 1, 4], 0);
+            let _ = ValueSerializer::new(|_: &str| return vec![3, 1, 4], 0);
+        }
+    }
+
+    #[test]
+    fn serialize() {
+        {
+            let serializer = ValueSerializer::new(
+                |value: &i32| return IntegerSerializer::new(false).serialize(value),
+                size_of::<i32>(),
+            );
+
+            let expected = IntegerSerializer::new(false).serialize(&42);
+            let serialized = serializer.serialize(&42);
+            assert_eq!(serialized, expected);
+        }
+        {
+            let serializer = ValueSerializer::new(|_: &str| return vec![3, 1, 4], 0);
+
+            let expected = vec![3, 1, 4];
+            let serialized = serializer.serialize("hoge");
+            assert_eq!(serialized, expected);
+        }
+    }
+
+    #[test]
+    fn fixed_value_size() {
+        {
+            let serializer = ValueSerializer::new(
+                |value: &i32| return IntegerSerializer::new(false).serialize(value),
+                size_of::<i32>(),
+            );
+
+            assert_eq!(serializer.fixed_value_size(), size_of::<i32>());
+        }
+        {
+            let serializer = ValueSerializer::new(|_: &str| return vec![3, 1, 4], 0);
+
+            assert_eq!(serializer.fixed_value_size(), 0);
         }
     }
 }
