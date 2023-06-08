@@ -4,20 +4,19 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use std::any::Any;
 use std::fmt;
 
 /**
  * A value serializer.
  */
 #[derive(Clone, Copy)]
-pub struct ValueSerializer {
-    serialize: fn(value: &dyn Any) -> Vec<u8>,
+pub struct ValueSerializer<T> {
+    serialize: fn(value: &T) -> Vec<u8>,
 
     fixed_value_size: usize,
 }
 
-impl fmt::Debug for ValueSerializer {
+impl<T> fmt::Debug for ValueSerializer<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
             .field("serialize", &"<fn>")
@@ -26,7 +25,7 @@ impl fmt::Debug for ValueSerializer {
     }
 }
 
-impl ValueSerializer {
+impl<T> ValueSerializer<T> {
     /**
      * Creates a value serializer.
      *
@@ -34,7 +33,7 @@ impl ValueSerializer {
      * * `serialize`        - A serializing function.
      * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
      */
-    pub fn new(serialize: fn(value: &dyn Any) -> Vec<u8>, fixed_value_size: usize) -> Self {
+    pub fn new(serialize: fn(value: &T) -> Vec<u8>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
             fixed_value_size,
@@ -50,7 +49,7 @@ impl ValueSerializer {
      * # Returns
      * The serialized value.
      */
-    pub fn serialize(&self, value: &dyn Any) -> Vec<u8> {
+    pub fn serialize(&self, value: &T) -> Vec<u8> {
         (self.serialize)(value)
     }
 
@@ -74,10 +73,10 @@ mod tests {
     #[test]
     fn new() {
         {
-            let _ = ValueSerializer::new(|_value: &dyn Any| return Vec::new(), size_of::<i32>());
+            let _ = ValueSerializer::new(|_value: &i32| return Vec::new(), size_of::<i32>());
         }
         {
-            let _ = ValueSerializer::new(|_: &dyn Any| return vec![3, 1, 4], 0);
+            let _ = ValueSerializer::new(|_: &i32| return vec![3, 1, 4], 0);
         }
     }
 }
