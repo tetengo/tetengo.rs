@@ -6,6 +6,8 @@
 
 use std::fmt;
 
+use crate::serializer::Result;
+
 /**
  * A value serializer.
  */
@@ -69,7 +71,7 @@ impl<T: ?Sized> ValueSerializer<T> {
  */
 #[derive(Clone, Copy, Debug)]
 pub struct ValueDeserializer<T> {
-    deserialize: fn(serialized: &[u8]) -> T,
+    deserialize: fn(serialized: &[u8]) -> Result<T>,
 }
 
 impl<T> ValueDeserializer<T> {
@@ -79,7 +81,7 @@ impl<T> ValueDeserializer<T> {
      * # Arguments
      * * `deserialize` - A deserializing function.
      */
-    pub fn new(deserialize: fn(serialized: &[u8]) -> T) -> Self {
+    pub fn new(deserialize: fn(serialized: &[u8]) -> Result<T>) -> Self {
         Self { deserialize }
     }
 
@@ -92,7 +94,7 @@ impl<T> ValueDeserializer<T> {
      * # Returns
      * A value.
      */
-    pub fn deserialize(&self, serialized: &[u8]) -> T {
+    pub fn deserialize(&self, serialized: &[u8]) -> Result<T> {
         (self.deserialize)(serialized)
     }
 }
@@ -159,7 +161,10 @@ mod tests {
     }
 
     mod value_deserializer {
-        use crate::{integer_serializer::IntegerDeserializer, serializer::Deserializer};
+        use crate::{
+            integer_serializer::{IntegerDeserializer, IntegerSerializer},
+            serializer::{Deserializer, Serializer},
+        };
 
         use super::super::*;
 
@@ -172,8 +177,37 @@ mod tests {
             }
             {
                 let _ = ValueDeserializer::new(|_: &[u8]| {
-                    return "hoge".to_string();
+                    return Ok("hoge".to_string());
                 });
+            }
+        }
+
+        #[test]
+        fn deserialize() {
+            {
+                let deserializer = ValueDeserializer::new(|serialized: &[u8]| {
+                    return IntegerDeserializer::<i32>::new(false).deserialize(serialized);
+                });
+
+                let expected = 42;
+                let serialized = IntegerSerializer::<i32>::new(false).serialize(&expected);
+                let Ok(deserialized) = deserializer.deserialize(&serialized) else {
+                    assert!(false);
+                    panic!("Serialized must be successfully deserialized.")
+                };
+                assert_eq!(deserialized, expected);
+            }
+            {
+                let deserializer = ValueDeserializer::new(|_: &[u8]| {
+                    return Ok("hoge".to_string());
+                });
+                let expected = "hoge";
+                let serialized = vec![3, 1, 4];
+                let Ok(deserialized) = deserializer.deserialize(&serialized) else {
+                    assert!(false);
+                    panic!("Serialized must be successfully deserialized.")
+                };
+                assert_eq!(deserialized, expected);
             }
         }
     }
