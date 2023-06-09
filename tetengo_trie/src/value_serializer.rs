@@ -101,6 +101,9 @@ impl<T> ValueDeserializer<T> {
      *
      * # Returns
      * A value.
+     *
+     * # Errors
+     * * `DeserializationError` - Failed to deserialize.
      */
     pub fn deserialize(&self, serialized: &[u8]) -> Result<T> {
         (self.deserialize)(serialized)
