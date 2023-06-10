@@ -9,6 +9,14 @@ use std::io::Write;
 use crate::value_serializer::ValueSerializer;
 
 /**
+ * A result type.
+ *
+ * # Type Parameters
+ * * `T` - A type.
+ */
+pub type Result<T> = anyhow::Result<T>;
+
+/**
  * A storage.
  *
  * # Type Parameters
