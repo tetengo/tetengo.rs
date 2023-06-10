@@ -21,15 +21,6 @@ pub struct ValueSerializer<T: ?Sized> {
     fixed_value_size: usize,
 }
 
-impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ValueSerializer")
-            .field("serialize", &"<fn>")
-            .field("fixed_value_size", &self.fixed_value_size)
-            .finish()
-    }
-}
-
 impl<T: ?Sized> ValueSerializer<T> {
     /**
      * Creates a value serializer.
@@ -69,6 +60,15 @@ impl<T: ?Sized> ValueSerializer<T> {
     }
 }
 
+impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ValueSerializer")
+            .field("serialize", &"<fn>")
+            .field("fixed_value_size", &self.fixed_value_size)
+            .finish()
+    }
+}
+
 /**
  * A value deserializer.
  *
@@ -78,14 +78,6 @@ impl<T: ?Sized> ValueSerializer<T> {
 #[derive(Clone, Copy)]
 pub struct ValueDeserializer<T> {
     deserialize: fn(serialized: &[u8]) -> Result<T>,
-}
-
-impl<T> fmt::Debug for ValueDeserializer<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ValueDeserializer")
-            .field("deserialize", &"<fn>")
-            .finish()
-    }
 }
 
 impl<T> ValueDeserializer<T> {
@@ -113,6 +105,14 @@ impl<T> ValueDeserializer<T> {
      */
     pub fn deserialize(&self, serialized: &[u8]) -> Result<T> {
         (self.deserialize)(serialized)
+    }
+}
+
+impl<T> fmt::Debug for ValueDeserializer<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ValueDeserializer")
+            .field("deserialize", &"<fn>")
+            .finish()
     }
 }
 
