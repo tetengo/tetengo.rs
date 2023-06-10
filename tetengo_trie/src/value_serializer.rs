@@ -10,6 +10,9 @@ use crate::serializer::Result;
 
 /**
  * A value serializer.
+ *
+ * # Type Parameters
+ * * `T` - A value type.
  */
 #[derive(Clone, Copy)]
 pub struct ValueSerializer<T: ?Sized> {
@@ -68,6 +71,9 @@ impl<T: ?Sized> ValueSerializer<T> {
 
 /**
  * A value deserializer.
+ *
+ * # Type Parameters
+ * * `T` - A value type.
  */
 #[derive(Clone, Copy)]
 pub struct ValueDeserializer<T> {

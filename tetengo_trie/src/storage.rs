@@ -4,13 +4,15 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use std::any::Any;
 use std::io::Write;
 
 /**
  * A storage.
+ *
+ * # Type Parameters
+ * * `T` - A value type.
  */
-pub trait Storage: Clone {
+pub trait Storage<T>: Clone {
     /**
      * Returns the base-check size.
      *
@@ -76,7 +78,7 @@ pub trait Storage: Clone {
      * # Returns
      * The value object. Or `None` if there is no corresponding value object.
      */
-    fn value_at(&self, value_index: usize) -> Option<&dyn Any>;
+    fn value_at(&self, value_index: usize) -> Option<T>;
 
     /**
      * Adds a value object.
@@ -85,7 +87,7 @@ pub trait Storage: Clone {
      * * `value_index` - A value index.
      * * `value`       - A value object.
      */
-    fn add_value_at(&mut self, value_index: usize, value: dyn Any);
+    fn add_value_at(&mut self, value_index: usize, value: T);
 
     /**
      * Returns the filling rate.
