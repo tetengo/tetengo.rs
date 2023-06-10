@@ -6,6 +6,8 @@
 
 use std::io::Write;
 
+use crate::value_serializer::ValueSerializer;
+
 /**
  * A storage.
  *
@@ -104,5 +106,5 @@ pub trait Storage<T>: Clone {
      * * `writer`           - A writer.
      * * `value_serializer` - A serializer for value objects.
      */
-    fn serialize(&self, writer: &dyn Write, value_serializer: i32);
+    fn serialize(&self, writer: &dyn Write, value_serializer: &ValueSerializer<T>);
 }
