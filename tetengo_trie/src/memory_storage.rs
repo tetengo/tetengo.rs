@@ -165,7 +165,7 @@ impl<T> Storage<T> for MemoryStorage<T> {
         (self.base_check_array.borrow()[base_check_index] >> 8u32) as i32
     }
 
-    fn set_base_at(&mut self, base_check_index: usize, base: i32) {
+    fn set_base_at(&mut self, _base_check_index: usize, _base: i32) {
         todo!()
     }
 
@@ -174,7 +174,7 @@ impl<T> Storage<T> for MemoryStorage<T> {
         (self.base_check_array.borrow()[base_check_index] & 0xFF) as u8
     }
 
-    fn set_check_at(&mut self, base_check_index: usize, check: u8) {
+    fn set_check_at(&mut self, _base_check_index: usize, _check: u8) {
         todo!()
     }
 
@@ -192,7 +192,7 @@ impl<T> Storage<T> for MemoryStorage<T> {
         }
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: T) {
+    fn add_value_at(&mut self, _value_index: usize, _value: T) {
         todo!()
     }
 
@@ -202,8 +202,8 @@ impl<T> Storage<T> for MemoryStorage<T> {
 
     fn serialize(
         &self,
-        writer: &dyn std::io::Write,
-        value_serializer: &crate::value_serializer::ValueSerializer<T>,
+        _writer: &dyn std::io::Write,
+        _value_serializer: &crate::value_serializer::ValueSerializer<T>,
     ) {
         todo!()
     }
