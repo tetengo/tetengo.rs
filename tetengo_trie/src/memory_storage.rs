@@ -264,6 +264,13 @@ mod tests {
         array
     }
 
+    #[rustfmt::skip]
+    const SERIALIZED_BROKEN: &[u8; 9] = &[
+        0x00u8, 0x00u8, 0x00u8, 0x02u8,
+        0x01u8, 0x23u8, 0x45u8, 0x67u8, 
+        0x89u8,
+    ];
+
     #[test]
     fn from_reader() {
         {
@@ -330,15 +337,15 @@ mod tests {
                 panic!();
             }
         }
+        {
+            let mut reader = Cursor::new(SERIALIZED_BROKEN);
+            let deserializer = ValueDeserializer::new(|serialized| {
+                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
+                    Lazy::new(|| StringDeserializer::new());
+                STRING_DESERIALIZER.deserialize(serialized)
+            });
+            let result = MemoryStorage::from_reader(&mut reader, &deserializer);
+            assert!(result.is_err());
+        }
     }
-    // {
-    //     const auto p_input_stream = create_broken_input_stream();
-
-    //     const tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
-    //         static const tetengo::trie::default_deserializer<std::string>string_deserializer{ false };
-    //         return string_deserializer(std::string{ std::begin(serialized), std::end(serialized) });
-    //     } };
-    //     BOOST_CHECK_THROW(
-    //         const tetengo::trie::memory_storage storage_(*p_input_stream, deserializer), std::ios_base::failure);
-    // }
 }
