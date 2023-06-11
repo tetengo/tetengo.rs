@@ -110,30 +110,6 @@ impl<T> MemoryStorage<T> {
         }
         Ok(value_array)
     }
-    //     else
-    //     {
-    //         for (auto i = static_cast<std::uint32_t>(0); i < size; ++i)
-    //         {
-    //             std::vector<char> to_deserialize(fixed_value_size, 0);
-    //             input_stream.read(std::data(to_deserialize), fixed_value_size);
-    //             if (input_stream.gcount() < static_cast<std::streamsize>(fixed_value_size))
-    //             {
-    //                 throw std::ios_base::failure("Can't read value.");
-    //             }
-    //             if (std::all_of(std::begin(to_deserialize), std::end(to_deserialize), [](const auto e) {
-    //                     return e == uninitialized_byte();
-    //                 }))
-    //             {
-    //                 std::remove_reference_t<decltype(value_array)>::value_type nullopt_{};
-    //                 value_array.push_back(std::move(nullopt_));
-    //             }
-    //             else
-    //             {
-    //                 value_array.push_back(value_deserializer_(to_deserialize));
-    //             }
-    //         }
-    //     }
-    // }
 
     fn read_u32(reader: &mut dyn Read) -> Result<u32> {
         static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
@@ -183,7 +159,7 @@ impl<T> Storage<T> for MemoryStorage<T> {
     }
 
     fn value_count(&self) -> usize {
-        todo!()
+        self.value_array.len()
     }
 
     fn value_at(&self, value_index: usize) -> Option<&T> {
@@ -196,8 +172,11 @@ impl<T> Storage<T> for MemoryStorage<T> {
         }
     }
 
-    fn add_value_at(&mut self, _value_index: usize, _value: T) {
-        todo!()
+    fn add_value_at(&mut self, value_index: usize, value: T) {
+        if value_index >= self.value_array.len() {
+            self.value_array.resize_with(value_index + 1, || None);
+        }
+        self.value_array[value_index] = Some(value);
     }
 
     fn filling_rate(&self) -> f64 {
@@ -400,5 +379,20 @@ mod tests {
         storage.set_check_at(24, 124);
 
         assert_eq!(storage.check_at(24), 124);
+    }
+
+    #[test]
+    fn value_count() {
+        let mut storage = MemoryStorage::<String>::new();
+        assert_eq!(storage.value_count(), 0);
+
+        storage.add_value_at(24, "hoge".to_string());
+        assert_eq!(storage.value_count(), 25);
+
+        storage.add_value_at(42, "fuga".to_string());
+        assert_eq!(storage.value_count(), 43);
+
+        storage.add_value_at(0, "piyo".to_string());
+        assert_eq!(storage.value_count(), 43);
     }
 }
