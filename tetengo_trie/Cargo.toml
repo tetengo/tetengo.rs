@@ -13,4 +13,5 @@ categories = ["algorithms", "text-processing"]
 
 [dependencies]
 anyhow = "1.0.71"
+once_cell = "1.18.0"
 thiserror = "1.0.40"

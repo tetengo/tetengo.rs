@@ -22,7 +22,7 @@ pub type Result<T> = anyhow::Result<T>;
  * # Type Parameters
  * * `T` - A value type.
  */
-pub trait Storage<T>: Clone {
+pub trait Storage<T> {
     /**
      * Returns the base-check size.
      *

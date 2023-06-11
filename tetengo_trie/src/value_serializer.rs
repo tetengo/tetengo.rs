@@ -210,7 +210,7 @@ mod tests {
                 let serialized = IntegerSerializer::<i32>::new(false).serialize(&expected);
                 let Ok(deserialized) = deserializer.deserialize(&serialized) else {
                     assert!(false);
-                    panic!("Serialized must be successfully deserialized.")
+                    panic!()
                 };
                 assert_eq!(deserialized, expected);
             }
@@ -222,7 +222,7 @@ mod tests {
                 let serialized = vec![3, 1, 4];
                 let Ok(deserialized) = deserializer.deserialize(&serialized) else {
                     assert!(false);
-                    panic!("Serialized must be successfully deserialized.")
+                    panic!()
                 };
                 assert_eq!(deserialized, expected);
             }
