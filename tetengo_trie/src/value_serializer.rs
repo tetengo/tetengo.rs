@@ -121,7 +121,8 @@ mod tests {
     mod value_serializer {
         use std::mem::size_of;
 
-        use crate::{integer_serializer::IntegerSerializer, serializer::Serializer};
+        use crate::integer_serializer::IntegerSerializer;
+        use crate::serializer::Serializer;
 
         use super::super::*;
 
@@ -178,10 +179,8 @@ mod tests {
     }
 
     mod value_deserializer {
-        use crate::{
-            integer_serializer::{IntegerDeserializer, IntegerSerializer},
-            serializer::{Deserializer, Serializer},
-        };
+        use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
+        use crate::serializer::{Deserializer, Serializer};
 
         use super::super::*;
 

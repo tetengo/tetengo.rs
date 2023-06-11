@@ -213,7 +213,8 @@ impl<T> Storage<T> for MemoryStorage<T> {
 mod tests {
     use std::io::Cursor;
 
-    use crate::{serializer::Deserializer, string_serializer::StringDeserializer};
+    use crate::serializer::Deserializer;
+    use crate::string_serializer::StringDeserializer;
 
     use super::*;
 
