@@ -165,8 +165,10 @@ impl<T> Storage<T> for MemoryStorage<T> {
         (self.base_check_array.borrow()[base_check_index] >> 8u32) as i32
     }
 
-    fn set_base_at(&mut self, _base_check_index: usize, _base: i32) {
-        todo!()
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) {
+        self.ensure_base_check_size(base_check_index + 1);
+        self.base_check_array.borrow_mut()[base_check_index] &= 0x000000FF;
+        self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
     }
 
     fn check_at(&self, base_check_index: usize) -> u8 {
@@ -368,5 +370,14 @@ mod tests {
         let storage = MemoryStorage::<u32>::new();
 
         assert_eq!(storage.base_at(42), 0);
+    }
+
+    #[test]
+    fn set_base_at() {
+        let mut storage = MemoryStorage::<u32>::new();
+
+        storage.set_base_at(42, 4242);
+
+        assert_eq!(storage.base_at(42), 4242);
     }
 }
