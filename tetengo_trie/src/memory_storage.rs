@@ -176,8 +176,10 @@ impl<T> Storage<T> for MemoryStorage<T> {
         (self.base_check_array.borrow()[base_check_index] & 0xFF) as u8
     }
 
-    fn set_check_at(&mut self, _base_check_index: usize, _check: u8) {
-        todo!()
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) {
+        self.ensure_base_check_size(base_check_index + 1);
+        self.base_check_array.borrow_mut()[base_check_index] &= 0xFFFFFF00;
+        self.base_check_array.borrow_mut()[base_check_index] |= check as u32;
     }
 
     fn value_count(&self) -> usize {
@@ -389,5 +391,14 @@ mod tests {
             storage.check_at(42),
             0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
         );
+    }
+
+    #[test]
+    fn set_check_at() {
+        let mut storage = MemoryStorage::<u32>::new();
+
+        storage.set_check_at(24, 124);
+
+        assert_eq!(storage.check_at(24), 124);
     }
 }
