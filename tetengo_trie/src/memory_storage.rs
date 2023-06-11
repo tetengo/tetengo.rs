@@ -185,12 +185,10 @@ impl<T> Storage<T> for MemoryStorage<T> {
     fn value_at(&self, value_index: usize) -> Option<&T> {
         if value_index >= self.value_array.len() {
             None
+        } else if let Some(value) = &self.value_array[value_index] {
+            Some(value)
         } else {
-            if let Some(value) = &self.value_array[value_index] {
-                Some(value)
-            } else {
-                None
-            }
+            None
         }
     }
 
@@ -241,6 +239,20 @@ mod tests {
         0x68u8, 0x6Fu8, 0x67u8, 0x65u8,
     ];
 
+    #[rustfmt::skip]
+    const SERIALIZED_FIXED_VALUE_SIZE: &[u8; 40] = &[
+        0x00u8, 0x00u8, 0x00u8, 0x02u8,
+        0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
+        0x00u8, 0x00u8, 0xFEu8, 0x18u8,
+        0x00u8, 0x00u8, 0x00u8, 0x05u8,
+        0x00u8, 0x00u8, 0x00u8, 0x04u8,
+        0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8,
+        0x00u8, 0x00u8, 0x00u8, 0x9Fu8,
+        0x00u8, 0x00u8, 0x00u8, 0x0Eu8,
+        0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8,
+        0x00u8, 0x00u8, 0x00u8, 0x03u8,
+    ];
+
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
     fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
@@ -254,53 +266,71 @@ mod tests {
 
     #[test]
     fn from_reader() {
-        let mut reader = Cursor::new(SERIALIZED);
-        let deserializer = ValueDeserializer::new(|serialized| {
-            static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                Lazy::new(|| StringDeserializer::new());
-            STRING_DESERIALIZER.deserialize(serialized)
-        });
-        let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-            assert!(false);
-            panic!();
-        };
+        {
+            let mut reader = Cursor::new(SERIALIZED);
+            let deserializer = ValueDeserializer::new(|serialized| {
+                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
+                    Lazy::new(|| StringDeserializer::new());
+                STRING_DESERIALIZER.deserialize(serialized)
+            });
+            let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
+                assert!(false);
+                panic!();
+            };
 
-        assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-        if let Some(value) = storage.value_at(4) {
-            assert_eq!(value, "hoge");
-        } else {
-            assert!(false);
-            panic!();
+            assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
+            if let Some(value) = storage.value_at(4) {
+                assert_eq!(value, "hoge");
+            } else {
+                assert!(false);
+                panic!();
+            }
+            if let Some(value) = storage.value_at(2) {
+                assert_eq!(value, "fuga");
+            } else {
+                assert!(false);
+                panic!();
+            }
+            if let Some(value) = storage.value_at(1) {
+                assert_eq!(value, "piyo");
+            } else {
+                assert!(false);
+                panic!();
+            }
         }
-        if let Some(value) = storage.value_at(2) {
-            assert_eq!(value, "fuga");
-        } else {
-            assert!(false);
-            panic!();
-        }
-        if let Some(value) = storage.value_at(1) {
-            assert_eq!(value, "piyo");
-        } else {
-            assert!(false);
-            panic!();
+        {
+            let mut reader = Cursor::new(SERIALIZED_FIXED_VALUE_SIZE);
+            let deserializer = ValueDeserializer::new(|serialized| {
+                static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                    Lazy::new(|| IntegerDeserializer::<u32>::new(false));
+                U32_DESERIALIZER.deserialize(serialized)
+            });
+            let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
+                assert!(false);
+                panic!();
+            };
+
+            assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
+            if let Some(value) = storage.value_at(4) {
+                assert_eq!(*value, 3u32);
+            } else {
+                assert!(false);
+                panic!();
+            }
+            if let Some(value) = storage.value_at(2) {
+                assert_eq!(*value, 14u32);
+            } else {
+                assert!(false);
+                panic!();
+            }
+            if let Some(value) = storage.value_at(1) {
+                assert_eq!(*value, 159u32);
+            } else {
+                assert!(false);
+                panic!();
+            }
         }
     }
-    // {
-    //     const auto                              p_input_stream = create_input_stream_fixed_value_size();
-    //     const tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
-    //         static const tetengo::trie::default_deserializer<std::uint32_t>uint32_deserializer{ false };
-    //         return uint32_deserializer(serialized);
-    //     } };
-    //     const tetengo::trie::memory_storage storage_{ *p_input_stream, deserializer };
-
-    //     BOOST_TEST(base_check_array_of(storage_) == base_check_array);
-    //     BOOST_REQUIRE(storage_.value_at(4));
-    //     BOOST_TEST(std::any_cast<std::uint32_t>(*storage_.value_at(4)) == 3U);
-    //     BOOST_REQUIRE(storage_.value_at(2));
-    //     BOOST_TEST(std::any_cast<std::uint32_t>(*storage_.value_at(2)) == 14U);
-    //     BOOST_REQUIRE(storage_.value_at(1));
-    //     BOOST_TEST(std::any_cast<std::uint32_t>(*storage_.value_at(1)) == 159U);
-    // }
     // {
     //     const auto p_input_stream = create_broken_input_stream();
 
