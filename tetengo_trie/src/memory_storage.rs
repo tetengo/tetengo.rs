@@ -5,6 +5,7 @@
  */
 
 use once_cell::sync::Lazy;
+use std::cell::RefCell;
 use std::io::Read;
 use std::mem::size_of;
 
@@ -21,7 +22,7 @@ use crate::value_serializer::ValueDeserializer;
  */
 #[derive(Clone, Debug, Default)]
 pub struct MemoryStorage<T> {
-    _base_check_array: Vec<u32>,
+    base_check_array: RefCell<Vec<u32>>,
     _value_array: Vec<Option<T>>,
 }
 
@@ -31,9 +32,9 @@ impl<T> MemoryStorage<T> {
      */
     pub fn new() -> Self {
         Self {
-            _base_check_array: vec![
+            base_check_array: RefCell::new(vec![
                 0xFF, /* TODO: 0x00000000 | tetengo::trie::double_array::key_terminator() */
-            ],
+            ]),
             _value_array: Vec::new(),
         }
     }
@@ -51,7 +52,7 @@ impl<T> MemoryStorage<T> {
     ) -> Result<Self> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
-            _base_check_array: base_check_array,
+            base_check_array: RefCell::new(base_check_array),
             _value_array: value_array,
         })
     }
@@ -135,7 +136,7 @@ impl<T> MemoryStorage<T> {
     // }
 
     fn read_u32(reader: &mut dyn Read) -> Result<u32> {
-        const U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+        static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
             Lazy::new(|| IntegerDeserializer::new(false));
 
         let mut to_deserialize: [u8; size_of::<u32>()] = [0u8; size_of::<u32>()];
@@ -144,15 +145,24 @@ impl<T> MemoryStorage<T> {
     }
 
     const UNINITIALIZED_BYTE: u8 = 0xFF;
+
+    fn ensure_base_check_size(&self, size: usize) {
+        if size > self.base_check_array.borrow().len() {
+            self.base_check_array.borrow_mut().resize(
+                size, 0xFF, /* TODO: 0x00000000U | double_array::vacant_check_value() */
+            );
+        }
+    }
 }
 
 impl<T> Storage<T> for MemoryStorage<T> {
     fn base_check_size(&self) -> usize {
-        todo!()
+        self.base_check_array.borrow().len()
     }
 
     fn base_at(&self, base_check_index: usize) -> i32 {
-        todo!()
+        self.ensure_base_check_size(base_check_index + 1);
+        (self.base_check_array.borrow()[base_check_index] >> 8u32) as i32
     }
 
     fn set_base_at(&mut self, base_check_index: usize, base: i32) {
@@ -160,7 +170,8 @@ impl<T> Storage<T> for MemoryStorage<T> {
     }
 
     fn check_at(&self, base_check_index: usize) -> u8 {
-        todo!()
+        self.ensure_base_check_size(base_check_index + 1);
+        (self.base_check_array.borrow()[base_check_index] & 0xFF) as u8
     }
 
     fn set_check_at(&mut self, base_check_index: usize, check: u8) {
@@ -237,16 +248,16 @@ mod tests {
     fn from_reader() {
         let mut reader = Cursor::new(SERIALIZED);
         let deserializer = ValueDeserializer::new(|serialized| {
-            const STRING_DESERIALIZER: Lazy<StringDeserializer> =
+            static STRING_DESERIALIZER: Lazy<StringDeserializer> =
                 Lazy::new(|| StringDeserializer::new());
             STRING_DESERIALIZER.deserialize(serialized)
         });
-        let Ok(_storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
+        let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
             assert!(false);
             panic!();
         };
 
-        // assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
+        assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
         // if let Some(value) = storage.value_at(4) {
         //     assert_eq!(value, "hoge");
         // } else {
