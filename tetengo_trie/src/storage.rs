@@ -88,7 +88,7 @@ pub trait Storage<T> {
      * # Returns
      * The value object. Or `None` if there is no corresponding value object.
      */
-    fn value_at(&self, value_index: usize) -> Option<T>;
+    fn value_at(&self, value_index: usize) -> Option<&T>;
 
     /**
      * Adds a value object.

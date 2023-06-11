@@ -23,7 +23,7 @@ use crate::value_serializer::ValueDeserializer;
 #[derive(Clone, Debug, Default)]
 pub struct MemoryStorage<T> {
     base_check_array: RefCell<Vec<u32>>,
-    _value_array: Vec<Option<T>>,
+    value_array: Vec<Option<T>>,
 }
 
 impl<T> MemoryStorage<T> {
@@ -35,7 +35,7 @@ impl<T> MemoryStorage<T> {
             base_check_array: RefCell::new(vec![
                 0xFF, /* TODO: 0x00000000 | tetengo::trie::double_array::key_terminator() */
             ]),
-            _value_array: Vec::new(),
+            value_array: Vec::new(),
         }
     }
 
@@ -53,7 +53,7 @@ impl<T> MemoryStorage<T> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
             base_check_array: RefCell::new(base_check_array),
-            _value_array: value_array,
+            value_array,
         })
     }
 
@@ -182,8 +182,16 @@ impl<T> Storage<T> for MemoryStorage<T> {
         todo!()
     }
 
-    fn value_at(&self, value_index: usize) -> Option<T> {
-        todo!()
+    fn value_at(&self, value_index: usize) -> Option<&T> {
+        if value_index >= self.value_array.len() {
+            None
+        } else {
+            if let Some(value) = &self.value_array[value_index] {
+                Some(value)
+            } else {
+                None
+            }
+        }
     }
 
     fn add_value_at(&mut self, value_index: usize, value: T) {
@@ -258,41 +266,25 @@ mod tests {
         };
 
         assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-        // if let Some(value) = storage.value_at(4) {
-        //     assert_eq!(value, "hoge");
-        // } else {
-        //     assert!(false);
-        //     panic!();
-        // }
-        // if let Some(value) = storage.value_at(2) {
-        //     assert_eq!(value, "fuga");
-        // } else {
-        //     assert!(false);
-        //     panic!();
-        // }
-        // if let Some(value) = storage.value_at(0) {
-        //     assert_eq!(value, "piyo");
-        // } else {
-        //     assert!(false);
-        //     panic!();
-        // }
+        if let Some(value) = storage.value_at(4) {
+            assert_eq!(value, "hoge");
+        } else {
+            assert!(false);
+            panic!();
+        }
+        if let Some(value) = storage.value_at(2) {
+            assert_eq!(value, "fuga");
+        } else {
+            assert!(false);
+            panic!();
+        }
+        if let Some(value) = storage.value_at(1) {
+            assert_eq!(value, "piyo");
+        } else {
+            assert!(false);
+            panic!();
+        }
     }
-    // {
-    //     const auto                              p_input_stream = create_input_stream();
-    //     const tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
-    //         static const tetengo::trie::default_deserializer<std::string>string_deserializer{ false };
-    //         return string_deserializer(std::string{ std::begin(serialized), std::end(serialized) });
-    //     } };
-    //     const tetengo::trie::memory_storage storage_{ *p_input_stream, deserializer };
-
-    //     BOOST_TEST(base_check_array_of(storage_) == base_check_array);
-    //     BOOST_REQUIRE(storage_.value_at(4));
-    //     BOOST_TEST(std::any_cast<std::string>(*storage_.value_at(4)) == "hoge");
-    //     BOOST_REQUIRE(storage_.value_at(2));
-    //     BOOST_TEST(std::any_cast<std::string>(*storage_.value_at(2)) == "fuga");
-    //     BOOST_REQUIRE(storage_.value_at(1));
-    //     BOOST_TEST(std::any_cast<std::string>(*storage_.value_at(1)) == "piyo");
-    // }
     // {
     //     const auto                              p_input_stream = create_input_stream_fixed_value_size();
     //     const tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
