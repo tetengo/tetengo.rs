@@ -283,4 +283,45 @@ mod tests {
 
         assert!(storage.value_at(42).is_none());
     }
+
+    #[test]
+    fn add_value_at() {
+        let mut storage = SharedStorage::<String>::new();
+
+        storage.add_value_at(24, String::from("hoge"));
+
+        assert!(storage.value_at(0).is_none());
+        {
+            let Some(value) = storage.value_at(24) else {
+                panic!();
+            };
+            assert_eq!(value, "hoge");
+        }
+        assert!(storage.value_at(42).is_none());
+
+        storage.add_value_at(42, String::from("fuga"));
+
+        {
+            let Some(value) = storage.value_at(42)  else {
+                panic!();
+            };
+            assert_eq!(value, "fuga");
+        }
+        assert!(storage.value_at(4242).is_none());
+
+        storage.add_value_at(0, String::from("piyo"));
+
+        {
+            let Some(value) = storage.value_at(0) else {
+                panic!();
+            };
+            assert_eq!(value, "piyo");
+        }
+        {
+            let Some(value) = storage.value_at(42) else {
+                panic!();
+            };
+            assert_eq!(value, "fuga");
+        }
+    }
 }
