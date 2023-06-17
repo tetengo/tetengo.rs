@@ -236,4 +236,14 @@ mod tests {
 
         assert_eq!(storage.base_at(42), 4242);
     }
+
+    #[test]
+    fn check_at() {
+        let storage = SharedStorage::<u32>::new();
+
+        assert_eq!(
+            storage.check_at(42),
+            0xFF, /* TODO: double_array::vacant_check_value() */
+        );
+    }
 }
