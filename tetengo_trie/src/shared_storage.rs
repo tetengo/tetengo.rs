@@ -276,4 +276,11 @@ mod tests {
         storage.add_value_at(0, String::from("piyo"));
         assert_eq!(storage.value_count(), 43);
     }
+
+    #[test]
+    fn value_at() {
+        let storage = SharedStorage::<u32>::new();
+
+        assert!(storage.value_at(42).is_none());
+    }
 }
