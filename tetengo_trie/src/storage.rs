@@ -113,6 +113,13 @@ pub trait Storage<T> {
      * # Arguments
      * * `writer`           - A writer.
      * * `value_serializer` - A serializer for value objects.
+     *
+     * # Errors
+     * * `std::io::Error` if an I/O error occurs.
      */
-    fn serialize(&self, writer: &dyn Write, value_serializer: &ValueSerializer<T>);
+    fn serialize(
+        &self,
+        writer: &mut dyn Write,
+        value_serializer: &ValueSerializer<T>,
+    ) -> Result<()>;
 }

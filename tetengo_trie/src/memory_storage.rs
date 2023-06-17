@@ -6,13 +6,13 @@
 
 use once_cell::sync::Lazy;
 use std::cell::RefCell;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::mem::size_of;
 
-use crate::integer_serializer::IntegerDeserializer;
-use crate::serializer::Deserializer;
+use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
+use crate::serializer::{Deserializer, Serializer};
 use crate::storage::{Result, Storage};
-use crate::value_serializer::ValueDeserializer;
+use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
 /**
  * A memory storage.
@@ -55,6 +55,62 @@ impl<T> MemoryStorage<T> {
             base_check_array: RefCell::new(base_check_array),
             value_array,
         })
+    }
+
+    fn serialize_base_check_array(writer: &mut dyn Write, base_check_array: &[u32]) -> Result<()> {
+        assert!(base_check_array.len() < u32::MAX as usize);
+        Self::write_u32(writer, base_check_array.len() as u32)?;
+        for v in base_check_array {
+            Self::write_u32(writer, *v)?;
+        }
+        Ok(())
+    }
+
+    fn serialize_value_array(
+        writer: &mut dyn Write,
+        value_serializer: &ValueSerializer<T>,
+        value_array: &[Option<T>],
+    ) -> Result<()> {
+        assert!(value_array.len() < u32::MAX as usize);
+        Self::write_u32(writer, value_array.len() as u32)?;
+
+        assert!(value_serializer.fixed_value_size() < u32::MAX as usize);
+        let fixed_value_size = value_serializer.fixed_value_size() as u32;
+        Self::write_u32(writer, fixed_value_size)?;
+
+        if fixed_value_size == 0 {
+            for v in value_array {
+                if let Some(v) = v {
+                    let serialized = value_serializer.serialize(v);
+                    assert!(serialized.len() < u32::MAX as usize);
+                    Self::write_u32(writer, serialized.len() as u32)?;
+                    writer.write_all(&serialized)?;
+                } else {
+                    Self::write_u32(writer, 0)?;
+                }
+            }
+        } else {
+            for v in value_array {
+                if let Some(v) = v {
+                    let serialized = value_serializer.serialize(v);
+                    assert!(serialized.len() == fixed_value_size as usize);
+                    writer.write_all(&serialized)?;
+                } else {
+                    let uninitialized = vec![Self::UNINITIALIZED_BYTE; fixed_value_size as usize];
+                    writer.write_all(&uninitialized)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
+        static INTEGER_SERIALIZER: Lazy<IntegerSerializer<u32>> =
+            Lazy::new(|| IntegerSerializer::new(false));
+
+        let serialized = INTEGER_SERIALIZER.serialize(&value);
+        writer.write_all(&serialized)?;
+        Ok(())
     }
 
     fn deserialize(
@@ -191,10 +247,13 @@ impl<T> Storage<T> for MemoryStorage<T> {
 
     fn serialize(
         &self,
-        _writer: &dyn std::io::Write,
-        _value_serializer: &crate::value_serializer::ValueSerializer<T>,
-    ) {
-        todo!()
+        writer: &mut dyn Write,
+        value_serializer: &ValueSerializer<T>,
+    ) -> Result<()> {
+        Self::serialize_base_check_array(writer, &self.base_check_array.borrow())?;
+        Self::serialize_value_array(writer, value_serializer, &self.value_array)?;
+
+        Ok(())
     }
 }
 
@@ -202,8 +261,9 @@ impl<T> Storage<T> for MemoryStorage<T> {
 mod tests {
     use std::io::Cursor;
 
-    use crate::serializer::Deserializer;
-    use crate::string_serializer::StringDeserializer;
+    use crate::serializer::{Deserializer, Serializer};
+    use crate::string_serializer::{StringDeserializer, StringSerializer};
+    use crate::value_serializer::ValueSerializer;
 
     use super::*;
 
@@ -457,5 +517,90 @@ mod tests {
         }
 
         assert!((storage.filling_rate() - 3.0 / 9.0).abs() < 0.1);
+    }
+
+    #[test]
+    fn serialize() {
+        {
+            let mut storage = MemoryStorage::<String>::new();
+
+            storage.set_base_at(0, 42);
+            storage.set_base_at(1, 0xFE);
+            storage.set_check_at(1, 24);
+
+            storage.add_value_at(4, String::from("hoge"));
+            storage.add_value_at(2, String::from("fuga"));
+            storage.add_value_at(1, String::from("piyo"));
+
+            let mut writer = Cursor::new(Vec::<u8>::new());
+            let serializer = ValueSerializer::<String>::new(
+                |value| {
+                    static STRING_SERIALIZER: Lazy<StringSerializer> =
+                        Lazy::new(|| StringSerializer::new());
+                    STRING_SERIALIZER.serialize(value)
+                },
+                0,
+            );
+            let result = storage.serialize(&mut writer, &serializer);
+            assert!(result.is_ok());
+
+            #[rustfmt::skip]
+            const EXPECTED: [u8; 52] = [
+                0x00u8, 0x00u8, 0x00u8, 0x02u8,
+                0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
+                0x00u8, 0x00u8, 0xFEu8, 0x18u8,
+                0x00u8, 0x00u8, 0x00u8, 0x05u8,
+                0x00u8, 0x00u8, 0x00u8, 0x00u8,
+                0x00u8, 0x00u8, 0x00u8, 0x00u8,
+                0x00u8, 0x00u8, 0x00u8, 0x04u8,
+                0x70u8, 0x69u8, 0x79u8, 0x6Fu8,
+                0x00u8, 0x00u8, 0x00u8, 0x04u8,
+                0x66u8, 0x75u8, 0x67u8, 0x61u8,
+                0x00u8, 0x00u8, 0x00u8, 0x00u8,
+                0x00u8, 0x00u8, 0x00u8, 0x04u8,
+                0x68u8, 0x6Fu8, 0x67u8, 0x65u8,
+            ];
+            let serialized = writer.get_ref();
+            assert_eq!(serialized.as_slice(), &EXPECTED);
+        }
+        {
+            let mut storage = MemoryStorage::<u32>::new();
+
+            storage.set_base_at(0, 42);
+            storage.set_base_at(1, 0xFE);
+            storage.set_check_at(1, 24);
+
+            storage.add_value_at(4, 3);
+            storage.add_value_at(2, 14);
+            storage.add_value_at(1, 159);
+
+            let mut writer = Cursor::new(Vec::<u8>::new());
+            let serializer = ValueSerializer::<u32>::new(
+                |value| {
+                    static INTEGER_SERIALIZER: Lazy<IntegerSerializer<u32>> =
+                        Lazy::new(|| IntegerSerializer::new(false));
+                    INTEGER_SERIALIZER.serialize(value)
+                },
+                size_of::<u32>(),
+            );
+            let result = storage.serialize(&mut writer, &serializer);
+            assert!(result.is_ok());
+
+            #[rustfmt::skip]
+            const EXPECTED: [u8; 40] = [
+                0x00u8, 0x00u8, 0x00u8, 0x02u8,
+                0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
+                0x00u8, 0x00u8, 0xFEu8, 0x18u8,
+                0x00u8, 0x00u8, 0x00u8, 0x05u8,
+                0x00u8, 0x00u8, 0x00u8, 0x04u8,
+                0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8,
+                0x00u8, 0x00u8, 0x00u8, 0x9Fu8,
+                0x00u8, 0x00u8, 0x00u8, 0x0Eu8,
+                0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8,
+                0x00u8, 0x00u8, 0x00u8, 0x03u8,
+            ];
+            let serialized = writer.get_ref();
+            assert_eq!(serialized.as_slice(), &EXPECTED);
+        }
     }
 }
