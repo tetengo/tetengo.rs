@@ -76,8 +76,11 @@ impl<T> Storage<T> for SharedStorage<T> {
         self.entity.check_at(base_check_index)
     }
 
-    fn set_check_at(&mut self, _base_check_index: usize, _check: u8) {
-        todo!()
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) {
+        let Some(entity) = Rc::get_mut(&mut self.entity) else {
+            panic!("Must not be called when shared.");
+        };
+        entity.set_check_at(base_check_index, check);
     }
 
     fn value_count(&self) -> usize {
@@ -245,5 +248,14 @@ mod tests {
             storage.check_at(42),
             0xFF, /* TODO: double_array::vacant_check_value() */
         );
+    }
+
+    #[test]
+    fn set_check_at() {
+        let mut storage = SharedStorage::<u32>::new();
+
+        storage.set_check_at(24, 124);
+
+        assert_eq!(storage.check_at(24), 124);
     }
 }
