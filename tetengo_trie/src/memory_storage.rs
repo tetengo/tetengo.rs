@@ -265,7 +265,6 @@ mod tests {
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-                assert!(false);
                 panic!();
             };
 
@@ -273,19 +272,16 @@ mod tests {
             if let Some(value) = storage.value_at(4) {
                 assert_eq!(value, "hoge");
             } else {
-                assert!(false);
                 panic!();
             }
             if let Some(value) = storage.value_at(2) {
                 assert_eq!(value, "fuga");
             } else {
-                assert!(false);
                 panic!();
             }
             if let Some(value) = storage.value_at(1) {
                 assert_eq!(value, "piyo");
             } else {
-                assert!(false);
                 panic!();
             }
         }
@@ -297,7 +293,6 @@ mod tests {
                 U32_DESERIALIZER.deserialize(serialized)
             });
             let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-                assert!(false);
                 panic!();
             };
 
@@ -305,19 +300,16 @@ mod tests {
             if let Some(value) = storage.value_at(4) {
                 assert_eq!(*value, 3u32);
             } else {
-                assert!(false);
                 panic!();
             }
             if let Some(value) = storage.value_at(2) {
                 assert_eq!(*value, 14u32);
             } else {
-                assert!(false);
                 panic!();
             }
             if let Some(value) = storage.value_at(1) {
                 assert_eq!(*value, 159u32);
             } else {
-                assert!(false);
                 panic!();
             }
         }
@@ -401,5 +393,46 @@ mod tests {
         let storage = MemoryStorage::<u32>::new();
 
         assert!(storage.value_at(42).is_none());
+    }
+
+    #[test]
+    fn add_value_at() {
+        let mut storage = MemoryStorage::<String>::new();
+
+        storage.add_value_at(24, String::from("hoge"));
+
+        assert!(storage.value_at(0).is_none());
+        {
+            let Some(value) = storage.value_at(24) else {
+                panic!();
+            };
+            assert_eq!(value, "hoge");
+        }
+        assert!(storage.value_at(42).is_none());
+
+        storage.add_value_at(42, String::from("fuga"));
+
+        {
+            let Some(value) = storage.value_at(42) else {
+                panic!();
+            };
+            assert_eq!(value, "fuga");
+        }
+        assert!(storage.value_at(4242).is_none());
+
+        storage.add_value_at(0, String::from("piyo"));
+
+        {
+            let Some(value) = storage.value_at(0) else {
+                panic!();
+            };
+            assert_eq!(value, "piyo");
+        }
+        {
+            let Some(value) = storage.value_at(42) else {
+                panic!();
+            };
+            assert_eq!(value, "fuga");
+        }
     }
 }
