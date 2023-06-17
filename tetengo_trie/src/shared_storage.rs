@@ -104,10 +104,10 @@ impl<T> Storage<T> for SharedStorage<T> {
 
     fn serialize(
         &self,
-        _writer: &mut dyn Write,
-        _value_serializer: &ValueSerializer<T>,
+        writer: &mut dyn Write,
+        value_serializer: &ValueSerializer<T>,
     ) -> Result<()> {
-        todo!()
+        self.entity.serialize(writer, value_serializer)
     }
 }
 
@@ -116,8 +116,8 @@ mod tests {
     use once_cell::sync::Lazy;
     use std::io::Cursor;
 
-    use crate::serializer::Deserializer;
-    use crate::string_serializer::StringDeserializer;
+    use crate::serializer::{Deserializer, Serializer};
+    use crate::string_serializer::{StringDeserializer, StringSerializer};
 
     use super::*;
 
@@ -340,5 +340,49 @@ mod tests {
         }
 
         assert!((storage.filling_rate() - 3.0 / 9.0).abs() < 0.1);
+    }
+
+    #[test]
+    fn serialize() {
+        let mut storage = SharedStorage::<String>::new();
+
+        storage.set_base_at(0, 42);
+        storage.set_base_at(1, 0xFE);
+        storage.set_check_at(1, 24);
+
+        storage.add_value_at(4, String::from("hoge"));
+        storage.add_value_at(2, String::from("fuga"));
+        storage.add_value_at(1, String::from("piyo"));
+
+        let mut writer = Cursor::new(Vec::<u8>::new());
+        let serializer = ValueSerializer::<String>::new(
+            |value| {
+                static STRING_SERIALIZER: Lazy<StringSerializer> =
+                    Lazy::new(|| StringSerializer::new());
+                STRING_SERIALIZER.serialize(value)
+            },
+            0,
+        );
+        let result = storage.serialize(&mut writer, &serializer);
+        assert!(result.is_ok());
+
+        #[rustfmt::skip]
+        const EXPECTED: [u8; 52] = [
+            0x00u8, 0x00u8, 0x00u8, 0x02u8,
+            0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
+            0x00u8, 0x00u8, 0xFEu8, 0x18u8,
+            0x00u8, 0x00u8, 0x00u8, 0x05u8,
+            0x00u8, 0x00u8, 0x00u8, 0x00u8,
+            0x00u8, 0x00u8, 0x00u8, 0x00u8,
+            0x00u8, 0x00u8, 0x00u8, 0x04u8,
+            0x70u8, 0x69u8, 0x79u8, 0x6Fu8,
+            0x00u8, 0x00u8, 0x00u8, 0x04u8,
+            0x66u8, 0x75u8, 0x67u8, 0x61u8,
+            0x00u8, 0x00u8, 0x00u8, 0x00u8,
+            0x00u8, 0x00u8, 0x00u8, 0x04u8,
+            0x68u8, 0x6Fu8, 0x67u8, 0x65u8,
+        ];
+        let serialized = writer.get_ref();
+        assert_eq!(serialized, &EXPECTED);
     }
 }
