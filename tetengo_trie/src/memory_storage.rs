@@ -180,7 +180,13 @@ impl<T> Storage<T> for MemoryStorage<T> {
     }
 
     fn filling_rate(&self) -> f64 {
-        todo!()
+        let empty_count = self
+            .base_check_array
+            .borrow()
+            .iter()
+            .filter(|&&e| e == 0x000000FFu32)
+            .count();
+        1.0 - (empty_count as f64) / (self.base_check_array.borrow().len() as f64)
     }
 
     fn serialize(
@@ -434,5 +440,22 @@ mod tests {
             };
             assert_eq!(value, "fuga");
         }
+    }
+
+    #[test]
+    fn filling_rate() {
+        let mut storage = MemoryStorage::<u32>::new();
+
+        for i in 0..9 {
+            if i % 3 == 0 {
+                storage.set_base_at(i, (i * i) as i32);
+                storage.set_check_at(i, i as u8);
+            } else {
+                storage.set_base_at(i, storage.base_at(i));
+                storage.set_check_at(i, storage.check_at(i));
+            }
+        }
+
+        assert!((storage.filling_rate() - 3.0 / 9.0).abs() < 0.1);
     }
 }
