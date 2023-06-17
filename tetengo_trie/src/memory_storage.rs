@@ -603,4 +603,24 @@ mod tests {
             assert_eq!(serialized.as_slice(), &EXPECTED);
         }
     }
+
+    #[test]
+    fn clone() {
+        let mut storage = MemoryStorage::<u32>::new();
+
+        storage.set_base_at(0, 42);
+        storage.set_base_at(1, 0xFE);
+        storage.set_check_at(1, 24);
+
+        let clone = storage.clone();
+
+        let base_check_array = base_check_array_of(&clone);
+
+        #[rustfmt::skip]
+        const EXPECTED: [u32; 2] = [
+            0x00002AFFu32,
+            0x0000FE18u32,
+        ];
+        assert_eq!(base_check_array, &EXPECTED);
+    }
 }
