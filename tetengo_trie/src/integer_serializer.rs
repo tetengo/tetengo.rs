@@ -297,8 +297,7 @@ mod tests {
             let serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
             let Ok(object)  = deserializer.deserialize(&serialized) else {
-                assert!(false);
-                return
+                panic!();
             };
             assert_eq!(object, expected_object);
         }
@@ -308,8 +307,7 @@ mod tests {
             let serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
             let Ok(object) = deserializer.deserialize(&serialized) else {
-                assert!(false);
-                return
+                panic!();
             };
             assert_eq!(object, expected_object);
         }
@@ -319,8 +317,7 @@ mod tests {
             let serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
             let Ok(object) = deserializer.deserialize(&serialized) else {
-                assert!(false);
-                return
+                panic!();
             };
             assert_eq!(object, expected_object);
         }
@@ -330,8 +327,7 @@ mod tests {
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
             let Ok(object) = deserializer.deserialize(&serialized) else {
-                assert!(false);
-                return
+                panic!();
             };
             assert_eq!(object, expected_object);
         }

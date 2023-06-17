@@ -4,13 +4,25 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use std::any::Any;
 use std::io::Write;
+
+use crate::value_serializer::ValueSerializer;
+
+/**
+ * A result type.
+ *
+ * # Type Parameters
+ * * `T` - A type.
+ */
+pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A storage.
+ *
+ * # Type Parameters
+ * * `T` - A value type.
  */
-pub trait Storage: Clone {
+pub trait Storage<T> {
     /**
      * Returns the base-check size.
      *
@@ -76,7 +88,7 @@ pub trait Storage: Clone {
      * # Returns
      * The value object. Or `None` if there is no corresponding value object.
      */
-    fn value_at(&self, value_index: usize) -> Option<&dyn Any>;
+    fn value_at(&self, value_index: usize) -> Option<&T>;
 
     /**
      * Adds a value object.
@@ -85,7 +97,7 @@ pub trait Storage: Clone {
      * * `value_index` - A value index.
      * * `value`       - A value object.
      */
-    fn add_value_at(&mut self, value_index: usize, value: dyn Any);
+    fn add_value_at(&mut self, value_index: usize, value: T);
 
     /**
      * Returns the filling rate.
@@ -101,6 +113,13 @@ pub trait Storage: Clone {
      * # Arguments
      * * `writer`           - A writer.
      * * `value_serializer` - A serializer for value objects.
+     *
+     * # Errors
+     * * `std::io::Error` if an I/O error occurs.
      */
-    fn serialize(&self, writer: &dyn Write, value_serializer: i32);
+    fn serialize(
+        &self,
+        writer: &mut dyn Write,
+        value_serializer: &ValueSerializer<T>,
+    ) -> Result<()>;
 }

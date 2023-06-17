@@ -10,21 +10,15 @@ use crate::serializer::Result;
 
 /**
  * A value serializer.
+ *
+ * # Type Parameters
+ * * `T` - A value type.
  */
 #[derive(Clone, Copy)]
 pub struct ValueSerializer<T: ?Sized> {
     serialize: fn(value: &T) -> Vec<u8>,
 
     fixed_value_size: usize,
-}
-
-impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ValueSerializer")
-            .field("serialize", &"<fn>")
-            .field("fixed_value_size", &self.fixed_value_size)
-            .finish()
-    }
 }
 
 impl<T: ?Sized> ValueSerializer<T> {
@@ -66,20 +60,24 @@ impl<T: ?Sized> ValueSerializer<T> {
     }
 }
 
+impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ValueSerializer")
+            .field("serialize", &"<fn>")
+            .field("fixed_value_size", &self.fixed_value_size)
+            .finish()
+    }
+}
+
 /**
  * A value deserializer.
+ *
+ * # Type Parameters
+ * * `T` - A value type.
  */
 #[derive(Clone, Copy)]
 pub struct ValueDeserializer<T> {
     deserialize: fn(serialized: &[u8]) -> Result<T>,
-}
-
-impl<T> fmt::Debug for ValueDeserializer<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ValueDeserializer")
-            .field("deserialize", &"<fn>")
-            .finish()
-    }
 }
 
 impl<T> ValueDeserializer<T> {
@@ -103,10 +101,18 @@ impl<T> ValueDeserializer<T> {
      * A value.
      *
      * # Errors
-     * * `DeserializationError` - Failed to deserialize.
+     * * `DeserializationError` - If fails to deserialize.
      */
     pub fn deserialize(&self, serialized: &[u8]) -> Result<T> {
         (self.deserialize)(serialized)
+    }
+}
+
+impl<T> fmt::Debug for ValueDeserializer<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ValueDeserializer")
+            .field("deserialize", &"<fn>")
+            .finish()
     }
 }
 
@@ -115,7 +121,8 @@ mod tests {
     mod value_serializer {
         use std::mem::size_of;
 
-        use crate::{integer_serializer::IntegerSerializer, serializer::Serializer};
+        use crate::integer_serializer::IntegerSerializer;
+        use crate::serializer::Serializer;
 
         use super::super::*;
 
@@ -172,10 +179,8 @@ mod tests {
     }
 
     mod value_deserializer {
-        use crate::{
-            integer_serializer::{IntegerDeserializer, IntegerSerializer},
-            serializer::{Deserializer, Serializer},
-        };
+        use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
+        use crate::serializer::{Deserializer, Serializer};
 
         use super::super::*;
 
@@ -203,8 +208,7 @@ mod tests {
                 let expected = 42;
                 let serialized = IntegerSerializer::<i32>::new(false).serialize(&expected);
                 let Ok(deserialized) = deserializer.deserialize(&serialized) else {
-                    assert!(false);
-                    panic!("Serialized must be successfully deserialized.")
+                    panic!();
                 };
                 assert_eq!(deserialized, expected);
             }
@@ -215,8 +219,7 @@ mod tests {
                 let expected = "hoge";
                 let serialized = vec![3, 1, 4];
                 let Ok(deserialized) = deserializer.deserialize(&serialized) else {
-                    assert!(false);
-                    panic!("Serialized must be successfully deserialized.")
+                    panic!();
                 };
                 assert_eq!(deserialized, expected);
             }

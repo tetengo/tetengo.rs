@@ -80,8 +80,7 @@ mod tests {
             let serialized = "Sakuramachi".as_bytes();
             let expected_object = "Sakuramachi";
             let Ok(object) = deserializer.deserialize(serialized) else {
-                assert!(false);
-                return
+                panic!();
             };
             assert_eq!(object.as_str(), expected_object);
         }
