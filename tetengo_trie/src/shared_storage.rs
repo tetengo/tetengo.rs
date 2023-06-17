@@ -217,4 +217,11 @@ mod tests {
             assert!(storage.base_check_size() >= 43);
         }
     }
+
+    #[test]
+    fn base_at() {
+        let storage = SharedStorage::<u32>::new();
+
+        assert_eq!(storage.base_at(42), 0);
+    }
 }
