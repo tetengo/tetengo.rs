@@ -65,8 +65,11 @@ impl<T> Storage<T> for SharedStorage<T> {
         self.entity.base_at(base_check_index)
     }
 
-    fn set_base_at(&mut self, _base_check_index: usize, _base: i32) {
-        todo!()
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) {
+        let Some(entity) = Rc::get_mut(&mut self.entity) else {
+            panic!("Must not be called when shared.");
+        };
+        entity.set_base_at(base_check_index, base);
     }
 
     fn check_at(&self, base_check_index: usize) -> u8 {
@@ -223,5 +226,14 @@ mod tests {
         let storage = SharedStorage::<u32>::new();
 
         assert_eq!(storage.base_at(42), 0);
+    }
+
+    #[test]
+    fn set_base_at() {
+        let mut storage = SharedStorage::<u32>::new();
+
+        storage.set_base_at(42, 4242);
+
+        assert_eq!(storage.base_at(42), 4242);
     }
 }
