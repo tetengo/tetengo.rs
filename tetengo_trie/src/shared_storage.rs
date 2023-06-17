@@ -84,15 +84,18 @@ impl<T> Storage<T> for SharedStorage<T> {
     }
 
     fn value_count(&self) -> usize {
-        todo!()
+        self.entity.value_count()
     }
 
     fn value_at(&self, value_index: usize) -> Option<&T> {
         self.entity.value_at(value_index)
     }
 
-    fn add_value_at(&mut self, _value_index: usize, _value: T) {
-        todo!()
+    fn add_value_at(&mut self, value_index: usize, value: T) {
+        let Some(entity) = Rc::get_mut(&mut self.entity) else {
+            panic!("Must not be called when shared.");
+        };
+        entity.add_value_at(value_index, value);
     }
 
     fn filling_rate(&self) -> f64 {
@@ -257,5 +260,20 @@ mod tests {
         storage.set_check_at(24, 124);
 
         assert_eq!(storage.check_at(24), 124);
+    }
+
+    #[test]
+    fn value_count() {
+        let mut storage = SharedStorage::<String>::new();
+        assert_eq!(storage.value_count(), 0);
+
+        storage.add_value_at(24, String::from("hoge"));
+        assert_eq!(storage.value_count(), 25);
+
+        storage.add_value_at(42, String::from("fuga"));
+        assert_eq!(storage.value_count(), 43);
+
+        storage.add_value_at(0, String::from("piyo"));
+        assert_eq!(storage.value_count(), 43);
     }
 }
