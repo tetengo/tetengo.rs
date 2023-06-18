@@ -106,7 +106,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let _storage = MmapStorage::new(file, 0, file_size, deserializer, 10000);
+            let storage = MmapStorage::new(file, 0, file_size, deserializer, 10000);
+            assert!(storage.is_ok());
         }
     }
 }
