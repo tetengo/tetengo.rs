@@ -386,6 +386,12 @@ mod tests {
         assert_eq!(serialized, &EXPECTED);
     }
 
+    impl<T> SharedStorage<T> {
+        fn shared_with(&self, another: &SharedStorage<T>) -> bool {
+            Rc::ptr_eq(&self.entity, &another.entity)
+        }
+    }
+
     #[test]
     fn clone() {
         let mut storage = SharedStorage::<u32>::new();
@@ -394,20 +400,23 @@ mod tests {
         storage.set_base_at(1, 0xFE);
         storage.set_check_at(1, 24);
 
-        let mut clone = storage.clone();
+        let /* mut */ clone = storage.clone();
+
+        assert!(clone.shared_with(&storage));
 
         let base_check_array = base_check_array_of(&clone);
 
         const EXPECTED: [u32; 2] = [0x00002AFFu32, 0x0000FE18u32];
         assert_eq!(base_check_array, &EXPECTED);
 
-        clone.set_base_at(0, 2424);
-        clone.set_check_at(5, 42);
+        // Rust forbids to modify the object shared with others.
+        // clone.set_base_at(0, 2424);
+        // clone.set_check_at(5, 42);
 
-        assert_eq!(clone.base_at(0), 2424);
-        assert_eq!(clone.check_at(5), 42);
+        // assert_eq!(clone.base_at(0), 2424);
+        // assert_eq!(clone.check_at(5), 42);
 
-        assert_eq!(storage.base_at(0), 2424);
-        assert_eq!(storage.check_at(5), 42);
+        // assert_eq!(storage.base_at(0), 2424);
+        // assert_eq!(storage.check_at(5), 42);
     }
 }
