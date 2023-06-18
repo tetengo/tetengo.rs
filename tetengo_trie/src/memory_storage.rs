@@ -346,26 +346,12 @@ mod tests {
                     Lazy::new(|| StringDeserializer::new());
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-                panic!();
-            };
+            let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            if let Some(value) = storage.value_at(4) {
-                assert_eq!(value, "hoge");
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(2) {
-                assert_eq!(value, "fuga");
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(1) {
-                assert_eq!(value, "piyo");
-            } else {
-                panic!();
-            }
+            assert_eq!(storage.value_at(4).unwrap(), "hoge");
+            assert_eq!(storage.value_at(2).unwrap(), "fuga");
+            assert_eq!(storage.value_at(1).unwrap(), "piyo");
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
@@ -374,26 +360,12 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::<u32>::new(false));
                 U32_DESERIALIZER.deserialize(serialized)
             });
-            let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-                panic!();
-            };
+            let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            if let Some(value) = storage.value_at(4) {
-                assert_eq!(*value, 3u32);
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(2) {
-                assert_eq!(*value, 14u32);
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(1) {
-                assert_eq!(*value, 159u32);
-            } else {
-                panic!();
-            }
+            assert_eq!(*storage.value_at(4).unwrap(), 3u32);
+            assert_eq!(*storage.value_at(2).unwrap(), 14u32);
+            assert_eq!(*storage.value_at(1).unwrap(), 159u32);
         }
         {
             let mut reader = create_input_stream_broken();
@@ -484,38 +456,18 @@ mod tests {
         storage.add_value_at(24, String::from("hoge"));
 
         assert!(storage.value_at(0).is_none());
-        {
-            let Some(value) = storage.value_at(24) else {
-                panic!();
-            };
-            assert_eq!(value, "hoge");
-        }
+        assert_eq!(storage.value_at(24).unwrap(), "hoge");
         assert!(storage.value_at(42).is_none());
 
         storage.add_value_at(42, String::from("fuga"));
 
-        {
-            let Some(value) = storage.value_at(42) else {
-                panic!();
-            };
-            assert_eq!(value, "fuga");
-        }
+        assert_eq!(storage.value_at(42).unwrap(), "fuga");
         assert!(storage.value_at(4242).is_none());
 
         storage.add_value_at(0, String::from("piyo"));
 
-        {
-            let Some(value) = storage.value_at(0) else {
-                panic!();
-            };
-            assert_eq!(value, "piyo");
-        }
-        {
-            let Some(value) = storage.value_at(42) else {
-                panic!();
-            };
-            assert_eq!(value, "fuga");
-        }
+        assert_eq!(storage.value_at(0).unwrap(), "piyo");
+        assert_eq!(storage.value_at(42).unwrap(), "fuga");
     }
 
     #[test]

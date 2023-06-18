@@ -207,9 +207,7 @@ mod tests {
 
                 let expected = 42;
                 let serialized = IntegerSerializer::<i32>::new(false).serialize(&expected);
-                let Ok(deserialized) = deserializer.deserialize(&serialized) else {
-                    panic!();
-                };
+                let deserialized = deserializer.deserialize(&serialized).unwrap();
                 assert_eq!(deserialized, expected);
             }
             {
@@ -218,9 +216,7 @@ mod tests {
                 });
                 let expected = "hoge";
                 let serialized = vec![3, 1, 4];
-                let Ok(deserialized) = deserializer.deserialize(&serialized) else {
-                    panic!();
-                };
+                let deserialized = deserializer.deserialize(&serialized).unwrap();
                 assert_eq!(deserialized, expected);
             }
         }
