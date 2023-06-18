@@ -45,6 +45,10 @@ impl<T> MemoryStorage<T> {
      * # Arguments
      * * `reader`             - A reader.
      * * `value_deserializer` - A deserializer for value objects.
+     *
+     * # Errors
+     * * `std::io::Error`       - If fails to read.
+     * * `DeserializationError` - If fails to deserialize.
      */
     pub fn from_reader(
         reader: &mut dyn Read,
@@ -289,6 +293,10 @@ mod tests {
         0x68u8, 0x6Fu8, 0x67u8, 0x65u8,
     ];
 
+    fn create_input_stream() -> Box<dyn Read> {
+        Box::new(Cursor::new(SERIALIZED))
+    }
+
     #[rustfmt::skip]
     const SERIALIZED_FIXED_VALUE_SIZE: &[u8; 40] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
@@ -302,6 +310,10 @@ mod tests {
         0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8,
         0x00u8, 0x00u8, 0x00u8, 0x03u8,
     ];
+
+    fn create_input_stream_fixed_value_size() -> Box<dyn Read> {
+        Box::new(Cursor::new(SERIALIZED_FIXED_VALUE_SIZE))
+    }
 
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
@@ -321,10 +333,14 @@ mod tests {
         0x89u8,
     ];
 
+    fn create_input_stream_broken() -> Box<dyn Read> {
+        Box::new(Cursor::new(SERIALIZED_BROKEN))
+    }
+
     #[test]
     fn from_reader() {
         {
-            let mut reader = Cursor::new(SERIALIZED);
+            let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
                     Lazy::new(|| StringDeserializer::new());
@@ -352,7 +368,7 @@ mod tests {
             }
         }
         {
-            let mut reader = Cursor::new(SERIALIZED_FIXED_VALUE_SIZE);
+            let mut reader = create_input_stream_fixed_value_size();
             let deserializer = ValueDeserializer::new(|serialized| {
                 static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::<u32>::new(false));
@@ -380,7 +396,7 @@ mod tests {
             }
         }
         {
-            let mut reader = Cursor::new(SERIALIZED_BROKEN);
+            let mut reader = create_input_stream_broken();
             let deserializer = ValueDeserializer::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
                     Lazy::new(|| StringDeserializer::new());

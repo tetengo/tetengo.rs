@@ -1,7 +1,7 @@
 [build]
 rustflags = [
     "-D", "absolute_paths_not_starting_with_crate",
-    "-D", "box_pointers",
+#    "-D", "box_pointers",
     "-D", "elided_lifetimes_in_paths",
     "-D", "explicit_outlives_requirements",
 #    "-D", "ffi_unwind_calls",

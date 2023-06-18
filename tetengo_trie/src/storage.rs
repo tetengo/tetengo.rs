@@ -115,7 +115,7 @@ pub trait Storage<T> {
      * * `value_serializer` - A serializer for value objects.
      *
      * # Errors
-     * * `std::io::Error` if an I/O error occurs.
+     * * `std::io::Error` - If fails to write.
      */
     fn serialize(
         &self,
