@@ -6,10 +6,36 @@
 
 use std::fs::File;
 
+use memmap::Mmap;
 use tempfile as _;
 
 use crate::storage::Result;
 use crate::value_serializer::ValueDeserializer;
+
+/**
+ * A file mapping.
+ */
+#[derive(Debug)]
+pub struct FileMapping {
+    _file: File,
+    _mmap: Mmap,
+}
+
+impl FileMapping {
+    /**
+     * Creates a file mapping.
+     *
+     * # Arguments
+     * * `file` - A file.
+     */
+    pub fn new(file: File) -> Result<Self> {
+        let mmap = unsafe { Mmap::map(&file)? };
+        Ok(Self {
+            _file: file,
+            _mmap: mmap,
+        })
+    }
+}
 
 /**
  * An mmap storage.
@@ -65,13 +91,7 @@ impl<T> MmapStorage<T> {
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom, Write};
-
-    use once_cell::sync::Lazy;
-    use tempfile;
-
-    use crate::integer_serializer::IntegerDeserializer;
-    use crate::serializer::Deserializer;
-    use crate::value_serializer::ValueDeserializer;
+    use tempfile::tempfile;
 
     use super::*;
 
@@ -82,8 +102,8 @@ mod tests {
         0xFFu8, 0xFFu8, 0xFFu8, 0x00u8, 0x00u8, 0x00u8, 0x03u8,
     ];
 
-    fn make_temporary_path(initial_content: &[u8]) -> File {
-        let mut file = tempfile::tempfile().expect("Can't create a temporary file.");
+    fn make_temporary_file(initial_content: &[u8]) -> File {
+        let mut file = tempfile().expect("Can't create a temporary file.");
         file.write_all(initial_content)
             .expect("Can't write to the temporary file.");
         let _ = file
@@ -92,22 +112,43 @@ mod tests {
         file
     }
 
-    fn size_of(file: &File) -> usize {
-        file.metadata().expect("Can't get the file size.").len() as usize
+    mod file_mapping {
+        use super::*;
+
+        #[test]
+        fn new() {
+            let file = make_temporary_file(&SERIALIZED__FIXED_VALUE_SIZE);
+            let file_mapping = FileMapping::new(file);
+            assert!(file_mapping.is_ok());
+        }
     }
 
-    #[test]
-    fn new() {
-        {
-            let file = make_temporary_path(&SERIALIZED__FIXED_VALUE_SIZE);
-            let file_size = size_of(&file);
-            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
-                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
-                    Lazy::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = MmapStorage::new(file, 0, file_size, deserializer, 10000);
-            assert!(storage.is_ok());
+    mod mmap_storage {
+        use once_cell::sync::Lazy;
+
+        use crate::integer_serializer::IntegerDeserializer;
+        use crate::serializer::Deserializer;
+        use crate::value_serializer::ValueDeserializer;
+
+        use super::*;
+
+        fn size_of(file: &File) -> usize {
+            file.metadata().expect("Can't get the file size.").len() as usize
+        }
+
+        #[test]
+        fn new() {
+            {
+                let file = make_temporary_file(&SERIALIZED__FIXED_VALUE_SIZE);
+                let file_size = size_of(&file);
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(file, 0, file_size, deserializer, 10000);
+                assert!(storage.is_ok());
+            }
         }
     }
 }

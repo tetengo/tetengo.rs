@@ -169,7 +169,7 @@ mod tests {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new());
+                    Lazy::new(StringDeserializer::new);
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage = SharedStorage::from_reader(&mut reader, &deserializer).unwrap();
@@ -183,7 +183,7 @@ mod tests {
             let mut reader = create_input_stream_broken();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new());
+                    Lazy::new(StringDeserializer::new);
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let result = SharedStorage::from_reader(&mut reader, &deserializer);
@@ -314,8 +314,7 @@ mod tests {
         let mut writer = Cursor::new(Vec::<u8>::new());
         let serializer = ValueSerializer::<String>::new(
             |value| {
-                static STRING_SERIALIZER: Lazy<StringSerializer> =
-                    Lazy::new(|| StringSerializer::new());
+                static STRING_SERIALIZER: Lazy<StringSerializer> = Lazy::new(StringSerializer::new);
                 STRING_SERIALIZER.serialize(value)
             },
             0,

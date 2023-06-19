@@ -8,7 +8,7 @@ if errorlevel 1 exit /b 1
 cargo fmt --check
 if errorlevel 1 exit /b 1
 
-cargo clippy
+cargo clippy --tests
 if errorlevel 1 exit /b 1
 
 cargo doc
