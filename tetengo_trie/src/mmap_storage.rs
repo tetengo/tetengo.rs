@@ -35,6 +35,10 @@ impl FileMapping {
             _mmap: mmap,
         })
     }
+
+    fn _mmap(&self) -> &Mmap {
+        &self._mmap
+    }
 }
 
 /**
@@ -120,6 +124,14 @@ mod tests {
             let file = make_temporary_file(&SERIALIZED__FIXED_VALUE_SIZE);
             let file_mapping = FileMapping::new(file);
             assert!(file_mapping.is_ok());
+        }
+
+        #[test]
+        fn mmap() {
+            let file = make_temporary_file(&SERIALIZED__FIXED_VALUE_SIZE);
+            let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+            let mmap = file_mapping._mmap();
+            assert_eq!(&mmap[..], &SERIALIZED__FIXED_VALUE_SIZE);
         }
     }
 
