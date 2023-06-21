@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::error;
 use std::io::Write;
 
 use crate::value_serializer::ValueSerializer;
@@ -15,6 +16,11 @@ use crate::value_serializer::ValueSerializer;
  * * `T` - A type.
  */
 pub type Result<T> = anyhow::Result<T>;
+
+/**
+ * A storage error.
+ */
+pub trait StorageError: error::Error {}
 
 /**
  * A storage.
