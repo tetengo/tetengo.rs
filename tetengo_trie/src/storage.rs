@@ -35,7 +35,7 @@ pub trait Storage<T> {
      * # Returns
      * The base-check size.
      */
-    fn base_check_size(&self) -> usize;
+    fn base_check_size(&self) -> Result<usize>;
 
     /**
      * Returns the base value.
@@ -46,7 +46,7 @@ pub trait Storage<T> {
      * # Returns
      * The base balue.
      */
-    fn base_at(&self, base_check_index: usize) -> i32;
+    fn base_at(&self, base_check_index: usize) -> Result<i32>;
 
     /**
      * Sets a base value.
@@ -55,7 +55,7 @@ pub trait Storage<T> {
      * * `base_check_index` - A base-check index.
      * * `base`             - A base value.
      */
-    fn set_base_at(&mut self, base_check_index: usize, base: i32);
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()>;
 
     /**
      * Return the check value.
@@ -66,7 +66,7 @@ pub trait Storage<T> {
      * # Returns
      * The check value.
      */
-    fn check_at(&self, base_check_index: usize) -> u8;
+    fn check_at(&self, base_check_index: usize) -> Result<u8>;
 
     /**
      * Sets a check value.
@@ -75,7 +75,7 @@ pub trait Storage<T> {
      * * `base_check_index` - A base-check index.
      * * `check`            - A check value.
      */
-    fn set_check_at(&mut self, base_check_index: usize, check: u8);
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()>;
 
     /**
      * Returns the value count.
@@ -83,7 +83,7 @@ pub trait Storage<T> {
      * # Returns
      * The value count.
      */
-    fn value_count(&self) -> usize;
+    fn value_count(&self) -> Result<usize>;
 
     /**
      * Returns the value object.
@@ -94,7 +94,7 @@ pub trait Storage<T> {
      * # Returns
      * The value object. Or `None` if there is no corresponding value object.
      */
-    fn value_at(&self, value_index: usize) -> Option<&T>;
+    fn value_at(&self, value_index: usize) -> Result<Option<&T>>;
 
     /**
      * Adds a value object.
@@ -103,7 +103,7 @@ pub trait Storage<T> {
      * * `value_index` - A value index.
      * * `value`       - A value object.
      */
-    fn add_value_at(&mut self, value_index: usize, value: T);
+    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()>;
 
     /**
      * Returns the filling rate.
@@ -111,7 +111,7 @@ pub trait Storage<T> {
      * # Returns
      * The filling rate.
      */
-    fn filling_rate(&self) -> f64;
+    fn filling_rate(&self) -> Result<f64>;
 
     /**
      * Serializes this storage.
