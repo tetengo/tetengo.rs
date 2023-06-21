@@ -6,7 +6,7 @@
 
 use std::fs::File;
 
-use memmap::Mmap;
+use memmap2::Mmap;
 use tempfile as _;
 
 use crate::storage::Result;
