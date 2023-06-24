@@ -192,8 +192,9 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
         self.read_u32(0).map(|v| v as usize)
     }
 
-    fn base_at(&self, _base_check_index: usize) -> Result<i32> {
-        todo!()
+    fn base_at(&self, base_check_index: usize) -> Result<i32> {
+        let base_check = self.read_u32(size_of::<u32>() * (1 + base_check_index))?;
+        Ok((base_check as i32) >> 8)
     }
 
     fn set_base_at(&mut self, _base_check_index: usize, _base: i32) -> Result<()> {
@@ -450,6 +451,40 @@ mod tests {
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.base_check_size().unwrap(), 2);
+            }
+        }
+
+        #[test]
+        fn base_at() {
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                assert_eq!(storage.base_at(0).unwrap(), 42);
+                assert_eq!(storage.base_at(1).unwrap(), 0xFE);
+            }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                assert_eq!(storage.base_at(0).unwrap(), 42);
+                assert_eq!(storage.base_at(1).unwrap(), 0xFE);
             }
         }
     }
