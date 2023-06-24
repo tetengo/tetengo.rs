@@ -201,8 +201,9 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
         panic!("Unsupported operation.");
     }
 
-    fn check_at(&self, _base_check_index: usize) -> Result<u8> {
-        todo!()
+    fn check_at(&self, base_check_index: usize) -> Result<u8> {
+        let base_check = self.read_u32(size_of::<u32>() * (1 + base_check_index))?;
+        Ok((base_check & 0xFF) as u8)
     }
 
     fn set_check_at(&mut self, _base_check_index: usize, _check: u8) -> Result<()> {
@@ -503,6 +504,46 @@ mod tests {
                 .expect("Can't create a storage.");
 
             let _result = storage.set_base_at(42, 4242);
+        }
+
+        #[test]
+        fn check_at() {
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                assert_eq!(
+                    storage.check_at(0).unwrap(),
+                    0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
+                );
+                assert_eq!(storage.check_at(1).unwrap(), 24);
+            }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                assert_eq!(
+                    storage.check_at(0).unwrap(),
+                    0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
+                );
+                assert_eq!(storage.check_at(1).unwrap(), 24);
+            }
         }
     }
 }
