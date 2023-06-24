@@ -197,8 +197,8 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
         Ok((base_check as i32) >> 8)
     }
 
-    fn set_base_at(&mut self, _base_check_index: usize, _base: i32) -> Result<()> {
-        todo!()
+    fn set_base_at(&mut self, _: usize, _: i32) -> Result<()> {
+        panic!("Unsupported operation.");
     }
 
     fn check_at(&self, _base_check_index: usize) -> Result<u8> {
@@ -486,6 +486,23 @@ mod tests {
                 assert_eq!(storage.base_at(0).unwrap(), 42);
                 assert_eq!(storage.base_at(1).unwrap(), 0xFE);
             }
+        }
+
+        #[test]
+        #[should_panic]
+        fn set_base_at() {
+            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file_size = size_of(&file);
+            let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                    Lazy::new(|| IntegerDeserializer::new(false));
+                INTEGER_DESERIALIZER.deserialize(serialized)
+            });
+            let mut storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                .expect("Can't create a storage.");
+
+            let _result = storage.set_base_at(42, 4242);
         }
     }
 }
