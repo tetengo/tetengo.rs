@@ -5,6 +5,7 @@
  */
 
 use std::fs::File;
+use std::io::Write;
 use std::mem::size_of;
 
 use memmap2::Mmap;
@@ -13,8 +14,8 @@ use tempfile as _;
 
 use crate::integer_serializer::IntegerDeserializer;
 use crate::serializer::Deserializer;
-use crate::storage::{Result, StorageError};
-use crate::value_serializer::ValueDeserializer;
+use crate::storage::{Result, Storage, StorageError};
+use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
 /**
  * A file mapping.
@@ -187,6 +188,52 @@ impl<'a, T> MmapStorage<'a, T> {
         static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
             Lazy::new(|| IntegerDeserializer::new(false));
         U32_DESERIALIZER.deserialize(self.read_bytes(offset, size_of::<u32>())?)
+    }
+}
+
+impl<T> Storage<T> for MmapStorage<'_, T> {
+    fn base_check_size(&self) -> Result<usize> {
+        todo!()
+    }
+
+    fn base_at(&self, _base_check_index: usize) -> Result<i32> {
+        todo!()
+    }
+
+    fn set_base_at(&mut self, _base_check_index: usize, _base: i32) -> Result<()> {
+        todo!()
+    }
+
+    fn check_at(&self, _base_check_index: usize) -> Result<u8> {
+        todo!()
+    }
+
+    fn set_check_at(&mut self, _base_check_index: usize, _check: u8) -> Result<()> {
+        todo!()
+    }
+
+    fn value_count(&self) -> Result<usize> {
+        todo!()
+    }
+
+    fn value_at(&self, _value_index: usize) -> Result<Option<&T>> {
+        todo!()
+    }
+
+    fn add_value_at(&mut self, _value_index: usize, _value: T) -> Result<()> {
+        todo!()
+    }
+
+    fn filling_rate(&self) -> Result<f64> {
+        todo!()
+    }
+
+    fn serialize(
+        &self,
+        _writer: &mut dyn Write,
+        _value_serializer: &ValueSerializer<T>,
+    ) -> Result<()> {
+        todo!()
     }
 }
 
