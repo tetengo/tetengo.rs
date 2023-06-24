@@ -207,7 +207,7 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
     }
 
     fn set_check_at(&mut self, _base_check_index: usize, _check: u8) -> Result<()> {
-        todo!()
+        panic!("Unsupported operation.");
     }
 
     fn value_count(&self) -> Result<usize> {
@@ -544,6 +544,23 @@ mod tests {
                 );
                 assert_eq!(storage.check_at(1).unwrap(), 24);
             }
+        }
+
+        #[test]
+        #[should_panic]
+        fn set_check_at() {
+            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file_size = size_of(&file);
+            let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                    Lazy::new(|| IntegerDeserializer::new(false));
+                INTEGER_DESERIALIZER.deserialize(serialized)
+            });
+            let mut storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                .expect("Can't create a storage.");
+
+            let _result = storage.set_check_at(24, 124);
         }
     }
 }
