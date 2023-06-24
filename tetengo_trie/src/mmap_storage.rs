@@ -90,8 +90,44 @@ pub struct MmapStorage<'a, T> {
 }
 
 impl<'a, T> MmapStorage<'a, T> {
+    /// A default value cache capacity.
+    pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
+
     /**
-     * Creates an mmap storage.
+     * Creates an mmap storage with a value cache capacity.
+     *
+     * `DEFAULT_VALUE_CACHE_CAPACITY` is used as the value cache capacity.
+     *
+     * # Arguments
+     * * `file_mapping`         - A file mapping.
+     * * `content_offset`       - A content offset in the file.
+     * * `file_size`            - The file size.
+     * * `value_deserializer`   - A deserializer for value objects.
+     *
+     * # Returns
+     * An mmap storage.
+     *
+     * # Errors
+     * * When the argument(s) is/are invalid.
+     * * When it fails to read the file.
+     */
+    pub fn new(
+        file_mapping: &'a FileMapping,
+        content_offset: usize,
+        file_size: usize,
+        value_deserializer: ValueDeserializer<T>,
+    ) -> Result<Self> {
+        Self::new_with_value_cache_capacity(
+            file_mapping,
+            content_offset,
+            file_size,
+            value_deserializer,
+            Self::DEFAULT_VALUE_CACHE_CAPACITY,
+        )
+    }
+
+    /**
+     * Creates an mmap storage with a value cache capacity.
      *
      * # Arguments
      * * `file_mapping`         - A file mapping.
@@ -107,7 +143,7 @@ impl<'a, T> MmapStorage<'a, T> {
      * * When the argument(s) is/are invalid.
      * * When it fails to read the file.
      */
-    pub fn new(
+    pub fn new_with_value_cache_capacity(
         file_mapping: &'a FileMapping,
         content_offset: usize,
         file_size: usize,
@@ -268,7 +304,7 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer, 10000);
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer);
                 assert!(storage.is_ok());
             }
             {
@@ -280,7 +316,7 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer, 10000);
+                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer);
                 assert!(storage.is_ok());
             }
             {
@@ -292,7 +328,7 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer, 10000);
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer);
                 assert!(storage.is_err());
             }
             {
@@ -304,7 +340,7 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer, 10000);
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer);
                 assert!(storage.is_err());
             }
             {
@@ -317,9 +353,29 @@ mod tests {
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
                 let storage =
-                    MmapStorage::new(&file_mapping, file_size + 1, file_size, deserializer, 10000);
+                    MmapStorage::new(&file_mapping, file_size + 1, file_size, deserializer);
                 assert!(storage.is_err());
             }
+        }
+
+        #[test]
+        fn new_with_value_cache_capacity() {
+            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file_size = size_of(&file);
+            let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                    Lazy::new(|| IntegerDeserializer::new(false));
+                INTEGER_DESERIALIZER.deserialize(serialized)
+            });
+            let storage = MmapStorage::new_with_value_cache_capacity(
+                &file_mapping,
+                0,
+                file_size,
+                deserializer,
+                10000,
+            );
+            assert!(storage.is_ok());
         }
     }
 }
