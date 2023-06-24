@@ -210,6 +210,13 @@ mod tests {
         0x00u8, 0x00u8, 0x00u8, 0x03u8,
     ];
 
+    #[rustfmt::skip]
+    const SERIALIZED_BROKEN: [u8; 9] = [
+        0x00u8, 0x00u8, 0x00u8, 0x02u8,
+        0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
+        0x00u8,
+    ];
+
     fn make_temporary_file(initial_content: &[u8]) -> File {
         let mut file = tempfile().expect("Can't create a temporary file.");
         file.write_all(initial_content)
@@ -288,42 +295,31 @@ mod tests {
                 let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer, 10000);
                 assert!(storage.is_err());
             }
-            // {
-            //     const auto file_path = temporary_file_path(serialized_broken);
-            //     BOOST_SCOPE_EXIT(&file_path)
-            //     {
-            //         std::filesystem::remove(file_path);
-            //     }
-            //     BOOST_SCOPE_EXIT_END;
-
-            //     const boost::interprocess::file_mapping file_mapping{ file_path.c_str(), boost::interprocess::read_only };
-            //     const auto                        file_size = static_cast<std::size_t>(std::filesystem::file_size(file_path));
-            //     tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
-            //         static const tetengo::trie::default_deserializer<std::uint32_t>uint32_deserializer{ false };
-            //         return uint32_deserializer(serialized);
-            //     } };
-            //     BOOST_CHECK_THROW(
-            //         const tetengo::trie::mmap_storage storage(file_mapping, 0, file_size, std::move(deserializer)),
-            //         std::ios_base::failure);
-            // }
-            // {
-            //     const auto file_path = temporary_file_path(serialized_fixed_value_size);
-            //     BOOST_SCOPE_EXIT(&file_path)
-            //     {
-            //         std::filesystem::remove(file_path);
-            //     }
-            //     BOOST_SCOPE_EXIT_END;
-
-            //     const boost::interprocess::file_mapping file_mapping{ file_path.c_str(), boost::interprocess::read_only };
-            //     const auto                        file_size = static_cast<std::size_t>(std::filesystem::file_size(file_path));
-            //     tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
-            //         static const tetengo::trie::default_deserializer<std::uint32_t>uint32_deserializer{ false };
-            //         return uint32_deserializer(serialized);
-            //     } };
-            //     BOOST_CHECK_THROW(
-            //         const tetengo::trie::mmap_storage storage(file_mapping, file_size + 1, file_size, std::move(deserializer)),
-            //         std::invalid_argument);
-            // }
+            {
+                let file = make_temporary_file(&SERIALIZED_BROKEN);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer, 10000);
+                assert!(storage.is_err());
+            }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage =
+                    MmapStorage::new(&file_mapping, file_size + 1, file_size, deserializer, 10000);
+                assert!(storage.is_err());
+            }
         }
     }
 }
