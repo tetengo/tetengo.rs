@@ -59,7 +59,7 @@ pub trait Deserializer {
      * * The deserialized object.
      *
      * # Errors
-     * * `DeserializationError` - If fails to deserialize.
+     * * When it fails to deserialize the object.
      */
     fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object>;
 }

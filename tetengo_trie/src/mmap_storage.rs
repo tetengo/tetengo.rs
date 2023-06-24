@@ -31,6 +31,9 @@ impl FileMapping {
      *
      * # Arguments
      * * `file` - A file.
+     *
+     * # Errors
+     * When it fails to memory-map the file.
      */
     pub fn new(file: File) -> Result<Self> {
         let mmap = unsafe { Mmap::map(&file)? };
@@ -101,9 +104,8 @@ impl<'a, T> MmapStorage<'a, T> {
      * An mmap storage.
      *
      * # Errors
-     * * `std::io::Error`   - If fails to read the file.
-     * * `DeserializeError` - If fails to deserialize a value.
-     * * `StorageError`     - If `content_offset` is greater than `file_size`, or the value size is not fixed.
+     * * When the argument(s) is/are invalid.
+     * * When it fails to read the file.
      */
     pub fn new(
         file_mapping: &'a FileMapping,

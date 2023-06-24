@@ -42,8 +42,7 @@ impl<T> SharedStorage<T> {
      * * `value_deserializer` - A deserializer for value objects.
      *
      * # Errors
-     * * `std::io::Error`       - If fails to read.
-     * * `DeserializationError` - If fails to deserialize.
+     * * When it fails to read the memory.
      */
     pub fn from_reader(
         reader: &mut dyn Read,

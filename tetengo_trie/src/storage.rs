@@ -34,6 +34,9 @@ pub trait Storage<T> {
      *
      * # Returns
      * The base-check size.
+     *
+     * # Errors
+     * * When it fails to read the base-check size.
      */
     fn base_check_size(&self) -> Result<usize>;
 
@@ -44,7 +47,10 @@ pub trait Storage<T> {
      * * `base_check_index` - A base-check index.
      *
      * # Returns
-     * The base balue.
+     * The base value.
+     *
+     * # Errors
+     * * When it fails to read the base value.
      */
     fn base_at(&self, base_check_index: usize) -> Result<i32>;
 
@@ -54,6 +60,9 @@ pub trait Storage<T> {
      * # Arguments
      * * `base_check_index` - A base-check index.
      * * `base`             - A base value.
+     *
+     * # Errors
+     * * When it fails to write the base value.
      */
     fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()>;
 
@@ -65,6 +74,9 @@ pub trait Storage<T> {
      *
      * # Returns
      * The check value.
+     *
+     * # Errors
+     * * When it fails to read the check value.
      */
     fn check_at(&self, base_check_index: usize) -> Result<u8>;
 
@@ -74,6 +86,9 @@ pub trait Storage<T> {
      * # Arguments
      * * `base_check_index` - A base-check index.
      * * `check`            - A check value.
+     *
+     * # Errors
+     * * When it fails to write the check value.
      */
     fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()>;
 
@@ -82,6 +97,9 @@ pub trait Storage<T> {
      *
      * # Returns
      * The value count.
+     *
+     * # Errors
+     * * When it fails to read the value count.
      */
     fn value_count(&self) -> Result<usize>;
 
@@ -93,6 +111,9 @@ pub trait Storage<T> {
      *
      * # Returns
      * The value object. Or `None` if there is no corresponding value object.
+     *
+     * # Errors
+     * * When it fails to read the value object.
      */
     fn value_at(&self, value_index: usize) -> Result<Option<&T>>;
 
@@ -102,6 +123,9 @@ pub trait Storage<T> {
      * # Arguments
      * * `value_index` - A value index.
      * * `value`       - A value object.
+     *
+     * # Errors
+     * * When it fails to write the value object.
      */
     fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()>;
 
@@ -110,6 +134,9 @@ pub trait Storage<T> {
      *
      * # Returns
      * The filling rate.
+     *
+     * # Errors
+     * * When it fails to calculate the filling rate.
      */
     fn filling_rate(&self) -> Result<f64>;
 
@@ -121,7 +148,7 @@ pub trait Storage<T> {
      * * `value_serializer` - A serializer for value objects.
      *
      * # Errors
-     * * `std::io::Error` - If fails to write.
+     * * When it fails to serialize the content.
      */
     fn serialize(
         &self,
