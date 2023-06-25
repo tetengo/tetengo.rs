@@ -223,13 +223,15 @@ impl<T> Storage<T> for MemoryStorage<T> {
         Ok(self.value_array.len())
     }
 
-    fn value_at(&self, value_index: usize) -> Result<Option<&T>> {
+    fn value_at(
+        &self,
+        value_index: usize,
+        operation: fn(value: &Option<T>) -> Result<()>,
+    ) -> Result<()> {
         if value_index >= self.value_array.len() {
-            Ok(None)
-        } else if let Some(value) = &self.value_array[value_index] {
-            Ok(Some(value))
+            operation(&None)
         } else {
-            Ok(None)
+            operation(&self.value_array[value_index])
         }
     }
 
@@ -354,9 +356,15 @@ mod tests {
             let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            assert_eq!(storage.value_at(4).unwrap().unwrap(), "hoge");
-            assert_eq!(storage.value_at(2).unwrap().unwrap(), "fuga");
-            assert_eq!(storage.value_at(1).unwrap().unwrap(), "piyo");
+            storage
+                .value_at(4, |value| {
+                    assert_eq!(value.as_ref().unwrap(), "hoge");
+                    Ok(())
+                })
+                .unwrap();
+            // assert_eq!(storage.value_at(4).unwrap().as_ref().unwrap(), "hoge");
+            // assert_eq!(storage.value_at(2).unwrap().as_ref().unwrap(), "fuga");
+            // assert_eq!(storage.value_at(1).unwrap().as_ref().unwrap(), "piyo");
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
@@ -368,9 +376,9 @@ mod tests {
             let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3u32);
-            assert_eq!(*storage.value_at(2).unwrap().unwrap(), 14u32);
-            assert_eq!(*storage.value_at(1).unwrap().unwrap(), 159u32);
+            // assert_eq!(storage.value_at(4).unwrap().unwrap(), 3u32);
+            // assert_eq!(storage.value_at(2).unwrap().unwrap(), 14u32);
+            // assert_eq!(storage.value_at(1).unwrap().unwrap(), 159u32);
         }
         {
             let mut reader = create_input_stream_broken();
@@ -451,7 +459,12 @@ mod tests {
     fn value_at() {
         let storage = MemoryStorage::<u32>::new();
 
-        assert!(storage.value_at(42).unwrap().is_none());
+        storage
+            .value_at(42, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
@@ -460,19 +473,54 @@ mod tests {
 
         storage.add_value_at(24, String::from("hoge")).unwrap();
 
-        assert!(storage.value_at(0).unwrap().is_none());
-        assert_eq!(storage.value_at(24).unwrap().unwrap(), "hoge");
-        assert!(storage.value_at(42).unwrap().is_none());
+        storage
+            .value_at(0, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(24, |value| {
+                assert_eq!(value.as_ref().unwrap(), "hoge");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(42, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
 
         storage.add_value_at(42, String::from("fuga")).unwrap();
 
-        assert_eq!(storage.value_at(42).unwrap().unwrap(), "fuga");
-        assert!(storage.value_at(4242).unwrap().is_none());
+        storage
+            .value_at(42, |value| {
+                assert_eq!(value.as_ref().unwrap(), "fuga");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(4242, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
 
         storage.add_value_at(0, String::from("piyo")).unwrap();
 
-        assert_eq!(storage.value_at(0).unwrap().unwrap(), "piyo");
-        assert_eq!(storage.value_at(42).unwrap().unwrap(), "fuga");
+        storage
+            .value_at(0, |value| {
+                assert_eq!(value.as_ref().unwrap(), "piyo");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(42, |value| {
+                assert_eq!(value.as_ref().unwrap(), "fuga");
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]

@@ -4,10 +4,12 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::cell::RefCell;
 use std::fs::File;
 use std::io::Write;
 use std::mem::size_of;
 
+use hashlink::LinkedHashMap;
 use memmap2::Mmap;
 use once_cell::sync::Lazy;
 use tempfile as _;
@@ -49,6 +51,40 @@ impl FileMapping {
     }
 }
 
+#[derive(Debug)]
+struct ValueCache<T> {
+    _cache_capacity: usize,
+    map: LinkedHashMap<usize, Option<T>>,
+}
+
+impl<T> ValueCache<T> {
+    fn _new(cache_capacity: usize) -> Self {
+        Self {
+            _cache_capacity: cache_capacity,
+            map: LinkedHashMap::new(),
+        }
+    }
+
+    fn _has(&self, index: usize) -> bool {
+        self.map.contains_key(&index)
+    }
+
+    fn _at(&mut self, index: usize) -> Option<&Option<T>> {
+        let _ = self.map.to_back(&index);
+        self.map.get(&index)
+    }
+
+    fn _insert(&mut self, index: usize, value: Option<T>) {
+        debug_assert!(self._has(index));
+
+        while self.map.len() >= self._cache_capacity {
+            let _popped = self.map.pop_front();
+        }
+
+        let _inserted = self.map.insert(index, value);
+    }
+}
+
 /**
  * An mmap storage error.
  */
@@ -87,7 +123,7 @@ pub struct MmapStorage<'a, T> {
     content_offset: usize,
     file_size: usize,
     _value_deserializer: ValueDeserializer<T>,
-    _value_cache_capacity: usize,
+    value_cache: RefCell<ValueCache<T>>,
 }
 
 impl<'a, T> MmapStorage<'a, T> {
@@ -156,7 +192,7 @@ impl<'a, T> MmapStorage<'a, T> {
             content_offset,
             file_size,
             _value_deserializer: value_deserializer,
-            _value_cache_capacity: value_cache_capacity,
+            value_cache: RefCell::new(ValueCache::_new(value_cache_capacity)),
         };
 
         if self_.content_offset > self_.file_size {
@@ -216,8 +252,34 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
             .map(|v| v as usize)
     }
 
-    fn value_at(&self, _value_index: usize) -> Result<Option<&T>> {
-        todo!()
+    fn value_at(
+        &self,
+        _value_index: usize,
+        _operation: fn(value: &Option<T>) -> Result<()>,
+    ) -> Result<()> {
+        _operation(
+            self.value_cache
+                .borrow_mut()
+                ._at(_value_index)
+                .unwrap_or_else(|| unreachable!()),
+        )
+        // if (!m_value_cache.has(value_index))
+        // {
+        //     const auto base_check_count = base_check_size_impl();
+        //     const auto fixed_value_size = read_uint32(sizeof(std::uint32_t) * (1 + base_check_count + 1));
+        //     const auto offset = sizeof(std::uint32_t) * (1 + base_check_count + 2) + fixed_value_size * value_index;
+        //     const auto serialized = read_bytes(offset, fixed_value_size);
+        //     if (serialized == std::vector<char>(fixed_value_size, uninitialized_byte()))
+        //     {
+        //         m_value_cache.insert(value_index, std::nullopt);
+        //     }
+        //     else
+        //     {
+        //         auto value = m_value_deserializer(serialized);
+        //         m_value_cache.insert(value_index, std::move(value));
+        //     }
+        // }
+        // return m_value_cache.at(value_index);
     }
 
     fn add_value_at(&mut self, _value_index: usize, _value: T) -> Result<()> {
@@ -595,6 +657,92 @@ mod tests {
 
                 assert_eq!(storage.value_count().unwrap(), 5);
             }
+        }
+
+        #[test]
+        fn value_at() {
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let _storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                // assert!(storage.value_at(0).unwrap().is_none());
+                // assert_eq!(*storage.value_at(1).unwrap().unwrap(), 159);
+                // assert_eq!(*storage.value_at(2).unwrap().unwrap(), 14);
+                // assert!(storage.value_at(3).unwrap().is_none());
+                // assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3);
+            }
+            // {
+            //     const auto file_path = temporary_file_path(serialized_fixed_value_size);
+            //     BOOST_SCOPE_EXIT(&file_path)
+            //     {
+            //         std::filesystem::remove(file_path);
+            //     }
+            //     BOOST_SCOPE_EXIT_END;
+
+            //     const boost::interprocess::file_mapping file_mapping{ file_path.c_str(), boost::interprocess::read_only };
+            //     const auto                        file_size = static_cast<std::size_t>(std::filesystem::file_size(file_path));
+            //     tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
+            //         static const tetengo::trie::default_deserializer<std::uint32_t>uint32_deserializer{ false };
+            //         return uint32_deserializer(serialized);
+            //     } };
+            //     const tetengo::trie::mmap_storage storage{ file_mapping, 0, file_size, std::move(deserializer) };
+
+            //     BOOST_TEST(!storage.value_at(0));
+            //     BOOST_TEST_REQUIRE(storage.value_at(1));
+            //     BOOST_TEST(*std::any_cast<std::uint32_t>(storage.value_at(1)) == 159U);
+            //     BOOST_TEST_REQUIRE(storage.value_at(2));
+            //     BOOST_TEST(*std::any_cast<std::uint32_t>(storage.value_at(2)) == 14U);
+            //     BOOST_TEST(!storage.value_at(3));
+            //     BOOST_TEST_REQUIRE(storage.value_at(4));
+            //     BOOST_TEST(*std::any_cast<std::uint32_t>(storage.value_at(4)) == 3U);
+            // }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file_size = size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                assert_eq!(storage.value_count().unwrap(), 5);
+            }
+            // {
+            //     const auto file_path = temporary_file_path(serialized_fixed_value_size_with_header);
+            //     BOOST_SCOPE_EXIT(&file_path)
+            //     {
+            //         std::filesystem::remove(file_path);
+            //     }
+            //     BOOST_SCOPE_EXIT_END;
+
+            //     const boost::interprocess::file_mapping file_mapping{ file_path.c_str(), boost::interprocess::read_only };
+            //     const auto                        file_size = static_cast<std::size_t>(std::filesystem::file_size(file_path));
+            //     tetengo::trie::value_deserializer deserializer{ [](const std::vector<char>& serialized) {
+            //         static const tetengo::trie::default_deserializer<std::uint32_t>uint32_deserializer{ false };
+            //         return uint32_deserializer(serialized);
+            //     } };
+            //     const tetengo::trie::mmap_storage storage{ file_mapping, 5, file_size, std::move(deserializer) };
+
+            //     BOOST_TEST(!storage.value_at(0));
+            //     BOOST_TEST_REQUIRE(storage.value_at(1));
+            //     BOOST_TEST(*std::any_cast<std::uint32_t>(storage.value_at(1)) == 159U);
+            //     BOOST_TEST_REQUIRE(storage.value_at(2));
+            //     BOOST_TEST(*std::any_cast<std::uint32_t>(storage.value_at(2)) == 14U);
+            //     BOOST_TEST(!storage.value_at(3));
+            //     BOOST_TEST_REQUIRE(storage.value_at(4));
+            //     BOOST_TEST(*std::any_cast<std::uint32_t>(storage.value_at(4)) == 3U);
+            // }
         }
     }
 }

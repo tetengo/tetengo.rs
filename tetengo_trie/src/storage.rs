@@ -115,7 +115,11 @@ pub trait Storage<T> {
      * # Errors
      * * When it fails to read the value object.
      */
-    fn value_at(&self, value_index: usize) -> Result<Option<&T>>;
+    fn value_at(
+        &self,
+        value_index: usize,
+        operation: fn(value: &Option<T>) -> Result<()>,
+    ) -> Result<()>;
 
     /**
      * Adds a value object.

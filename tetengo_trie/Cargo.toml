@@ -13,6 +13,7 @@ categories = ["algorithms", "text-processing"]
 
 [dependencies]
 anyhow = "1.0.71"
+hashlink = "0.8.3"
 memmap2 = "0.7.0"
 once_cell = "1.18.0"
 tempfile = "3.6.0"
