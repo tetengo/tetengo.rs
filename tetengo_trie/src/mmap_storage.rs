@@ -285,7 +285,15 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
     }
 
     fn filling_rate(&self) -> Result<f64> {
-        todo!()
+        let base_check_count = self.base_check_size()?;
+        let mut empty_count = 0usize;
+        for i in 0..base_check_count {
+            let base_check = self.read_u32(size_of::<u32>() * (1 + i))?;
+            if base_check == 0x000000FF {
+                empty_count += 1;
+            }
+        }
+        Ok(1.0 - (empty_count as f64) / (base_check_count as f64))
     }
 
     fn serialize(
@@ -352,6 +360,15 @@ mod tests {
         0xFFu8, 0xFFu8, 0xFFu8, 0xFFu8,
         0x00u8, 0x00u8, 0x00u8, 0x03u8,
     ];
+
+    #[rustfmt::skip]
+    const SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE: [u8; 20] = [
+            0x00u8, 0x00u8, 0x00u8, 0x02u8,
+            0x00u8, 0x00u8, 0x00u8, 0xFFu8,
+            0x00u8, 0x00u8, 0xFEu8, 0x18u8,
+            0x00u8, 0x00u8, 0x00u8, 0x00u8,
+            0x00u8, 0x00u8, 0x00u8, 0x04u8,
+        ];
 
     #[rustfmt::skip]
     const SERIALIZED_BROKEN: [u8; 9] = [
@@ -762,6 +779,23 @@ mod tests {
                 .expect("Can't create a storage.");
 
             let _result = storage.add_value_at(24, 124);
+        }
+
+        #[test]
+        fn filling_rate() {
+            let file =
+                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+            let file_size = size_of(&file);
+            let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                    Lazy::new(|| IntegerDeserializer::new(false));
+                INTEGER_DESERIALIZER.deserialize(serialized)
+            });
+            let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                .expect("Can't create a storage.");
+
+            assert!((storage.filling_rate().unwrap() - 1.0 / 2.0).abs() < 0.1);
         }
     }
 }
