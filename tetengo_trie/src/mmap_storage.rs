@@ -48,7 +48,7 @@ impl FileMapping {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct ValueCache<T> {
     cache_capacity: usize,
     map: LinkedHashMap<usize, Option<T>>,
@@ -114,7 +114,7 @@ impl StorageError for MmapStorageError {}
  * # Type Parameters
  * * `T` - A value type.
  */
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MmapStorage<'a, T> {
     file_mapping: &'a FileMapping,
     content_offset: usize,
@@ -378,6 +378,18 @@ mod tests {
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8,
     ];
+
+    fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
+        let size = storage.base_check_size().unwrap();
+        let mut array = Vec::<u32>::with_capacity(size);
+        for i in 0..size {
+            array.push(
+                ((storage.base_at(i).unwrap() as u32) << 8u32)
+                    | storage.check_at(i).unwrap() as u32,
+            );
+        }
+        array
+    }
 
     fn make_temporary_file(initial_content: &[u8]) -> File {
         let mut file = tempfile().expect("Can't create a temporary file.");
@@ -827,6 +839,42 @@ mod tests {
             );
 
             let _result = storage.serialize(&mut writer, &serializer);
+        }
+
+        #[test]
+        fn clone() {
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = file_size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                let clone = storage.clone();
+                assert_eq!(base_check_array_of(&clone), base_check_array_of(&storage));
+                assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
+            }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file_size = file_size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                let clone = storage.clone();
+                assert_eq!(base_check_array_of(&clone), base_check_array_of(&storage));
+                assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
+            }
         }
     }
 }
