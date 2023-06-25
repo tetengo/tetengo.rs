@@ -280,8 +280,8 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
         )
     }
 
-    fn add_value_at(&mut self, _value_index: usize, _value: T) -> Result<()> {
-        todo!()
+    fn add_value_at(&mut self, _: usize, _: T) -> Result<()> {
+        unreachable!("Unsupported operation.");
     }
 
     fn filling_rate(&self) -> Result<f64> {
@@ -745,6 +745,23 @@ mod tests {
                     })
                     .unwrap();
             }
+        }
+
+        #[test]
+        #[should_panic]
+        fn add_value_at() {
+            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file_size = size_of(&file);
+            let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                    Lazy::new(|| IntegerDeserializer::new(false));
+                INTEGER_DESERIALIZER.deserialize(serialized)
+            });
+            let mut storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                .expect("Can't create a storage.");
+
+            let _result = storage.add_value_at(24, 124);
         }
     }
 }
