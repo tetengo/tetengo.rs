@@ -244,7 +244,7 @@ mod tests {
     use super::*;
 
     const fn nul_byte() -> u8 {
-        return 0xFEu8;
+        0xFEu8
     }
 
     #[test]
@@ -296,9 +296,7 @@ mod tests {
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
-            let Ok(object)  = deserializer.deserialize(&serialized) else {
-                panic!();
-            };
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -306,9 +304,7 @@ mod tests {
 
             let serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
-            let Ok(object) = deserializer.deserialize(&serialized) else {
-                panic!();
-            };
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -316,9 +312,7 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
-            let Ok(object) = deserializer.deserialize(&serialized) else {
-                panic!();
-            };
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -326,9 +320,7 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
-            let Ok(object) = deserializer.deserialize(&serialized) else {
-                panic!();
-            };
+            let object = deserializer.deserialize(&serialized).unwrap();
             assert_eq!(object, expected_object);
         }
         {
@@ -336,11 +328,10 @@ mod tests {
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    matches!(f, IntegerDeserialationError::InvalidSerializedLength)
-                } else {
-                    false
-                }
+                matches!(
+                    e.downcast_ref::<IntegerDeserialationError>(),
+                    Some(IntegerDeserialationError::InvalidSerializedLength)
+                )
             } else {
                 false
             });
@@ -350,11 +341,10 @@ mod tests {
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    matches!(f, IntegerDeserialationError::InvalidSerializedLength)
-                } else {
-                    false
-                }
+                matches!(
+                    e.downcast_ref::<IntegerDeserialationError>(),
+                    Some(IntegerDeserialationError::InvalidSerializedLength)
+                )
             } else {
                 false
             });
@@ -364,11 +354,10 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    matches!(f, IntegerDeserialationError::InvalidSerializedContent)
-                } else {
-                    false
-                }
+                matches!(
+                    e.downcast_ref::<IntegerDeserialationError>(),
+                    Some(IntegerDeserialationError::InvalidSerializedContent)
+                )
             } else {
                 false
             });
@@ -378,11 +367,10 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFDu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                if let Some(f) = e.downcast_ref::<IntegerDeserialationError>() {
-                    matches!(f, IntegerDeserialationError::InvalidSerializedContent)
-                } else {
-                    false
-                }
+                matches!(
+                    e.downcast_ref::<IntegerDeserialationError>(),
+                    Some(IntegerDeserialationError::InvalidSerializedContent)
+                )
             } else {
                 false
             });

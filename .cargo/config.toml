@@ -28,7 +28,7 @@ rustflags = [
     "-D", "trivial_casts",
     "-D", "trivial_numeric_casts",
     "-D", "unreachable_pub",
-    "-D", "unsafe_code",
+#    "-D", "unsafe_code",
     "-D", "unsafe_op_in_unsafe_fn",
     "-D", "unstable_features",
     "-D", "unused_crate_dependencies",

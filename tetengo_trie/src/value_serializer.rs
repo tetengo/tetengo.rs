@@ -101,7 +101,7 @@ impl<T> ValueDeserializer<T> {
      * A value.
      *
      * # Errors
-     * * `DeserializationError` - If fails to deserialize.
+     * * When it fails to deserialize the value.
      */
     pub fn deserialize(&self, serialized: &[u8]) -> Result<T> {
         (self.deserialize)(serialized)
@@ -130,12 +130,12 @@ mod tests {
         fn new() {
             {
                 let _ = ValueSerializer::new(
-                    |value: &i32| return IntegerSerializer::new(false).serialize(value),
+                    |value: &i32| IntegerSerializer::new(false).serialize(value),
                     size_of::<i32>(),
                 );
             }
             {
-                let _ = ValueSerializer::new(|_: &str| return vec![3, 1, 4], 0);
+                let _ = ValueSerializer::new(|_: &str| vec![3, 1, 4], 0);
             }
         }
 
@@ -143,7 +143,7 @@ mod tests {
         fn serialize() {
             {
                 let serializer = ValueSerializer::new(
-                    |value: &i32| return IntegerSerializer::new(false).serialize(value),
+                    |value: &i32| IntegerSerializer::new(false).serialize(value),
                     size_of::<i32>(),
                 );
 
@@ -152,7 +152,7 @@ mod tests {
                 assert_eq!(serialized, expected);
             }
             {
-                let serializer = ValueSerializer::new(|_: &str| return vec![3, 1, 4], 0);
+                let serializer = ValueSerializer::new(|_: &str| vec![3, 1, 4], 0);
 
                 let expected = vec![3, 1, 4];
                 let serialized = serializer.serialize("hoge");
@@ -164,14 +164,14 @@ mod tests {
         fn fixed_value_size() {
             {
                 let serializer = ValueSerializer::new(
-                    |value: &i32| return IntegerSerializer::new(false).serialize(value),
+                    |value: &i32| IntegerSerializer::new(false).serialize(value),
                     size_of::<i32>(),
                 );
 
                 assert_eq!(serializer.fixed_value_size(), size_of::<i32>());
             }
             {
-                let serializer = ValueSerializer::new(|_: &str| return vec![3, 1, 4], 0);
+                let serializer = ValueSerializer::new(|_: &str| vec![3, 1, 4], 0);
 
                 assert_eq!(serializer.fixed_value_size(), 0);
             }
@@ -188,13 +188,11 @@ mod tests {
         fn new() {
             {
                 let _ = ValueDeserializer::new(|serialized: &[u8]| {
-                    return IntegerDeserializer::<i32>::new(false).deserialize(serialized);
+                    IntegerDeserializer::<i32>::new(false).deserialize(serialized)
                 });
             }
             {
-                let _ = ValueDeserializer::new(|_: &[u8]| {
-                    return Ok("hoge".to_string());
-                });
+                let _ = ValueDeserializer::new(|_: &[u8]| Ok("hoge".to_string()));
             }
         }
 
@@ -202,25 +200,19 @@ mod tests {
         fn deserialize() {
             {
                 let deserializer = ValueDeserializer::new(|serialized: &[u8]| {
-                    return IntegerDeserializer::<i32>::new(false).deserialize(serialized);
+                    IntegerDeserializer::<i32>::new(false).deserialize(serialized)
                 });
 
                 let expected = 42;
                 let serialized = IntegerSerializer::<i32>::new(false).serialize(&expected);
-                let Ok(deserialized) = deserializer.deserialize(&serialized) else {
-                    panic!();
-                };
+                let deserialized = deserializer.deserialize(&serialized).unwrap();
                 assert_eq!(deserialized, expected);
             }
             {
-                let deserializer = ValueDeserializer::new(|_: &[u8]| {
-                    return Ok("hoge".to_string());
-                });
+                let deserializer = ValueDeserializer::new(|_: &[u8]| Ok("hoge".to_string()));
                 let expected = "hoge";
                 let serialized = vec![3, 1, 4];
-                let Ok(deserialized) = deserializer.deserialize(&serialized) else {
-                    panic!();
-                };
+                let deserialized = deserializer.deserialize(&serialized).unwrap();
                 assert_eq!(deserialized, expected);
             }
         }

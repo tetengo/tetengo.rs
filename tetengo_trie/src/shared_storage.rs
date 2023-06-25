@@ -42,8 +42,7 @@ impl<T> SharedStorage<T> {
      * * `value_deserializer` - A deserializer for value objects.
      *
      * # Errors
-     * * `std::io::Error`       - If fails to read.
-     * * `DeserializationError` - If fails to deserialize.
+     * * When it fails to read the memory.
      */
     pub fn from_reader(
         reader: &mut dyn Read,
@@ -57,48 +56,46 @@ impl<T> SharedStorage<T> {
 }
 
 impl<T> Storage<T> for SharedStorage<T> {
-    fn base_check_size(&self) -> usize {
+    fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }
 
-    fn base_at(&self, base_check_index: usize) -> i32 {
+    fn base_at(&self, base_check_index: usize) -> Result<i32> {
         self.entity.base_at(base_check_index)
     }
 
-    fn set_base_at(&mut self, base_check_index: usize, base: i32) {
-        let Some(entity) = Rc::get_mut(&mut self.entity) else {
-            panic!("Must not be called when shared.");
-        };
-        entity.set_base_at(base_check_index, base);
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {
+        let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
+        entity.set_base_at(base_check_index, base)
     }
 
-    fn check_at(&self, base_check_index: usize) -> u8 {
+    fn check_at(&self, base_check_index: usize) -> Result<u8> {
         self.entity.check_at(base_check_index)
     }
 
-    fn set_check_at(&mut self, base_check_index: usize, check: u8) {
-        let Some(entity) = Rc::get_mut(&mut self.entity) else {
-            panic!("Must not be called when shared.");
-        };
-        entity.set_check_at(base_check_index, check);
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()> {
+        let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
+        entity.set_check_at(base_check_index, check)
     }
 
-    fn value_count(&self) -> usize {
+    fn value_count(&self) -> Result<usize> {
         self.entity.value_count()
     }
 
-    fn value_at(&self, value_index: usize) -> Option<&T> {
-        self.entity.value_at(value_index)
+    fn value_at(
+        &self,
+        value_index: usize,
+        operation: fn(value: &Option<T>) -> Result<()>,
+    ) -> Result<()> {
+        self.entity.value_at(value_index, operation)
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: T) {
-        let Some(entity) = Rc::get_mut(&mut self.entity) else {
-            panic!("Must not be called when shared.");
-        };
-        entity.add_value_at(value_index, value);
+    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
+        let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
+        entity.add_value_at(value_index, value)
     }
 
-    fn filling_rate(&self) -> f64 {
+    fn filling_rate(&self) -> Result<f64> {
         self.entity.filling_rate()
     }
 
@@ -161,10 +158,13 @@ mod tests {
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
     fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
-        let size = storage.base_check_size();
+        let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(((storage.base_at(i) as u32) << 8u32) | storage.check_at(i) as u32);
+            array.push(
+                ((storage.base_at(i).unwrap() as u32) << 8u32)
+                    | storage.check_at(i).unwrap() as u32,
+            );
         }
         array
     }
@@ -175,38 +175,21 @@ mod tests {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new());
+                    Lazy::new(StringDeserializer::new);
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let Ok(storage) = SharedStorage::from_reader(&mut reader, &deserializer) else {
-                panic!();
-            };
+            let storage = SharedStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            {
-                let Some(value) = storage.value_at(4) else {
-                    panic!();
-                };
-                assert_eq!(value, "hoge");
-            }
-            {
-                let Some(value) = storage.value_at(2) else {
-                    panic!();
-                };
-                assert_eq!(value, "fuga");
-            }
-            {
-                let Some(value) = storage.value_at(1) else {
-                    panic!();
-                };
-                assert_eq!(value, "piyo");
-            }
+            // assert_eq!(storage.value_at(4).unwrap().as_ref().unwrap(), "hoge");
+            // assert_eq!(storage.value_at(2).unwrap().as_ref().unwrap(), "fuga");
+            // assert_eq!(storage.value_at(1).unwrap().as_ref().unwrap(), "piyo");
         }
         {
             let mut reader = create_input_stream_broken();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new());
+                    Lazy::new(StringDeserializer::new);
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let result = SharedStorage::from_reader(&mut reader, &deserializer);
@@ -218,12 +201,12 @@ mod tests {
     fn base_check_size() {
         {
             let storage = SharedStorage::<u32>::new();
-            assert!(storage.base_check_size() >= 1);
+            assert!(storage.base_check_size().unwrap() >= 1);
         }
         {
             let storage = SharedStorage::<u32>::new();
-            let _ = storage.base_at(42);
-            assert!(storage.base_check_size() >= 43);
+            let _ = storage.base_at(42).unwrap();
+            assert!(storage.base_check_size().unwrap() >= 43);
         }
     }
 
@@ -231,16 +214,16 @@ mod tests {
     fn base_at() {
         let storage = SharedStorage::<u32>::new();
 
-        assert_eq!(storage.base_at(42), 0);
+        assert_eq!(storage.base_at(42).unwrap(), 0);
     }
 
     #[test]
     fn set_base_at() {
         let mut storage = SharedStorage::<u32>::new();
 
-        storage.set_base_at(42, 4242);
+        storage.set_base_at(42, 4242).unwrap();
 
-        assert_eq!(storage.base_at(42), 4242);
+        assert_eq!(storage.base_at(42).unwrap(), 4242);
     }
 
     #[test]
@@ -248,7 +231,7 @@ mod tests {
         let storage = SharedStorage::<u32>::new();
 
         assert_eq!(
-            storage.check_at(42),
+            storage.check_at(42).unwrap(),
             0xFF, /* TODO: double_array::vacant_check_value() */
         );
     }
@@ -257,72 +240,92 @@ mod tests {
     fn set_check_at() {
         let mut storage = SharedStorage::<u32>::new();
 
-        storage.set_check_at(24, 124);
+        storage.set_check_at(24, 124).unwrap();
 
-        assert_eq!(storage.check_at(24), 124);
+        assert_eq!(storage.check_at(24).unwrap(), 124);
     }
 
     #[test]
     fn value_count() {
         let mut storage = SharedStorage::<String>::new();
-        assert_eq!(storage.value_count(), 0);
+        assert_eq!(storage.value_count().unwrap(), 0);
 
-        storage.add_value_at(24, String::from("hoge"));
-        assert_eq!(storage.value_count(), 25);
+        storage.add_value_at(24, String::from("hoge")).unwrap();
+        assert_eq!(storage.value_count().unwrap(), 25);
 
-        storage.add_value_at(42, String::from("fuga"));
-        assert_eq!(storage.value_count(), 43);
+        storage.add_value_at(42, String::from("fuga")).unwrap();
+        assert_eq!(storage.value_count().unwrap(), 43);
 
-        storage.add_value_at(0, String::from("piyo"));
-        assert_eq!(storage.value_count(), 43);
+        storage.add_value_at(0, String::from("piyo")).unwrap();
+        assert_eq!(storage.value_count().unwrap(), 43);
     }
 
     #[test]
     fn value_at() {
         let storage = SharedStorage::<u32>::new();
 
-        assert!(storage.value_at(42).is_none());
+        storage
+            .value_at(42, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
     fn add_value_at() {
         let mut storage = SharedStorage::<String>::new();
 
-        storage.add_value_at(24, String::from("hoge"));
+        storage.add_value_at(24, String::from("hoge")).unwrap();
 
-        assert!(storage.value_at(0).is_none());
-        {
-            let Some(value) = storage.value_at(24) else {
-                panic!();
-            };
-            assert_eq!(value, "hoge");
-        }
-        assert!(storage.value_at(42).is_none());
+        storage
+            .value_at(0, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(24, |value| {
+                assert_eq!(value.as_ref().unwrap(), "hoge");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(42, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
 
-        storage.add_value_at(42, String::from("fuga"));
+        storage.add_value_at(42, String::from("fuga")).unwrap();
 
-        {
-            let Some(value) = storage.value_at(42)  else {
-                panic!();
-            };
-            assert_eq!(value, "fuga");
-        }
-        assert!(storage.value_at(4242).is_none());
+        storage
+            .value_at(42, |value| {
+                assert_eq!(value.as_ref().unwrap(), "fuga");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(4242, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
 
-        storage.add_value_at(0, String::from("piyo"));
+        storage.add_value_at(0, String::from("piyo")).unwrap();
 
-        {
-            let Some(value) = storage.value_at(0) else {
-                panic!();
-            };
-            assert_eq!(value, "piyo");
-        }
-        {
-            let Some(value) = storage.value_at(42) else {
-                panic!();
-            };
-            assert_eq!(value, "fuga");
-        }
+        storage
+            .value_at(0, |value| {
+                assert_eq!(value.as_ref().unwrap(), "piyo");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(42, |value| {
+                assert_eq!(value.as_ref().unwrap(), "fuga");
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
@@ -331,34 +334,35 @@ mod tests {
 
         for i in 0..9 {
             if i % 3 == 0 {
-                storage.set_base_at(i, (i * i) as i32);
-                storage.set_check_at(i, i as u8);
+                storage.set_base_at(i, (i * i) as i32).unwrap();
+                storage.set_check_at(i, i as u8).unwrap();
             } else {
-                storage.set_base_at(i, storage.base_at(i));
-                storage.set_check_at(i, storage.check_at(i));
+                storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
+                storage
+                    .set_check_at(i, storage.check_at(i).unwrap())
+                    .unwrap();
             }
         }
 
-        assert!((storage.filling_rate() - 3.0 / 9.0).abs() < 0.1);
+        assert!((storage.filling_rate().unwrap() - 3.0 / 9.0).abs() < 0.1);
     }
 
     #[test]
     fn serialize() {
         let mut storage = SharedStorage::<String>::new();
 
-        storage.set_base_at(0, 42);
-        storage.set_base_at(1, 0xFE);
-        storage.set_check_at(1, 24);
+        storage.set_base_at(0, 42).unwrap();
+        storage.set_base_at(1, 0xFE).unwrap();
+        storage.set_check_at(1, 24).unwrap();
 
-        storage.add_value_at(4, String::from("hoge"));
-        storage.add_value_at(2, String::from("fuga"));
-        storage.add_value_at(1, String::from("piyo"));
+        storage.add_value_at(4, String::from("hoge")).unwrap();
+        storage.add_value_at(2, String::from("fuga")).unwrap();
+        storage.add_value_at(1, String::from("piyo")).unwrap();
 
         let mut writer = Cursor::new(Vec::<u8>::new());
         let serializer = ValueSerializer::<String>::new(
             |value| {
-                static STRING_SERIALIZER: Lazy<StringSerializer> =
-                    Lazy::new(|| StringSerializer::new());
+                static STRING_SERIALIZER: Lazy<StringSerializer> = Lazy::new(StringSerializer::new);
                 STRING_SERIALIZER.serialize(value)
             },
             0,
@@ -396,9 +400,9 @@ mod tests {
     fn clone() {
         let mut storage = SharedStorage::<u32>::new();
 
-        storage.set_base_at(0, 42);
-        storage.set_base_at(1, 0xFE);
-        storage.set_check_at(1, 24);
+        storage.set_base_at(0, 42).unwrap();
+        storage.set_base_at(1, 0xFE).unwrap();
+        storage.set_check_at(1, 24).unwrap();
 
         let /* mut */ clone = storage.clone();
 

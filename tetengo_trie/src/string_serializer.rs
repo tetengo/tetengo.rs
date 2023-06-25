@@ -79,9 +79,7 @@ mod tests {
 
             let serialized = "Sakuramachi".as_bytes();
             let expected_object = "Sakuramachi";
-            let Ok(object) = deserializer.deserialize(serialized) else {
-                panic!();
-            };
+            let object = deserializer.deserialize(serialized).unwrap();
             assert_eq!(object.as_str(), expected_object);
         }
         {

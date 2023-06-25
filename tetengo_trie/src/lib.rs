@@ -2,6 +2,7 @@
 
 pub mod integer_serializer;
 pub mod memory_storage;
+pub mod mmap_storage;
 pub mod serializer;
 pub mod shared_storage;
 pub mod storage;

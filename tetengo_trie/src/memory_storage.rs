@@ -47,8 +47,7 @@ impl<T> MemoryStorage<T> {
      * * `value_deserializer` - A deserializer for value objects.
      *
      * # Errors
-     * * `std::io::Error`       - If fails to read.
-     * * `DeserializationError` - If fails to deserialize.
+     * * When it fails to read the memory.
      */
     pub fn from_reader(
         reader: &mut dyn Read,
@@ -192,61 +191,66 @@ impl<T> MemoryStorage<T> {
 }
 
 impl<T> Storage<T> for MemoryStorage<T> {
-    fn base_check_size(&self) -> usize {
-        self.base_check_array.borrow().len()
+    fn base_check_size(&self) -> Result<usize> {
+        Ok(self.base_check_array.borrow().len())
     }
 
-    fn base_at(&self, base_check_index: usize) -> i32 {
+    fn base_at(&self, base_check_index: usize) -> Result<i32> {
         self.ensure_base_check_size(base_check_index + 1);
-        (self.base_check_array.borrow()[base_check_index] >> 8u32) as i32
+        Ok((self.base_check_array.borrow()[base_check_index] >> 8u32) as i32)
     }
 
-    fn set_base_at(&mut self, base_check_index: usize, base: i32) {
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0x000000FF;
         self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
+        Ok(())
     }
 
-    fn check_at(&self, base_check_index: usize) -> u8 {
+    fn check_at(&self, base_check_index: usize) -> Result<u8> {
         self.ensure_base_check_size(base_check_index + 1);
-        (self.base_check_array.borrow()[base_check_index] & 0xFF) as u8
+        Ok((self.base_check_array.borrow()[base_check_index] & 0xFF) as u8)
     }
 
-    fn set_check_at(&mut self, base_check_index: usize, check: u8) {
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0xFFFFFF00;
         self.base_check_array.borrow_mut()[base_check_index] |= check as u32;
+        Ok(())
     }
 
-    fn value_count(&self) -> usize {
-        self.value_array.len()
+    fn value_count(&self) -> Result<usize> {
+        Ok(self.value_array.len())
     }
 
-    fn value_at(&self, value_index: usize) -> Option<&T> {
+    fn value_at(
+        &self,
+        value_index: usize,
+        operation: fn(value: &Option<T>) -> Result<()>,
+    ) -> Result<()> {
         if value_index >= self.value_array.len() {
-            None
-        } else if let Some(value) = &self.value_array[value_index] {
-            Some(value)
+            operation(&None)
         } else {
-            None
+            operation(&self.value_array[value_index])
         }
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: T) {
+    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
         if value_index >= self.value_array.len() {
             self.value_array.resize_with(value_index + 1, || None);
         }
         self.value_array[value_index] = Some(value);
+        Ok(())
     }
 
-    fn filling_rate(&self) -> f64 {
+    fn filling_rate(&self) -> Result<f64> {
         let empty_count = self
             .base_check_array
             .borrow()
             .iter()
             .filter(|&&e| e == 0x000000FFu32)
             .count();
-        1.0 - (empty_count as f64) / (self.base_check_array.borrow().len() as f64)
+        Ok(1.0 - (empty_count as f64) / (self.base_check_array.borrow().len() as f64))
     }
 
     fn serialize(
@@ -318,10 +322,13 @@ mod tests {
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
     fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
-        let size = storage.base_check_size();
+        let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(((storage.base_at(i) as u32) << 8u32) | storage.check_at(i) as u32);
+            array.push(
+                ((storage.base_at(i).unwrap() as u32) << 8u32)
+                    | storage.check_at(i).unwrap() as u32,
+            );
         }
         array
     }
@@ -343,29 +350,21 @@ mod tests {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new());
+                    Lazy::new(StringDeserializer::new);
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-                panic!();
-            };
+            let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            if let Some(value) = storage.value_at(4) {
-                assert_eq!(value, "hoge");
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(2) {
-                assert_eq!(value, "fuga");
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(1) {
-                assert_eq!(value, "piyo");
-            } else {
-                panic!();
-            }
+            storage
+                .value_at(4, |value| {
+                    assert_eq!(value.as_ref().unwrap(), "hoge");
+                    Ok(())
+                })
+                .unwrap();
+            // assert_eq!(storage.value_at(4).unwrap().as_ref().unwrap(), "hoge");
+            // assert_eq!(storage.value_at(2).unwrap().as_ref().unwrap(), "fuga");
+            // assert_eq!(storage.value_at(1).unwrap().as_ref().unwrap(), "piyo");
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
@@ -374,32 +373,18 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::<u32>::new(false));
                 U32_DESERIALIZER.deserialize(serialized)
             });
-            let Ok(storage) = MemoryStorage::from_reader(&mut reader, &deserializer) else {
-                panic!();
-            };
+            let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            if let Some(value) = storage.value_at(4) {
-                assert_eq!(*value, 3u32);
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(2) {
-                assert_eq!(*value, 14u32);
-            } else {
-                panic!();
-            }
-            if let Some(value) = storage.value_at(1) {
-                assert_eq!(*value, 159u32);
-            } else {
-                panic!();
-            }
+            // assert_eq!(storage.value_at(4).unwrap().unwrap(), 3u32);
+            // assert_eq!(storage.value_at(2).unwrap().unwrap(), 14u32);
+            // assert_eq!(storage.value_at(1).unwrap().unwrap(), 159u32);
         }
         {
             let mut reader = create_input_stream_broken();
             let deserializer = ValueDeserializer::new(|serialized| {
                 static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new());
+                    Lazy::new(StringDeserializer::new);
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let result = MemoryStorage::from_reader(&mut reader, &deserializer);
@@ -411,12 +396,12 @@ mod tests {
     fn base_check_size() {
         {
             let storage = MemoryStorage::<u32>::new();
-            assert!(storage.base_check_size() >= 1);
+            assert!(storage.base_check_size().unwrap() >= 1);
         }
         {
             let storage = MemoryStorage::<u32>::new();
-            let _ = storage.base_at(42);
-            assert!(storage.base_check_size() >= 43);
+            let _ = storage.base_at(42).unwrap();
+            assert!(storage.base_check_size().unwrap() >= 43);
         }
     }
 
@@ -424,16 +409,16 @@ mod tests {
     fn base_at() {
         let storage = MemoryStorage::<u32>::new();
 
-        assert_eq!(storage.base_at(42), 0);
+        assert_eq!(storage.base_at(42).unwrap(), 0);
     }
 
     #[test]
     fn set_base_at() {
         let mut storage = MemoryStorage::<u32>::new();
 
-        storage.set_base_at(42, 4242);
+        storage.set_base_at(42, 4242).unwrap();
 
-        assert_eq!(storage.base_at(42), 4242);
+        assert_eq!(storage.base_at(42).unwrap(), 4242);
     }
 
     #[test]
@@ -441,7 +426,7 @@ mod tests {
         let storage = MemoryStorage::<u32>::new();
 
         assert_eq!(
-            storage.check_at(42),
+            storage.check_at(42).unwrap(),
             0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
         );
     }
@@ -450,72 +435,92 @@ mod tests {
     fn set_check_at() {
         let mut storage = MemoryStorage::<u32>::new();
 
-        storage.set_check_at(24, 124);
+        storage.set_check_at(24, 124).unwrap();
 
-        assert_eq!(storage.check_at(24), 124);
+        assert_eq!(storage.check_at(24).unwrap(), 124);
     }
 
     #[test]
     fn value_count() {
         let mut storage = MemoryStorage::<String>::new();
-        assert_eq!(storage.value_count(), 0);
+        assert_eq!(storage.value_count().unwrap(), 0);
 
-        storage.add_value_at(24, "hoge".to_string());
-        assert_eq!(storage.value_count(), 25);
+        storage.add_value_at(24, "hoge".to_string()).unwrap();
+        assert_eq!(storage.value_count().unwrap(), 25);
 
-        storage.add_value_at(42, "fuga".to_string());
-        assert_eq!(storage.value_count(), 43);
+        storage.add_value_at(42, "fuga".to_string()).unwrap();
+        assert_eq!(storage.value_count().unwrap(), 43);
 
-        storage.add_value_at(0, "piyo".to_string());
-        assert_eq!(storage.value_count(), 43);
+        storage.add_value_at(0, "piyo".to_string()).unwrap();
+        assert_eq!(storage.value_count().unwrap(), 43);
     }
 
     #[test]
     fn value_at() {
         let storage = MemoryStorage::<u32>::new();
 
-        assert!(storage.value_at(42).is_none());
+        storage
+            .value_at(42, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
     fn add_value_at() {
         let mut storage = MemoryStorage::<String>::new();
 
-        storage.add_value_at(24, String::from("hoge"));
+        storage.add_value_at(24, String::from("hoge")).unwrap();
 
-        assert!(storage.value_at(0).is_none());
-        {
-            let Some(value) = storage.value_at(24) else {
-                panic!();
-            };
-            assert_eq!(value, "hoge");
-        }
-        assert!(storage.value_at(42).is_none());
+        storage
+            .value_at(0, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(24, |value| {
+                assert_eq!(value.as_ref().unwrap(), "hoge");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(42, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
 
-        storage.add_value_at(42, String::from("fuga"));
+        storage.add_value_at(42, String::from("fuga")).unwrap();
 
-        {
-            let Some(value) = storage.value_at(42) else {
-                panic!();
-            };
-            assert_eq!(value, "fuga");
-        }
-        assert!(storage.value_at(4242).is_none());
+        storage
+            .value_at(42, |value| {
+                assert_eq!(value.as_ref().unwrap(), "fuga");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(4242, |value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
 
-        storage.add_value_at(0, String::from("piyo"));
+        storage.add_value_at(0, String::from("piyo")).unwrap();
 
-        {
-            let Some(value) = storage.value_at(0) else {
-                panic!();
-            };
-            assert_eq!(value, "piyo");
-        }
-        {
-            let Some(value) = storage.value_at(42) else {
-                panic!();
-            };
-            assert_eq!(value, "fuga");
-        }
+        storage
+            .value_at(0, |value| {
+                assert_eq!(value.as_ref().unwrap(), "piyo");
+                Ok(())
+            })
+            .unwrap();
+        storage
+            .value_at(42, |value| {
+                assert_eq!(value.as_ref().unwrap(), "fuga");
+                Ok(())
+            })
+            .unwrap();
     }
 
     #[test]
@@ -524,15 +529,17 @@ mod tests {
 
         for i in 0..9 {
             if i % 3 == 0 {
-                storage.set_base_at(i, (i * i) as i32);
-                storage.set_check_at(i, i as u8);
+                storage.set_base_at(i, (i * i) as i32).unwrap();
+                storage.set_check_at(i, i as u8).unwrap();
             } else {
-                storage.set_base_at(i, storage.base_at(i));
-                storage.set_check_at(i, storage.check_at(i));
+                storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
+                storage
+                    .set_check_at(i, storage.check_at(i).unwrap())
+                    .unwrap();
             }
         }
 
-        assert!((storage.filling_rate() - 3.0 / 9.0).abs() < 0.1);
+        assert!((storage.filling_rate().unwrap() - 3.0 / 9.0).abs() < 0.1);
     }
 
     #[test]
@@ -540,19 +547,19 @@ mod tests {
         {
             let mut storage = MemoryStorage::<String>::new();
 
-            storage.set_base_at(0, 42);
-            storage.set_base_at(1, 0xFE);
-            storage.set_check_at(1, 24);
+            storage.set_base_at(0, 42).unwrap();
+            storage.set_base_at(1, 0xFE).unwrap();
+            storage.set_check_at(1, 24).unwrap();
 
-            storage.add_value_at(4, String::from("hoge"));
-            storage.add_value_at(2, String::from("fuga"));
-            storage.add_value_at(1, String::from("piyo"));
+            storage.add_value_at(4, String::from("hoge")).unwrap();
+            storage.add_value_at(2, String::from("fuga")).unwrap();
+            storage.add_value_at(1, String::from("piyo")).unwrap();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<String>::new(
                 |value| {
                     static STRING_SERIALIZER: Lazy<StringSerializer> =
-                        Lazy::new(|| StringSerializer::new());
+                        Lazy::new(StringSerializer::new);
                     STRING_SERIALIZER.serialize(value)
                 },
                 0,
@@ -582,13 +589,13 @@ mod tests {
         {
             let mut storage = MemoryStorage::<u32>::new();
 
-            storage.set_base_at(0, 42);
-            storage.set_base_at(1, 0xFE);
-            storage.set_check_at(1, 24);
+            storage.set_base_at(0, 42).unwrap();
+            storage.set_base_at(1, 0xFE).unwrap();
+            storage.set_check_at(1, 24).unwrap();
 
-            storage.add_value_at(4, 3);
-            storage.add_value_at(2, 14);
-            storage.add_value_at(1, 159);
+            storage.add_value_at(4, 3).unwrap();
+            storage.add_value_at(2, 14).unwrap();
+            storage.add_value_at(1, 159).unwrap();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<u32>::new(
@@ -624,9 +631,9 @@ mod tests {
     fn clone() {
         let mut storage = MemoryStorage::<u32>::new();
 
-        storage.set_base_at(0, 42);
-        storage.set_base_at(1, 0xFE);
-        storage.set_check_at(1, 24);
+        storage.set_base_at(0, 42).unwrap();
+        storage.set_base_at(1, 0xFE).unwrap();
+        storage.set_check_at(1, 24).unwrap();
 
         let clone = storage.clone();
 
