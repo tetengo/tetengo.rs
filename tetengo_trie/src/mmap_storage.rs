@@ -251,7 +251,7 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
             .map(|v| v as usize)
     }
 
-    fn value_at(
+    fn for_value_at(
         &self,
         value_index: usize,
         operation: fn(value: &Option<T>) -> Result<()>,
@@ -691,7 +691,7 @@ mod tests {
         }
 
         #[test]
-        fn value_at() {
+        fn for_value_at() {
             {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
@@ -705,31 +705,31 @@ mod tests {
                     .expect("Can't create a storage.");
 
                 storage
-                    .value_at(0, |value| {
+                    .for_value_at(0, |value| {
                         assert!(value.is_none());
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(1, |value| {
+                    .for_value_at(1, |value| {
                         assert_eq!(value.unwrap(), 159);
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(2, |value| {
+                    .for_value_at(2, |value| {
                         assert_eq!(value.unwrap(), 14);
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(3, |value| {
+                    .for_value_at(3, |value| {
                         assert!(value.is_none());
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(4, |value| {
+                    .for_value_at(4, |value| {
                         assert_eq!(value.unwrap(), 3);
                         Ok(())
                     })
@@ -748,31 +748,31 @@ mod tests {
                     .expect("Can't create a storage.");
 
                 storage
-                    .value_at(0, |value| {
+                    .for_value_at(0, |value| {
                         assert!(value.is_none());
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(1, |value| {
+                    .for_value_at(1, |value| {
                         assert_eq!(value.unwrap(), 159);
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(2, |value| {
+                    .for_value_at(2, |value| {
                         assert_eq!(value.unwrap(), 14);
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(3, |value| {
+                    .for_value_at(3, |value| {
                         assert!(value.is_none());
                         Ok(())
                     })
                     .unwrap();
                 storage
-                    .value_at(4, |value| {
+                    .for_value_at(4, |value| {
                         assert_eq!(value.unwrap(), 3);
                         Ok(())
                     })

@@ -104,18 +104,17 @@ pub trait Storage<T> {
     fn value_count(&self) -> Result<usize>;
 
     /**
-     * Returns the value object.
+     * Applies an operation for the specified value object.
      *
      * # Arguments
      * * `value_index` - A value index.
-     *
-     * # Returns
-     * The value object. Or `None` if there is no corresponding value object.
+     * * `operation`   - An operation.
      *
      * # Errors
      * * When it fails to read the value object.
+     * * When the operation fails.
      */
-    fn value_at(
+    fn for_value_at(
         &self,
         value_index: usize,
         operation: fn(value: &Option<T>) -> Result<()>,

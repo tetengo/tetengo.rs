@@ -82,12 +82,12 @@ impl<T> Storage<T> for SharedStorage<T> {
         self.entity.value_count()
     }
 
-    fn value_at(
+    fn for_value_at(
         &self,
         value_index: usize,
         operation: fn(value: &Option<T>) -> Result<()>,
     ) -> Result<()> {
-        self.entity.value_at(value_index, operation)
+        self.entity.for_value_at(value_index, operation)
     }
 
     fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
@@ -261,11 +261,11 @@ mod tests {
     }
 
     #[test]
-    fn value_at() {
+    fn for_value_at() {
         let storage = SharedStorage::<u32>::new();
 
         storage
-            .value_at(42, |value| {
+            .for_value_at(42, |value| {
                 assert!(value.is_none());
                 Ok(())
             })
@@ -279,19 +279,19 @@ mod tests {
         storage.add_value_at(24, String::from("hoge")).unwrap();
 
         storage
-            .value_at(0, |value| {
+            .for_value_at(0, |value| {
                 assert!(value.is_none());
                 Ok(())
             })
             .unwrap();
         storage
-            .value_at(24, |value| {
+            .for_value_at(24, |value| {
                 assert_eq!(value.as_ref().unwrap(), "hoge");
                 Ok(())
             })
             .unwrap();
         storage
-            .value_at(42, |value| {
+            .for_value_at(42, |value| {
                 assert!(value.is_none());
                 Ok(())
             })
@@ -300,13 +300,13 @@ mod tests {
         storage.add_value_at(42, String::from("fuga")).unwrap();
 
         storage
-            .value_at(42, |value| {
+            .for_value_at(42, |value| {
                 assert_eq!(value.as_ref().unwrap(), "fuga");
                 Ok(())
             })
             .unwrap();
         storage
-            .value_at(4242, |value| {
+            .for_value_at(4242, |value| {
                 assert!(value.is_none());
                 Ok(())
             })
@@ -315,13 +315,13 @@ mod tests {
         storage.add_value_at(0, String::from("piyo")).unwrap();
 
         storage
-            .value_at(0, |value| {
+            .for_value_at(0, |value| {
                 assert_eq!(value.as_ref().unwrap(), "piyo");
                 Ok(())
             })
             .unwrap();
         storage
-            .value_at(42, |value| {
+            .for_value_at(42, |value| {
                 assert_eq!(value.as_ref().unwrap(), "fuga");
                 Ok(())
             })
