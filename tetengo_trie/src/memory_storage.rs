@@ -362,9 +362,18 @@ mod tests {
                     Ok(())
                 })
                 .unwrap();
-            // assert_eq!(storage.value_at(4).unwrap().as_ref().unwrap(), "hoge");
-            // assert_eq!(storage.value_at(2).unwrap().as_ref().unwrap(), "fuga");
-            // assert_eq!(storage.value_at(1).unwrap().as_ref().unwrap(), "piyo");
+            storage
+                .for_value_at(2, |value| {
+                    assert_eq!(value.as_ref().unwrap(), "fuga");
+                    Ok(())
+                })
+                .unwrap();
+            storage
+                .for_value_at(1, |value| {
+                    assert_eq!(value.as_ref().unwrap(), "piyo");
+                    Ok(())
+                })
+                .unwrap();
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
@@ -376,9 +385,24 @@ mod tests {
             let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            // assert_eq!(storage.value_at(4).unwrap().unwrap(), 3u32);
-            // assert_eq!(storage.value_at(2).unwrap().unwrap(), 14u32);
-            // assert_eq!(storage.value_at(1).unwrap().unwrap(), 159u32);
+            storage
+                .for_value_at(4, |value| {
+                    assert_eq!(value.unwrap(), 3);
+                    Ok(())
+                })
+                .unwrap();
+            storage
+                .for_value_at(2, |value| {
+                    assert_eq!(value.unwrap(), 14);
+                    Ok(())
+                })
+                .unwrap();
+            storage
+                .for_value_at(1, |value| {
+                    assert_eq!(value.unwrap(), 159);
+                    Ok(())
+                })
+                .unwrap();
         }
         {
             let mut reader = create_input_stream_broken();
