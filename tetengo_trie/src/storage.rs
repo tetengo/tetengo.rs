@@ -117,7 +117,7 @@ pub trait Storage<T> {
     fn for_value_at(
         &self,
         value_index: usize,
-        operation: fn(value: &Option<T>) -> Result<()>,
+        operation: &dyn Fn(&Option<T>) -> Result<()>,
     ) -> Result<()>;
 
     /**

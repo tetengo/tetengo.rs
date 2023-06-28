@@ -226,7 +226,7 @@ impl<T> Storage<T> for MemoryStorage<T> {
     fn for_value_at(
         &self,
         value_index: usize,
-        operation: fn(value: &Option<T>) -> Result<()>,
+        operation: &dyn Fn(&Option<T>) -> Result<()>,
     ) -> Result<()> {
         if value_index >= self.value_array.len() {
             operation(&None)
@@ -357,19 +357,19 @@ mod tests {
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             storage
-                .for_value_at(4, |value| {
+                .for_value_at(4, &|value| {
                     assert_eq!(value.as_ref().unwrap(), "hoge");
                     Ok(())
                 })
                 .unwrap();
             storage
-                .for_value_at(2, |value| {
+                .for_value_at(2, &|value| {
                     assert_eq!(value.as_ref().unwrap(), "fuga");
                     Ok(())
                 })
                 .unwrap();
             storage
-                .for_value_at(1, |value| {
+                .for_value_at(1, &|value| {
                     assert_eq!(value.as_ref().unwrap(), "piyo");
                     Ok(())
                 })
@@ -386,19 +386,19 @@ mod tests {
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             storage
-                .for_value_at(4, |value| {
+                .for_value_at(4, &|value| {
                     assert_eq!(value.unwrap(), 3);
                     Ok(())
                 })
                 .unwrap();
             storage
-                .for_value_at(2, |value| {
+                .for_value_at(2, &|value| {
                     assert_eq!(value.unwrap(), 14);
                     Ok(())
                 })
                 .unwrap();
             storage
-                .for_value_at(1, |value| {
+                .for_value_at(1, &|value| {
                     assert_eq!(value.unwrap(), 159);
                     Ok(())
                 })
@@ -484,7 +484,7 @@ mod tests {
         let storage = MemoryStorage::<u32>::new();
 
         storage
-            .for_value_at(42, |value| {
+            .for_value_at(42, &|value| {
                 assert!(value.is_none());
                 Ok(())
             })
@@ -498,19 +498,19 @@ mod tests {
         storage.add_value_at(24, String::from("hoge")).unwrap();
 
         storage
-            .for_value_at(0, |value| {
+            .for_value_at(0, &|value| {
                 assert!(value.is_none());
                 Ok(())
             })
             .unwrap();
         storage
-            .for_value_at(24, |value| {
+            .for_value_at(24, &|value| {
                 assert_eq!(value.as_ref().unwrap(), "hoge");
                 Ok(())
             })
             .unwrap();
         storage
-            .for_value_at(42, |value| {
+            .for_value_at(42, &|value| {
                 assert!(value.is_none());
                 Ok(())
             })
@@ -519,13 +519,13 @@ mod tests {
         storage.add_value_at(42, String::from("fuga")).unwrap();
 
         storage
-            .for_value_at(42, |value| {
+            .for_value_at(42, &|value| {
                 assert_eq!(value.as_ref().unwrap(), "fuga");
                 Ok(())
             })
             .unwrap();
         storage
-            .for_value_at(4242, |value| {
+            .for_value_at(4242, &|value| {
                 assert!(value.is_none());
                 Ok(())
             })
@@ -534,13 +534,13 @@ mod tests {
         storage.add_value_at(0, String::from("piyo")).unwrap();
 
         storage
-            .for_value_at(0, |value| {
+            .for_value_at(0, &|value| {
                 assert_eq!(value.as_ref().unwrap(), "piyo");
                 Ok(())
             })
             .unwrap();
         storage
-            .for_value_at(42, |value| {
+            .for_value_at(42, &|value| {
                 assert_eq!(value.as_ref().unwrap(), "fuga");
                 Ok(())
             })
