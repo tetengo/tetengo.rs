@@ -235,6 +235,18 @@ impl<T> Storage<T> for MemoryStorage<T> {
         }
     }
 
+    fn for_value_at_mut(
+        &self,
+        value_index: usize,
+        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+    ) -> Result<()> {
+        if value_index >= self.value_array.len() {
+            operation(&None)
+        } else {
+            operation(&self.value_array[value_index])
+        }
+    }
+
     fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
         if value_index >= self.value_array.len() {
             self.value_array.resize_with(value_index + 1, || None);
@@ -485,6 +497,18 @@ mod tests {
 
         storage
             .for_value_at(42, &|value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn for_value_at_mut() {
+        let storage = MemoryStorage::<u32>::new();
+
+        storage
+            .for_value_at_mut(42, &mut |value| {
                 assert!(value.is_none());
                 Ok(())
             })

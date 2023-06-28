@@ -121,6 +121,23 @@ pub trait Storage<T> {
     ) -> Result<()>;
 
     /**
+     * Applies a mutable operation for the specified value object.
+     *
+     * # Arguments
+     * * `value_index` - A value index.
+     * * `operation`   - An operation.
+     *
+     * # Errors
+     * * When it fails to read the value object.
+     * * When the operation fails.
+     */
+    fn for_value_at_mut(
+        &self,
+        value_index: usize,
+        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+    ) -> Result<()>;
+
+    /**
      * Adds a value object.
      *
      * # Arguments

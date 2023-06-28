@@ -205,6 +205,27 @@ impl<'a, T> MmapStorage<'a, T> {
         Ok(self_)
     }
 
+    fn ensure_value_cached(&self, value_index: usize) -> Result<()> {
+        if self.value_cache.borrow().has(value_index) {
+            return Ok(());
+        }
+
+        let base_check_count = self.base_check_size()?;
+        let fixed_value_size =
+            self.read_u32(size_of::<u32>() * (1 + base_check_count + 1))? as usize;
+        let offset = size_of::<u32>() * (1 + base_check_count + 2) + fixed_value_size * value_index;
+        let serialized = self.read_bytes(offset, fixed_value_size)?;
+        if serialized == vec![Self::UNINITIALIZED_BYTE; fixed_value_size] {
+            self.value_cache.borrow_mut().insert(value_index, None);
+        } else {
+            let value = self.value_deserializer.deserialize(serialized)?;
+            self.value_cache
+                .borrow_mut()
+                .insert(value_index, Some(value));
+        }
+        Ok(())
+    }
+
     const UNINITIALIZED_BYTE: u8 = 0xFF;
 
     fn read_bytes(&self, offset: usize, size: usize) -> Result<&[u8]> {
@@ -256,22 +277,21 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
         value_index: usize,
         operation: &dyn Fn(&Option<T>) -> Result<()>,
     ) -> Result<()> {
-        if !self.value_cache.borrow().has(value_index) {
-            let base_check_count = self.base_check_size()?;
-            let fixed_value_size =
-                self.read_u32(size_of::<u32>() * (1 + base_check_count + 1))? as usize;
-            let offset =
-                size_of::<u32>() * (1 + base_check_count + 2) + fixed_value_size * value_index;
-            let serialized = self.read_bytes(offset, fixed_value_size)?;
-            if serialized == vec![Self::UNINITIALIZED_BYTE; fixed_value_size] {
-                self.value_cache.borrow_mut().insert(value_index, None);
-            } else {
-                let value = self.value_deserializer.deserialize(serialized)?;
-                self.value_cache
-                    .borrow_mut()
-                    .insert(value_index, Some(value));
-            }
-        }
+        self.ensure_value_cached(value_index)?;
+        operation(
+            self.value_cache
+                .borrow_mut()
+                .at(value_index)
+                .unwrap_or_else(|| unreachable!("The value must be cached.")),
+        )
+    }
+
+    fn for_value_at_mut(
+        &self,
+        value_index: usize,
+        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+    ) -> Result<()> {
+        self.ensure_value_cached(value_index)?;
         operation(
             self.value_cache
                 .borrow_mut()
@@ -773,6 +793,96 @@ mod tests {
                     .unwrap();
                 storage
                     .for_value_at(4, &|value| {
+                        assert_eq!(value.unwrap(), 3);
+                        Ok(())
+                    })
+                    .unwrap();
+            }
+        }
+
+        #[test]
+        fn for_value_at_mut() {
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = file_size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                storage
+                    .for_value_at_mut(0, &mut |value| {
+                        assert!(value.is_none());
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(1, &mut |value| {
+                        assert_eq!(value.unwrap(), 159);
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(2, &mut |value| {
+                        assert_eq!(value.unwrap(), 14);
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(3, &mut |value| {
+                        assert!(value.is_none());
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(4, &mut |value| {
+                        assert_eq!(value.unwrap(), 3);
+                        Ok(())
+                    })
+                    .unwrap();
+            }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file_size = file_size_of(&file);
+                let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer)
+                    .expect("Can't create a storage.");
+
+                storage
+                    .for_value_at_mut(0, &mut |value| {
+                        assert!(value.is_none());
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(1, &mut |value| {
+                        assert_eq!(value.unwrap(), 159);
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(2, &mut |value| {
+                        assert_eq!(value.unwrap(), 14);
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(3, &mut |value| {
+                        assert!(value.is_none());
+                        Ok(())
+                    })
+                    .unwrap();
+                storage
+                    .for_value_at_mut(4, &mut |value| {
                         assert_eq!(value.unwrap(), 3);
                         Ok(())
                     })

@@ -90,6 +90,14 @@ impl<T> Storage<T> for SharedStorage<T> {
         self.entity.for_value_at(value_index, operation)
     }
 
+    fn for_value_at_mut(
+        &self,
+        value_index: usize,
+        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+    ) -> Result<()> {
+        self.entity.for_value_at_mut(value_index, operation)
+    }
+
     fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
         let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
         entity.add_value_at(value_index, value)
@@ -281,6 +289,18 @@ mod tests {
 
         storage
             .for_value_at(42, &|value| {
+                assert!(value.is_none());
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn for_value_at_mut() {
+        let storage = SharedStorage::<u32>::new();
+
+        storage
+            .for_value_at_mut(42, &mut |value| {
                 assert!(value.is_none());
                 Ok(())
             })
