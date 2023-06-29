@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 
+pub mod double_array;
 pub mod integer_serializer;
 pub mod memory_storage;
 pub mod mmap_storage;
