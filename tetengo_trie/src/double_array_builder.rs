@@ -25,13 +25,43 @@ pub(crate) fn _build<'a, T: 'a>(
 
     elements.sort_by_key(|(k, _)| *k);
 
-    let storage = Box::new(MemoryStorage::<T>::new());
+    let mut storage = Box::new(MemoryStorage::<T>::new());
 
     if !elements.is_empty() {
-        let _base_uniquer = HashSet::<i32>::new();
-        // build_iter()
+        let mut base_uniquer = HashSet::new();
+        _build_iter(
+            &elements[..],
+            0,
+            storage.as_mut(),
+            0,
+            &mut base_uniquer,
+            observer,
+            density_factor,
+        );
     }
 
     observer.done();
     Ok(storage)
 }
+
+fn _build_iter<T>(
+    _elements: &[(&str, i32)],
+    _key_offset: usize,
+    _storage: &mut dyn Storage<T>,
+    _base_check_index: usize,
+    _base_uniquer: &mut HashSet<i32>,
+    _observer: &BuldingObserverSet,
+    _density_factor: usize,
+) {
+    // let children_firsts = children_firsts(elements, key_offset);
+}
+
+// fn children_firsts(elements: &[(&str, i32)], key_offset: usize) -> Vec<usize> {
+//     let mut firsts = vec![0];
+//     {
+//         let mut child_first = 0;
+//         while child_first < elements.len() {
+//             let child_last = elements[children_first..].iter().find(|(k, _)| k.len() > key_offset);
+//         }
+//     }
+// }
