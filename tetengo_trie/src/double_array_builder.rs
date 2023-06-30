@@ -16,7 +16,7 @@ pub(crate) const _DEFAULT_DENSITY_FACTOR: usize = 1000;
 
 pub(crate) fn _build<'a, T: 'a>(
     mut elements: Vec<(&str, i32)>,
-    _observer: &BuldingObserverSet,
+    observer: &BuldingObserverSet,
     density_factor: usize,
 ) -> Result<Box<dyn Storage<T> + 'a>> {
     if density_factor == 0 {
@@ -32,6 +32,6 @@ pub(crate) fn _build<'a, T: 'a>(
         // build_iter()
     }
 
-    //observer._done();
+    observer.done();
     Ok(storage)
 }

@@ -34,8 +34,8 @@ pub type DoubleArrayElement<'a> = (&'a str, i32);
  * A building observer set.
  */
 pub struct BuldingObserverSet {
-    _adding: Box<dyn FnOnce(&DoubleArrayElement<'_>)>,
-    _done: Box<dyn FnOnce()>,
+    pub(crate) adding: Box<dyn Fn(&DoubleArrayElement<'_>)>,
+    pub(crate) done: Box<dyn Fn()>,
 }
 
 impl BuldingObserverSet {
@@ -46,11 +46,25 @@ impl BuldingObserverSet {
      * * `adding` - An adding observer.
      * * `done` - A done observer.
      */
-    pub fn new(adding: Box<dyn FnOnce(&DoubleArrayElement<'_>)>, done: Box<dyn FnOnce()>) -> Self {
-        Self {
-            _adding: adding,
-            _done: done,
-        }
+    pub fn new(adding: Box<dyn Fn(&DoubleArrayElement<'_>)>, done: Box<dyn Fn()>) -> Self {
+        Self { adding, done }
+    }
+
+    /**
+     * Calls `adding`.
+     *
+     * # Arguments
+     * * `element` - An element.
+     */
+    pub fn adding(&self, element: &DoubleArrayElement<'_>) {
+        (self.adding)(element);
+    }
+
+    /**
+     * Calls `done`.
+     */
+    pub fn done(&self) {
+        (self.done)();
     }
 }
 
