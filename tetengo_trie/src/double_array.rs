@@ -10,6 +10,26 @@ use std::fmt::{self, Debug, Formatter};
 
 use crate::storage::Storage;
 
+/**
+ * A result type.
+ *
+ * # Type Parameters
+ * * `T` - A type.
+ */
+pub type Result<T> = anyhow::Result<T>;
+
+/**
+ * A double array error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum DoubleArrayError {
+    /**
+     * density_factor must be greater than 0.
+     */
+    #[error("density_factor must be greater than 0.")]
+    InvalidDensityFactor,
+}
+
 /// The double array element type.
 pub type DoubleArrayElement<'a> = (&'a str, i32);
 /**
