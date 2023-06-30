@@ -12,9 +12,9 @@ use crate::double_array::{BuldingObserverSet, DoubleArrayError, Result};
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
-pub(super) const _DEFAULT_DENSITY_FACTOR: usize = 1000;
+pub(crate) const _DEFAULT_DENSITY_FACTOR: usize = 1000;
 
-pub(super) fn _build<'a, T: 'a>(
+pub(crate) fn _build<'a, T: 'a>(
     mut elements: Vec<(&str, i32)>,
     _observer: &BuldingObserverSet,
     density_factor: usize,

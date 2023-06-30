@@ -4,8 +4,6 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-mod double_array_builder;
-
 use std::fmt::{self, Debug, Formatter};
 
 use crate::storage::Storage;
