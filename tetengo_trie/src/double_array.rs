@@ -35,12 +35,12 @@ pub type DoubleArrayElement<'a> = (&'a str, i32);
 /**
  * A building observer set.
  */
-pub struct BuldingObserverSet {
-    pub(crate) adding: Box<dyn Fn(&DoubleArrayElement<'_>)>,
-    pub(crate) done: Box<dyn Fn()>,
+pub struct BuldingObserverSet<'a> {
+    pub(crate) adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
+    pub(crate) done: &'a mut dyn FnMut(),
 }
 
-impl BuldingObserverSet {
+impl<'a> BuldingObserverSet<'a> {
     /**
      * Creates a building observer set.
      *
@@ -48,7 +48,10 @@ impl BuldingObserverSet {
      * * `adding` - An adding observer.
      * * `done` - A done observer.
      */
-    pub fn new(adding: Box<dyn Fn(&DoubleArrayElement<'_>)>, done: Box<dyn Fn()>) -> Self {
+    pub fn new(
+        adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
+        done: &'a mut dyn FnMut(),
+    ) -> Self {
         Self { adding, done }
     }
 
@@ -58,36 +61,23 @@ impl BuldingObserverSet {
      * # Arguments
      * * `element` - An element.
      */
-    pub fn adding(&self, element: &DoubleArrayElement<'_>) {
+    pub fn adding(&mut self, element: &DoubleArrayElement<'_>) {
         (self.adding)(element);
     }
 
     /**
      * Calls `done`.
      */
-    pub fn done(&self) {
+    pub fn done(&mut self) {
         (self.done)();
     }
 }
 
-impl Debug for BuldingObserverSet {
+impl Debug for BuldingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
             .field("adding", &"Box<dyn FnOnce(&DoubleArrayElement<'_>)>")
             .finish()
-    }
-}
-
-/**
- * Creates a null building observer set.
- *
- * # Returns
- * A null building observer set.
- */
-pub fn null_building_observer_set() -> BuldingObserverSet {
-    BuldingObserverSet {
-        adding: Box::new(|_| {}),
-        done: Box::new(|| {}),
     }
 }
 
@@ -128,7 +118,7 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
         Ok(Self {
             storage: double_array_builder::build::<V>(
                 vec![],
-                &null_building_observer_set(),
+                &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
                 double_array_builder::DEFAULT_DENSITY_FACTOR,
             )?,
             _root_base_check_index: 0,
@@ -184,19 +174,36 @@ mod tests {
     }
 
     mod building_observer_set {
+        use super::*;
+
         #[test]
         fn new() {
-            let _observer_set =
-                super::super::BuldingObserverSet::new(Box::new(|_| {}), Box::new(|| {}));
+            let _observer_set = BuldingObserverSet::new(&mut |_| {}, &mut || {});
         }
-    }
 
-    #[test]
-    fn null_building_observer_set() {
-        let observer_set = super::null_building_observer_set();
+        #[test]
+        fn adding() {
+            let mut added = None;
+            let mut adding = |e: &DoubleArrayElement<'_>| added = Some((e.0.to_string(), e.1));
+            let mut done = || {};
+            let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
 
-        observer_set.adding(&("hoge", 42));
-        observer_set.done();
+            observer_set.adding(&("hoge", 42));
+
+            assert_eq!(added.unwrap(), (String::from("hoge"), 42));
+        }
+
+        #[test]
+        fn done() {
+            let mut adding = |_e: &DoubleArrayElement<'_>| {};
+            let mut done_called = false;
+            let mut done = || done_called = true;
+            let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
+
+            observer_set.done();
+
+            assert!(done_called);
+        }
     }
 
     mod double_array {

@@ -14,7 +14,7 @@ pub(super) const DEFAULT_DENSITY_FACTOR: usize = 1000;
 
 pub(super) fn build<'a, T: 'a>(
     mut elements: Vec<(&str, i32)>,
-    observer: &BuldingObserverSet,
+    observer: &mut BuldingObserverSet<'_>,
     density_factor: usize,
 ) -> Result<Box<dyn Storage<T> + 'a>> {
     if density_factor == 0 {
@@ -48,7 +48,7 @@ fn build_iter<T>(
     storage: &mut dyn Storage<T>,
     base_check_index: usize,
     base_uniquer: &mut HashSet<i32>,
-    observer: &BuldingObserverSet,
+    observer: &mut BuldingObserverSet<'_>,
     density_factor: usize,
 ) -> Result<()> {
     let children_firsts = children_firsts(elements, key_offset);
