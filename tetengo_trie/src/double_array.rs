@@ -113,10 +113,25 @@ impl<V> Debug for DoubleArray<'_, V> {
 mod tests {
     use super::*;
 
+    #[rustfmt::skip]
+    const _EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY: [u32; 1] = [
+    //                  BASE  CHECK  BYTECHECK
+    0x000000FF, // [ 0]    0,    -1,        -1
+    ];
+
+    fn _base_check_array_of<T>(storage: &dyn Storage<T>) -> Result<Vec<u32>> {
+        let size = storage.base_check_size()?;
+        let mut array = Vec::<u32>::with_capacity(size);
+        for i in 0..size {
+            array.push(((storage.base_at(i)? as u32) << 8) | storage.check_at(i)? as u32);
+        }
+        Ok(array)
+    }
+
     #[test]
     fn new() {
         let _double_array = DoubleArray::<i32>::new().unwrap();
 
-        //assert_eq!(base_check_array_of(double_array.storage()), EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY);
+        // assert_eq!(base_check_array_of(_double_array.storage()), EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY);
     }
 }
