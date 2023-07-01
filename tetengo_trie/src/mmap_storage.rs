@@ -443,6 +443,7 @@ mod tests {
     mod mmap_storage {
         use std::io::Cursor;
 
+        use crate::double_array::VACANT_CHECK_VALUE;
         use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
         use crate::serializer::Deserializer;
         use crate::value_serializer::ValueDeserializer;
@@ -635,10 +636,7 @@ mod tests {
                 let storage = MmapStorage::new(&file_mapping, 0, file_size, deserializer)
                     .expect("Can't create a storage.");
 
-                assert_eq!(
-                    storage.check_at(0).unwrap(),
-                    0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
-                );
+                assert_eq!(storage.check_at(0).unwrap(), VACANT_CHECK_VALUE);
                 assert_eq!(storage.check_at(1).unwrap(), 24);
             }
             {
@@ -653,10 +651,7 @@ mod tests {
                 let storage = MmapStorage::new(&file_mapping, 5, file_size, deserializer)
                     .expect("Can't create a storage.");
 
-                assert_eq!(
-                    storage.check_at(0).unwrap(),
-                    0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
-                );
+                assert_eq!(storage.check_at(0).unwrap(), VACANT_CHECK_VALUE);
                 assert_eq!(storage.check_at(1).unwrap(), 24);
             }
         }

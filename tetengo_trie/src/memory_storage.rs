@@ -9,6 +9,7 @@ use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::mem::size_of;
 
+use crate::double_array::VACANT_CHECK_VALUE;
 use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
 use crate::serializer::{Deserializer, Serializer};
 use crate::storage::{Result, Storage};
@@ -32,9 +33,7 @@ impl<T> MemoryStorage<T> {
      */
     pub fn new() -> Self {
         Self {
-            base_check_array: RefCell::new(vec![
-                0xFF, /* TODO: 0x00000000 | tetengo::trie::double_array::key_terminator() */
-            ]),
+            base_check_array: RefCell::new(vec![VACANT_CHECK_VALUE as u32]),
             value_array: Vec::new(),
         }
     }
@@ -183,9 +182,9 @@ impl<T> MemoryStorage<T> {
 
     fn ensure_base_check_size(&self, size: usize) {
         if size > self.base_check_array.borrow().len() {
-            self.base_check_array.borrow_mut().resize(
-                size, 0xFF, /* TODO: 0x00000000U | double_array::vacant_check_value() */
-            );
+            self.base_check_array
+                .borrow_mut()
+                .resize(size, VACANT_CHECK_VALUE as u32);
         }
     }
 }
@@ -461,10 +460,7 @@ mod tests {
     fn check_at() {
         let storage = MemoryStorage::<u32>::new();
 
-        assert_eq!(
-            storage.check_at(42).unwrap(),
-            0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
-        );
+        assert_eq!(storage.check_at(42).unwrap(), VACANT_CHECK_VALUE);
     }
 
     #[test]

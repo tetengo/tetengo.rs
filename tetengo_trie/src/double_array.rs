@@ -81,26 +81,14 @@ impl Debug for BuldingObserverSet<'_> {
     }
 }
 
-// /*!
-//     \brief Returns the default density factor.
+/// The default density factor.
+pub const DEFAULT_DENSITY_FACTOR: usize = 1000;
 
-//     \return The default density factor.
-// */
-// [[nodiscard]] static std::size_t default_density_factor();
+/// The key terminator.
+pub const KEY_TERMINATOR: u8 = 0;
 
-// /*!
-//     \brief Returns the key terminator.
-
-//     \return The key terminator.
-// */
-// [[nodiscard]] static char key_terminator();
-
-// /*!
-//     \brief Returns the check value for a vacant element.
-
-//     \return The check value for a vacant element.
-// */
-// [[nodiscard]] static std::uint8_t vacant_check_value();
+/// The check value for a vacant element.
+pub const VACANT_CHECK_VALUE: u8 = 0xFF;
 
 /**
  * A double array.
@@ -119,7 +107,7 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
             storage: double_array_builder::build::<V>(
                 vec![],
                 &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                double_array_builder::DEFAULT_DENSITY_FACTOR,
+                DEFAULT_DENSITY_FACTOR,
             )?,
             _root_base_check_index: 0,
         })

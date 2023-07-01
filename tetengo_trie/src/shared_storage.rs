@@ -121,6 +121,7 @@ mod tests {
     use once_cell::sync::Lazy;
     use std::io::Cursor;
 
+    use crate::double_array::VACANT_CHECK_VALUE;
     use crate::serializer::{Deserializer, Serializer};
     use crate::string_serializer::{StringDeserializer, StringSerializer};
 
@@ -253,10 +254,7 @@ mod tests {
     fn check_at() {
         let storage = SharedStorage::<u32>::new();
 
-        assert_eq!(
-            storage.check_at(42).unwrap(),
-            0xFF, /* TODO: double_array::vacant_check_value() */
-        );
+        assert_eq!(storage.check_at(42).unwrap(), VACANT_CHECK_VALUE);
     }
 
     #[test]

@@ -6,11 +6,11 @@
 
 use std::collections::HashSet;
 
-use crate::double_array::{BuldingObserverSet, DoubleArrayElement, DoubleArrayError, Result};
+use crate::double_array::{
+    BuldingObserverSet, DoubleArrayElement, DoubleArrayError, Result, KEY_TERMINATOR,
+};
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
-
-pub(super) const DEFAULT_DENSITY_FACTOR: usize = 1000;
 
 pub(super) fn build<'a, T: 'a>(
     mut elements: Vec<DoubleArrayElement<'_>>,
@@ -71,9 +71,7 @@ fn build_iter<T>(
     for (i, &(key, value)) in elements.iter().enumerate().take(children_firsts.len() - 1) {
         let char_code = char_code_at(key, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
-        if char_code == 0
-        /* TODO: double_array::key_terminator() */
-        {
+        if char_code == KEY_TERMINATOR {
             observer.adding(&(key, value));
             storage.set_base_at(next_base_check_index, value)?;
             continue;
@@ -140,6 +138,6 @@ fn char_code_at(string: &str, index: usize) -> u8 {
     if index < string.len() {
         string.as_bytes()[index]
     } else {
-        0 /* TODO: double_array::key_terminator() */
+        KEY_TERMINATOR
     }
 }
