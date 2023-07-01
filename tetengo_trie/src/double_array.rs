@@ -31,6 +31,7 @@ pub enum DoubleArrayError {
 
 /// The double array element type.
 pub type DoubleArrayElement<'a> = (&'a str, i32);
+
 /**
  * A building observer set.
  */
@@ -78,6 +79,40 @@ impl Debug for BuldingObserverSet {
 }
 
 /**
+ * Creates a null building observer set.
+ *
+ * # Returns
+ * A null building observer set.
+ */
+pub fn null_building_observer_set() -> BuldingObserverSet {
+    BuldingObserverSet {
+        adding: Box::new(|_| {}),
+        done: Box::new(|| {}),
+    }
+}
+
+// /*!
+//     \brief Returns the default density factor.
+
+//     \return The default density factor.
+// */
+// [[nodiscard]] static std::size_t default_density_factor();
+
+// /*!
+//     \brief Returns the key terminator.
+
+//     \return The key terminator.
+// */
+// [[nodiscard]] static char key_terminator();
+
+// /*!
+//     \brief Returns the check value for a vacant element.
+
+//     \return The check value for a vacant element.
+// */
+// [[nodiscard]] static std::uint8_t vacant_check_value();
+
+/**
  * A double array.
  */
 pub struct DoubleArray<'a, V> {
@@ -93,7 +128,7 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
         Ok(Self {
             storage: double_array_builder::build::<V>(
                 vec![],
-                &BuldingObserverSet::new(Box::new(|_| {}), Box::new(|| {})),
+                &null_building_observer_set(),
                 double_array_builder::DEFAULT_DENSITY_FACTOR,
             )?,
             _root_base_check_index: 0,
@@ -148,36 +183,56 @@ mod tests {
         Ok(array)
     }
 
-    #[test]
-    fn new() {
-        let double_array = DoubleArray::<i32>::new().unwrap();
-
-        assert_eq!(
-            base_check_array_of(double_array.storage()).unwrap(),
-            EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY
-        );
+    mod building_observer_set {
+        #[test]
+        fn new() {
+            let _observer_set =
+                super::super::BuldingObserverSet::new(Box::new(|_| {}), Box::new(|| {}));
+        }
     }
 
     #[test]
-    fn storage() {
-        // TODO: Implement it.
-        // {
-        //     let double_array = DoubleArray::<i32>::new().unwrap();
+    fn null_building_observer_set() {
+        let observer_set = super::null_building_observer_set();
 
-        //     let base_check_array = _base_check_array_of(double_array.storage()).unwrap();
-
-        //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
-        // }
+        observer_set.adding(&("hoge", 42));
+        observer_set.done();
     }
 
-    #[test]
-    fn storage_mut() {
-        // {
-        //     let mut double_array = DoubleArray::<i32>::new().unwrap();
+    mod double_array {
+        use super::*;
 
-        //     let base_check_array = _base_check_array_of(double_array.storage_mut()).unwrap();
+        #[test]
+        fn new() {
+            let double_array = DoubleArray::<i32>::new().unwrap();
 
-        //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
-        // }
+            assert_eq!(
+                base_check_array_of(double_array.storage()).unwrap(),
+                EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY
+            );
+        }
+
+        #[test]
+        fn storage() {
+            // TODO: Implement it.
+            // {
+            //     let double_array = DoubleArray::<i32>::new().unwrap();
+
+            //     let base_check_array = _base_check_array_of(double_array.storage()).unwrap();
+
+            //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
+            // }
+        }
+
+        #[test]
+        fn storage_mut() {
+            // {
+            //     let mut double_array = DoubleArray::<i32>::new().unwrap();
+
+            //     let base_check_array = _base_check_array_of(double_array.storage_mut()).unwrap();
+
+            //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
+            // }
+        }
     }
 }
