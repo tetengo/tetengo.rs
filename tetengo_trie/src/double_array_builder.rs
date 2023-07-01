@@ -6,14 +6,14 @@
 
 use std::collections::HashSet;
 
-use crate::double_array::{BuldingObserverSet, DoubleArrayError, Result};
+use crate::double_array::{BuldingObserverSet, DoubleArrayElement, DoubleArrayError, Result};
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
 pub(super) const DEFAULT_DENSITY_FACTOR: usize = 1000;
 
 pub(super) fn build<'a, T: 'a>(
-    mut elements: Vec<(&str, i32)>,
+    mut elements: Vec<DoubleArrayElement<'_>>,
     observer: &mut BuldingObserverSet<'_>,
     density_factor: usize,
 ) -> Result<Box<dyn Storage<T> + 'a>> {
@@ -43,7 +43,7 @@ pub(super) fn build<'a, T: 'a>(
 }
 
 fn build_iter<T>(
-    elements: &[(&str, i32)],
+    elements: &[DoubleArrayElement<'_>],
     key_offset: usize,
     storage: &mut dyn Storage<T>,
     base_check_index: usize,
@@ -92,7 +92,7 @@ fn build_iter<T>(
 }
 
 fn calc_base<T>(
-    elements: &[(&str, i32)],
+    elements: &[DoubleArrayElement<'_>],
     key_offset: usize,
     storage: &dyn Storage<T>,
     base_check_index: usize,
@@ -121,7 +121,7 @@ fn calc_base<T>(
     unreachable!()
 }
 
-fn children_firsts(elements: &[(&str, i32)], key_offset: usize) -> Vec<usize> {
+fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Vec<usize> {
     let mut firsts = vec![0];
     for &(child_key, _) in elements {
         let child_last = elements
