@@ -81,7 +81,7 @@ impl Debug for BuldingObserverSet {
  * A double array.
  */
 pub struct DoubleArray<'a, V> {
-    _storage: Box<dyn Storage<V> + 'a>,
+    storage: Box<dyn Storage<V> + 'a>,
     _root_base_check_index: usize,
 }
 
@@ -91,13 +91,33 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
      */
     pub fn new() -> Result<Self> {
         Ok(Self {
-            _storage: double_array_builder::build::<V>(
+            storage: double_array_builder::build::<V>(
                 vec![],
                 &BuldingObserverSet::new(Box::new(|_| {}), Box::new(|| {})),
                 double_array_builder::DEFAULT_DENSITY_FACTOR,
             )?,
             _root_base_check_index: 0,
         })
+    }
+
+    /**
+     * Returns the storage.
+     *
+     * # Returns
+     * The storage.
+     */
+    pub fn storage(&self) -> &dyn Storage<V> {
+        &*self.storage
+    }
+
+    /**
+     * Returns the mutable storage.
+     *
+     * # Returns
+     * The mutable storage.
+     */
+    pub fn storage_mut(&mut self) -> &mut dyn Storage<V> {
+        &mut *self.storage
     }
 }
 
@@ -133,5 +153,28 @@ mod tests {
         let _double_array = DoubleArray::<i32>::new().unwrap();
 
         // assert_eq!(base_check_array_of(_double_array.storage()), EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY);
+    }
+
+    #[test]
+    fn storage() {
+        // TODO: Implement it.
+        // {
+        //     let double_array = DoubleArray::<i32>::new().unwrap();
+
+        //     let base_check_array = _base_check_array_of(double_array.storage()).unwrap();
+
+        //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
+        // }
+    }
+
+    #[test]
+    fn storage_mut() {
+        // {
+        //     let mut double_array = DoubleArray::<i32>::new().unwrap();
+
+        //     let base_check_array = _base_check_array_of(double_array.storage_mut()).unwrap();
+
+        //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
+        // }
     }
 }
