@@ -6,6 +6,7 @@
 
 use std::fmt::{self, Debug, Formatter};
 
+use crate::double_array_builder;
 use crate::storage::Storage;
 
 /**
@@ -79,21 +80,28 @@ impl Debug for BuldingObserverSet {
 /**
  * A double array.
  */
-pub struct DoubleArray<V> {
-    _storage: Box<dyn Storage<V>>,
+pub struct DoubleArray<'a, V> {
+    _storage: Box<dyn Storage<V> + 'a>,
     _root_base_check_index: usize,
 }
 
-impl<V> DoubleArray<V> {
+impl<'a, V: 'a> DoubleArray<'a, V> {
     /**
      * Creates a double array.
      */
-    fn _new() -> Self {
-        todo!()
+    pub fn new() -> Result<Self> {
+        Ok(Self {
+            _storage: double_array_builder::build::<V>(
+                vec![],
+                &BuldingObserverSet::new(Box::new(|_| {}), Box::new(|| {})),
+                double_array_builder::DEFAULT_DENSITY_FACTOR,
+            )?,
+            _root_base_check_index: 0,
+        })
     }
 }
 
-impl<V> Debug for DoubleArray<V> {
+impl<V> Debug for DoubleArray<'_, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArray")
             .field("storage", &"Box<dyn Storage<V>")
@@ -103,12 +111,12 @@ impl<V> Debug for DoubleArray<V> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn new() {
-        // TODO: Implement it.
-        // let double_array = DoubleArray::<i32>::new();
+        let _double_array = DoubleArray::<i32>::new().unwrap();
 
-        // assert_eq!(base_check_array_of(double_array.storage()), EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY);
+        //assert_eq!(base_check_array_of(double_array.storage()), EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY);
     }
 }
