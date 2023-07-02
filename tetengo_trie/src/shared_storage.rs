@@ -18,7 +18,7 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * # Type Parameters
  * * `T` - A value type.
  */
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct SharedStorage<T> {
     entity: Rc<MemoryStorage<T>>,
 }
@@ -424,36 +424,36 @@ mod tests {
     }
 
     impl<T> SharedStorage<T> {
-        fn shared_with(&self, another: &SharedStorage<T>) -> bool {
+        fn _shared_with(&self, another: &SharedStorage<T>) -> bool {
             Rc::ptr_eq(&self.entity, &another.entity)
         }
     }
 
-    #[test]
-    fn clone() {
-        let mut storage = SharedStorage::<u32>::new();
+    // #[test]
+    // fn clone() {
+    //     let mut storage = SharedStorage::<u32>::new();
 
-        storage.set_base_at(0, 42).unwrap();
-        storage.set_base_at(1, 0xFE).unwrap();
-        storage.set_check_at(1, 24).unwrap();
+    //     storage.set_base_at(0, 42).unwrap();
+    //     storage.set_base_at(1, 0xFE).unwrap();
+    //     storage.set_check_at(1, 24).unwrap();
 
-        let /* mut */ clone = storage.clone();
+    //     let /* mut */ clone = storage.clone();
 
-        assert!(clone.shared_with(&storage));
+    //     assert!(clone.shared_with(&storage));
 
-        let base_check_array = base_check_array_of(&clone);
+    //     let base_check_array = base_check_array_of(&clone);
 
-        const EXPECTED: [u32; 2] = [0x00002AFFu32, 0x0000FE18u32];
-        assert_eq!(base_check_array, &EXPECTED);
+    //     const EXPECTED: [u32; 2] = [0x00002AFFu32, 0x0000FE18u32];
+    //     assert_eq!(base_check_array, &EXPECTED);
 
-        // Rust forbids to modify the object shared with others.
-        // clone.set_base_at(0, 2424);
-        // clone.set_check_at(5, 42);
+    //     // Rust forbids to modify the object shared with others.
+    //     // clone.set_base_at(0, 2424);
+    //     // clone.set_check_at(5, 42);
 
-        // assert_eq!(clone.base_at(0), 2424);
-        // assert_eq!(clone.check_at(5), 42);
+    //     // assert_eq!(clone.base_at(0), 2424);
+    //     // assert_eq!(clone.check_at(5), 42);
 
-        // assert_eq!(storage.base_at(0), 2424);
-        // assert_eq!(storage.check_at(5), 42);
-    }
+    //     // assert_eq!(storage.base_at(0), 2424);
+    //     // assert_eq!(storage.check_at(5), 42);
+    // }
 }
