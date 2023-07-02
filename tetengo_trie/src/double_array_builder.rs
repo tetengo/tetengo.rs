@@ -13,11 +13,11 @@ use crate::double_array::{
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
-pub(super) fn build<'a, T: 'a>(
+pub(super) fn build<T: 'static>(
     mut elements: Vec<DoubleArrayElement<'_>>,
     observer: &mut BuldingObserverSet<'_>,
     density_factor: usize,
-) -> Result<Box<dyn Storage<T> + 'a>> {
+) -> Result<Box<dyn Storage<T>>> {
     if density_factor == 0 {
         return Err(DoubleArrayError::InvalidDensityFactor.into());
     }

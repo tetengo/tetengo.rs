@@ -27,7 +27,7 @@ pub struct MemoryStorage<T> {
     value_array: Vec<Option<T>>,
 }
 
-impl<T> MemoryStorage<T> {
+impl<T: 'static> MemoryStorage<T> {
     /**
      * Creates a memory storage.
      */
@@ -189,7 +189,7 @@ impl<T> MemoryStorage<T> {
     }
 }
 
-impl<T> Storage<T> for MemoryStorage<T> {
+impl<T: 'static> Storage<T> for MemoryStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         Ok(self.base_check_array.borrow().len())
     }
@@ -274,9 +274,8 @@ impl<T> Storage<T> for MemoryStorage<T> {
 
         Ok(())
     }
-
     fn clone_box(&self) -> Box<dyn Storage<T>> {
-        todo!();
+        Box::new(Self::new())
     }
 }
 

@@ -93,12 +93,12 @@ pub const VACANT_CHECK_VALUE: u8 = 0xFF;
 /**
  * A double array.
  */
-pub struct DoubleArray<'a, V> {
-    storage: Box<dyn Storage<V> + 'a>,
+pub struct DoubleArray<V> {
+    storage: Box<dyn Storage<V>>,
     root_base_check_index: usize,
 }
 
-impl<'a, V: 'a> DoubleArray<'a, V> {
+impl<V: 'static> DoubleArray<V> {
     /**
      * Creates a double array.
      *
@@ -243,7 +243,7 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
     }
 }
 
-impl<V> Debug for DoubleArray<'_, V> {
+impl<V> Debug for DoubleArray<V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArray")
             .field("storage", &"Box<dyn Storage<V>")

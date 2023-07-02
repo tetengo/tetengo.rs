@@ -123,7 +123,7 @@ pub struct MmapStorage<'a, T> {
     value_cache: RefCell<ValueCache<T>>,
 }
 
-impl<'a, T> MmapStorage<'a, T> {
+impl<'a, T: 'static> MmapStorage<'a, T> {
     /// A default value cache capacity.
     pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
 
@@ -243,7 +243,7 @@ impl<'a, T> MmapStorage<'a, T> {
     }
 }
 
-impl<T> Storage<T> for MmapStorage<'_, T> {
+impl<T: 'static> Storage<T> for MmapStorage<'_, T> {
     fn base_check_size(&self) -> Result<usize> {
         self.read_u32(0).map(|v| v as usize)
     }

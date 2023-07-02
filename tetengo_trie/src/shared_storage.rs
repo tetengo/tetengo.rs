@@ -23,7 +23,7 @@ pub struct SharedStorage<T> {
     entity: Rc<MemoryStorage<T>>,
 }
 
-impl<T> SharedStorage<T> {
+impl<T: 'static> SharedStorage<T> {
     /**
      * Creates a shared storage.
      */
@@ -55,7 +55,7 @@ impl<T> SharedStorage<T> {
     }
 }
 
-impl<T> Storage<T> for SharedStorage<T> {
+impl<T: 'static> Storage<T> for SharedStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }
