@@ -22,12 +22,12 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * * `T` - A value type.
  */
 #[derive(Debug, Default)]
-pub struct MemoryStorage<T> {
+pub struct MemoryStorage<T: Clone> {
     base_check_array: RefCell<Vec<u32>>,
     value_array: Vec<Option<T>>,
 }
 
-impl<T: 'static> MemoryStorage<T> {
+impl<T: Clone + 'static> MemoryStorage<T> {
     /**
      * Creates a memory storage.
      */
@@ -189,7 +189,7 @@ impl<T: 'static> MemoryStorage<T> {
     }
 }
 
-impl<T: 'static> Storage<T> for MemoryStorage<T> {
+impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         Ok(self.base_check_array.borrow().len())
     }
@@ -275,7 +275,10 @@ impl<T: 'static> Storage<T> for MemoryStorage<T> {
         Ok(())
     }
     fn clone_box(&self) -> Box<dyn Storage<T>> {
-        Box::new(Self::new())
+        Box::new(Self {
+            base_check_array: RefCell::new(self.base_check_array.borrow().clone()),
+            value_array: self.value_array.clone(),
+        })
     }
 }
 

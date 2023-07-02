@@ -98,7 +98,7 @@ pub struct DoubleArray<V> {
     root_base_check_index: usize,
 }
 
-impl<V: 'static> DoubleArray<V> {
+impl<V: Clone + 'static> DoubleArray<V> {
     /**
      * Creates a double array.
      *

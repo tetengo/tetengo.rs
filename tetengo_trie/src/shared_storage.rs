@@ -19,11 +19,11 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * * `T` - A value type.
  */
 #[derive(Debug, Default)]
-pub struct SharedStorage<T> {
+pub struct SharedStorage<T: Clone> {
     entity: Rc<MemoryStorage<T>>,
 }
 
-impl<T: 'static> SharedStorage<T> {
+impl<T: Clone + 'static> SharedStorage<T> {
     /**
      * Creates a shared storage.
      */
@@ -55,7 +55,7 @@ impl<T: 'static> SharedStorage<T> {
     }
 }
 
-impl<T: 'static> Storage<T> for SharedStorage<T> {
+impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }
@@ -427,7 +427,7 @@ mod tests {
         assert_eq!(serialized, &EXPECTED);
     }
 
-    impl<T> SharedStorage<T> {
+    impl<T: Clone> SharedStorage<T> {
         fn _shared_with(&self, another: &SharedStorage<T>) -> bool {
             Rc::ptr_eq(&self.entity, &another.entity)
         }

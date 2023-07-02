@@ -13,7 +13,7 @@ use crate::double_array::{
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
-pub(super) fn build<T: 'static>(
+pub(super) fn build<T: Clone + 'static>(
     mut elements: Vec<DoubleArrayElement<'_>>,
     observer: &mut BuldingObserverSet<'_>,
     density_factor: usize,
