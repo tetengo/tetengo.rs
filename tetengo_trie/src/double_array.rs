@@ -220,6 +220,8 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
         Ok(Some(base_check_index))
     }
 
+    // TODO: Implement iter().
+
     /**
      * Returns the storage.
      *
@@ -559,6 +561,11 @@ mod tests {
                     assert!(found.is_none());
                 }
             }
+        }
+
+        #[test]
+        fn iter() {
+            // TODO: Implement it.
         }
 
         #[test]
