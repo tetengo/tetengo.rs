@@ -101,6 +101,9 @@ pub struct DoubleArray<'a, V> {
 impl<'a, V: 'a> DoubleArray<'a, V> {
     /**
      * Creates a double array.
+     *
+     * # Errors
+     * * When it fails to build a double array.
      */
     pub fn new() -> Result<Self> {
         Ok(Self {
@@ -118,10 +121,50 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
      *
      * # Arguments
      * * `elements` - Initial elements.
-     * * `building_observer_set` - A building observer set.
-     * * `density_factor` - A density factor. Must be greater than 0.
+     *
+     * # Errors
+     * * When it fails to build a double array.
      */
-    pub fn new_with_elements(
+    pub fn new_with_elements(elements: Vec<DoubleArrayElement<'_>>) -> Result<Self> {
+        Self::new_with_elements_buldingobserverset(
+            elements,
+            &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+        )
+    }
+
+    /**
+     * Creates a double array.
+     *
+     * # Arguments
+     * * `elements`              - Initial elements.
+     * * `building_observer_set` - A building observer set.
+     *
+     * # Errors
+     * * When it fails to build a double array.
+     */
+    pub fn new_with_elements_buldingobserverset(
+        elements: Vec<DoubleArrayElement<'_>>,
+        building_observer_set: &mut BuldingObserverSet<'_>,
+    ) -> Result<Self> {
+        Self::new_with_elements_buldingobserverset_densityfactor(
+            elements,
+            building_observer_set,
+            DEFAULT_DENSITY_FACTOR,
+        )
+    }
+
+    /**
+     * Creates a double array.
+     *
+     * # Arguments
+     * * `elements`              - Initial elements.
+     * * `building_observer_set` - A building observer set.
+     * * `density_factor`        - A density factor. Must be greater than 0.
+     *
+     * # Errors
+     * * When it fails to build a double array.
+     */
+    pub fn new_with_elements_buldingobserverset_densityfactor(
         elements: Vec<DoubleArrayElement<'_>>,
         building_observer_set: &mut BuldingObserverSet<'_>,
         density_factor: usize,
@@ -357,12 +400,8 @@ mod tests {
         #[test]
         fn new_with_elements() {
             {
-                let double_array = DoubleArray::<i32>::new_with_elements(
-                    EXPECTED_VALUES0.to_vec(),
-                    &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                    DEFAULT_DENSITY_FACTOR,
-                )
-                .unwrap();
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES0.to_vec()).unwrap();
 
                 assert_eq!(
                     base_check_array_of(double_array.storage()).unwrap(),
@@ -370,12 +409,8 @@ mod tests {
                 );
             }
             {
-                let double_array = DoubleArray::<i32>::new_with_elements(
-                    EXPECTED_VALUES3.to_vec(),
-                    &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                    DEFAULT_DENSITY_FACTOR,
-                )
-                .unwrap();
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
                 assert_eq!(
                     base_check_array_of(double_array.storage()).unwrap(),
@@ -383,18 +418,56 @@ mod tests {
                 );
             }
             {
-                let double_array = DoubleArray::<i32>::new_with_elements(
-                    EXPECTED_VALUES4.to_vec(),
-                    &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                    DEFAULT_DENSITY_FACTOR,
-                )
-                .unwrap();
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
                 assert_eq!(
                     base_check_array_of(double_array.storage()).unwrap(),
                     EXPECTED_BASE_CHECK_ARRAY4
                 );
             }
+        }
+
+        #[test]
+        fn new_with_elements_buldingobserverset() {
+            let mut adding_called = false;
+            let mut done_called = false;
+            let double_array = DoubleArray::<i32>::new_with_elements_buldingobserverset(
+                EXPECTED_VALUES3.to_vec(),
+                &mut BuldingObserverSet::new(&mut |_| adding_called = true, &mut || {
+                    done_called = true
+                }),
+            )
+            .unwrap();
+
+            assert_eq!(
+                base_check_array_of(double_array.storage()).unwrap(),
+                EXPECTED_BASE_CHECK_ARRAY3
+            );
+            assert!(adding_called);
+            assert!(done_called);
+        }
+
+        #[test]
+        fn new_with_elements_buldingobserverset_densityfactor() {
+            let mut adding_called = false;
+            let mut done_called = false;
+            let double_array =
+                DoubleArray::<i32>::new_with_elements_buldingobserverset_densityfactor(
+                    EXPECTED_VALUES3.to_vec(),
+                    &mut BuldingObserverSet::new(&mut |_| adding_called = true, &mut || {
+                        done_called = true
+                    }),
+                    DEFAULT_DENSITY_FACTOR,
+                )
+                .unwrap();
+
+            assert_eq!(
+                base_check_array_of(double_array.storage()).unwrap(),
+                EXPECTED_BASE_CHECK_ARRAY3
+            );
+            assert!(adding_called);
+            assert!(done_called);
         }
 
         #[test]
