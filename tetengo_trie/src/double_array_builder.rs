@@ -136,15 +136,14 @@ fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Ve
     let mut firsts = vec![0];
     let mut child_first = 0;
     while child_first < elements.len() {
-        let mut child_last = elements.len();
-        for i in child_first..elements.len() {
-            if char_code_at(elements[i].0, key_offset)
-                != char_code_at(elements[child_first].0, key_offset)
-            {
-                child_last = i;
-                break;
-            }
-        }
+        let child_first_element_key = elements[child_first].0;
+        let child_last = elements
+            .iter()
+            .skip(child_first)
+            .position(|&(key, _)| {
+                char_code_at(key, key_offset) != char_code_at(child_first_element_key, key_offset)
+            })
+            .unwrap_or(elements.len());
 
         firsts.push(child_last);
 
