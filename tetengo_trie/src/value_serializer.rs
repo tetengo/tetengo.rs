@@ -17,7 +17,6 @@ use crate::serializer::Result;
 #[derive(Clone, Copy)]
 pub struct ValueSerializer<T: ?Sized> {
     serialize: fn(value: &T) -> Vec<u8>,
-
     fixed_value_size: usize,
 }
 
