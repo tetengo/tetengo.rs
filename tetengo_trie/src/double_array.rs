@@ -542,27 +542,23 @@ mod tests {
                     assert!(found.is_none());
                 }
             }
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
-            // {
-            //     const tetengo::trie::double_array double_array_{ expected_values4 };
-
-            //     {
-            //         const auto o_found = double_array_.find(std::string{ 0xE8_c, 0xB5_c, 0xA4_c, 0xE7_c, 0x80_c, 0xAC_c });
-            //         BOOST_REQUIRE(o_found);
-            //         BOOST_TEST(*o_found == 24);
-            //     }
-            //     {
-            //         const auto o_found = double_array_.find(std::string{ 0xE8_c, 0xB5_c, 0xA4_c, 0xE6_c, 0xB0_c, 0xB4_c });
-            //         BOOST_REQUIRE(o_found);
-            //         BOOST_TEST(*o_found == 42);
-            //     }
-            //     {
-            //         // "Suizenji" in Kanji
-            //         const std::string key{ { 0xE6_c, 0xB0_c, 0xB4_c, 0xE5_c, 0x89_c, 0x8D_c, 0xE5_c, 0xAF_c, 0xBA_c } };
-            //         const auto        o_found = double_array_.find(key);
-            //         BOOST_CHECK(!o_found);
-            //     }
-            // }
+                {
+                    let found = double_array.find("赤瀬").unwrap().unwrap(); // "Akase" in Kanji
+                    assert_eq!(found, 24);
+                }
+                {
+                    let found = double_array.find("赤水").unwrap().unwrap(); // "Akamizu" in Kanji
+                    assert_eq!(found, 42);
+                }
+                {
+                    let found = double_array.find("水前寺").unwrap(); // "Suizenji" in Kanji
+                    assert!(found.is_none());
+                }
+            }
         }
 
         #[test]
