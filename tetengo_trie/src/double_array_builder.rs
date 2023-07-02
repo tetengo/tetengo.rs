@@ -8,6 +8,7 @@ use std::collections::HashSet;
 
 use crate::double_array::{
     BuldingObserverSet, DoubleArrayElement, DoubleArrayError, Result, KEY_TERMINATOR,
+    VACANT_CHECK_VALUE,
 };
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
@@ -54,6 +55,7 @@ fn build_iter<T>(
     let children_firsts = children_firsts(elements, key_offset);
 
     let base = calc_base(
+        children_firsts.as_slice(),
         elements,
         key_offset,
         storage,
@@ -63,21 +65,21 @@ fn build_iter<T>(
     )?;
     storage.set_base_at(base_check_index, base)?;
 
-    for &(key, _) in elements.iter().take(children_firsts.len() - 1) {
-        let char_code = char_code_at(key, key_offset);
+    for i in &children_firsts[0..children_firsts.len() - 1] {
+        let char_code = char_code_at(elements[*i].0, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
         storage.set_check_at(next_base_check_index, char_code)?;
     }
-    for (i, &(key, value)) in elements.iter().enumerate().take(children_firsts.len() - 1) {
-        let char_code = char_code_at(key, key_offset);
+    for i in &children_firsts[0..children_firsts.len() - 1] {
+        let char_code = char_code_at(elements[*i].0, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
         if char_code == KEY_TERMINATOR {
-            observer.adding(&(key, value));
-            storage.set_base_at(next_base_check_index, value)?;
+            observer.adding(&elements[*i]);
+            storage.set_base_at(next_base_check_index, elements[*i].1)?;
             continue;
         }
         build_iter(
-            &elements[children_firsts[i]..children_firsts[i + 1]],
+            &elements[children_firsts[*i]..children_firsts[*i + 1]],
             key_offset + 1,
             storage,
             next_base_check_index,
@@ -90,6 +92,7 @@ fn build_iter<T>(
 }
 
 fn calc_base<T>(
+    firsts: &[usize],
     elements: &[DoubleArrayElement<'_>],
     key_offset: usize,
     storage: &dyn Storage<T>,
@@ -101,17 +104,27 @@ fn calc_base<T>(
         - char_code_at(elements[0].0, key_offset) as i32
         + 1;
     for base in base_first.. {
-        let first_last = elements.len() - 1;
-        let mut occupied = false;
-        for &(key, _) in elements.iter().take(first_last) {
-            let next_base_check_index = (base + char_code_at(key, key_offset) as i32) as usize;
-            let check = storage.check_at(next_base_check_index)?;
-            if check != 0 {
-                occupied = true;
-                break;
-            }
-        }
-        if !occupied && !base_uniquer.contains(&base) {
+        let first_last = firsts[firsts.len() - 1];
+        let occupied = elements
+            .iter()
+            .take(first_last)
+            .skip(firsts[0])
+            .find_map(|&(key, _)| {
+                let next_base_check_index = (base + char_code_at(key, key_offset) as i32) as usize;
+                match storage.check_at(next_base_check_index) {
+                    Ok(check) => {
+                        if check != VACANT_CHECK_VALUE {
+                            Some(Ok(()))
+                        } else {
+                            None
+                        }
+                    }
+                    Err(e) => Some(Err(e)),
+                }
+            });
+        if let Some(occupied) = occupied {
+            occupied?
+        } else {
             let _ = base_uniquer.insert(base);
             return Ok(base);
         }
@@ -121,14 +134,21 @@ fn calc_base<T>(
 
 fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Vec<usize> {
     let mut firsts = vec![0];
-    for &(child_key, _) in elements {
-        let child_last = elements
-            .iter()
-            .skip_while(|(key, _)| {
-                char_code_at(key, key_offset) == char_code_at(child_key, key_offset)
-            })
-            .count();
+    let mut child_first = 0;
+    while child_first < elements.len() {
+        let mut child_last = elements.len();
+        for i in child_first..elements.len() {
+            if char_code_at(elements[i].0, key_offset)
+                != char_code_at(elements[child_first].0, key_offset)
+            {
+                child_last = i;
+                break;
+            }
+        }
+
         firsts.push(child_last);
+
+        child_first = child_last;
     }
     debug_assert!(!firsts.is_empty());
     firsts

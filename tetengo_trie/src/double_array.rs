@@ -114,6 +114,29 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
     }
 
     /**
+     * Creates a double array.
+     *
+     * # Arguments
+     * * `elements` - Initial elements.
+     * * `building_observer_set` - A building observer set.
+     * * `density_factor` - A density factor. Must be greater than 0.
+     */
+    pub fn new_with_elements(
+        elements: Vec<DoubleArrayElement<'_>>,
+        building_observer_set: &mut BuldingObserverSet<'_>,
+        density_factor: usize,
+    ) -> Result<Self> {
+        Ok(Self {
+            storage: double_array_builder::build::<V>(
+                elements,
+                building_observer_set,
+                density_factor,
+            )?,
+            _root_base_check_index: 0,
+        })
+    }
+
+    /**
      * Returns the storage.
      *
      * # Returns
@@ -150,6 +173,45 @@ mod tests {
     const EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY: [u32; 1] = [
     //                  BASE  CHECK  BYTECHECK
     0x000000FF, // [ 0]    0,    -1,        -1
+    ];
+
+    /*
+              S       E       T       A       \0
+        [ 0]+---[ 1]----[ 2]----[ 4]----[ 5]----[ 6]
+            |
+            | U       T       I       G       O       S       I       \0
+            +---[ 3]----[ 7]+---[ 8]----[ 9]----[10]----[11]----[12]----[13]
+                            |
+                            | O       \0
+                            +---[14]----[15]
+    */
+
+    #[rustfmt::skip]
+    const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
+        ("UTIGOSI", 24),
+        ("UTO", 2424),
+        ("SETA", 42),
+    ];
+
+    #[rustfmt::skip]
+    const EXPECTED_BASE_CHECK_ARRAY3: [u32; 16] = [
+        //                  BASE  CHECK  BYTECHECK
+        0xFFFFAEFF, // [ 0]  -82,    -1,        -1
+        0xFFFFBD53, // [ 1]  -67,     0,        83
+        0xFFFFB045, // [ 2]  -80,     1,        69
+        0xFFFFB355, // [ 3]  -77,     0,        85
+        0xFFFFC454, // [ 4]  -60,     2,        84
+        0x00000641, // [ 5]    6,     4,        65
+        0x00002A00, // [ 6]   42,     5,         0
+        0xFFFFBF54, // [ 7]  -65,     3,        84
+        0xFFFFC249, // [ 8]  -62,     7,        73
+        0xFFFFBB47, // [ 9]  -69,     8,        71
+        0xFFFFB84F, // [10]  -72,     9,        79
+        0xFFFFC353, // [11]  -61,    10,        83
+        0x00000D49, // [12]   13,    11,        73
+        0x00001800, // [13]   24,    12,         0
+        0x00000F4F, // [14]   15,     7,        79
+        0x00097800, // [15] 2424,    14,         0
     ];
 
     fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Result<Vec<u32>> {
@@ -204,6 +266,21 @@ mod tests {
             assert_eq!(
                 base_check_array_of(double_array.storage()).unwrap(),
                 EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY
+            );
+        }
+
+        #[test]
+        fn new_with_elements() {
+            let double_array = DoubleArray::<i32>::new_with_elements(
+                EXPECTED_VALUES3.to_vec(),
+                &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+                DEFAULT_DENSITY_FACTOR,
+            )
+            .unwrap();
+
+            assert_eq!(
+                base_check_array_of(double_array.storage()).unwrap(),
+                EXPECTED_BASE_CHECK_ARRAY3
             );
         }
 
