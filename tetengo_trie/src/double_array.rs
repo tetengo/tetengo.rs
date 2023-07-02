@@ -180,6 +180,25 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
     }
 
     /**
+     * Finds the value correspoinding the given key.
+     *
+     * # Arguments
+     * * `key` - A key.
+     *
+     * # Returns
+     * The value. Or None when the double array does not have the given key.
+     */
+    pub fn find(&self, _key: &str) -> Option<i32> {
+        None
+    }
+
+    //  std::optional<std::int32_t> find(const std::string_view& key) const
+    //  {
+    //      const auto o_index = traverse(std::string{ key } + double_array::key_terminator());
+    //      return o_index ? std::make_optional(m_p_storage->base_at(*o_index)) : std::nullopt;
+    //  }
+
+    /**
      * Returns the storage.
      *
      * # Returns
@@ -468,6 +487,62 @@ mod tests {
             );
             assert!(adding_called);
             assert!(done_called);
+        }
+
+        #[test]
+        fn find() {
+            {
+                let double_array = DoubleArray::<i32>::new().unwrap();
+
+                {
+                    let found = double_array.find("SETA");
+                    assert!(found.is_none());
+                }
+            }
+
+            // {
+            //     const tetengo::trie::double_array double_array_{ expected_values3 };
+
+            //     {
+            //         const auto o_found = double_array_.find("SETA");
+            //         BOOST_REQUIRE(o_found);
+            //         BOOST_TEST(*o_found == 42);
+            //     }
+            //     {
+            //         const auto o_found = double_array_.find("UTIGOSI");
+            //         BOOST_REQUIRE(o_found);
+            //         BOOST_TEST(*o_found == 24);
+            //     }
+            //     {
+            //         const auto o_found = double_array_.find("UTO");
+            //         BOOST_REQUIRE(o_found);
+            //         BOOST_TEST(*o_found == 2424);
+            //     }
+            //     {
+            //         const auto o_found = double_array_.find("SUIZENJI");
+            //         BOOST_CHECK(!o_found);
+            //     }
+            // }
+            // {
+            //     const tetengo::trie::double_array double_array_{ expected_values4 };
+
+            //     {
+            //         const auto o_found = double_array_.find(std::string{ 0xE8_c, 0xB5_c, 0xA4_c, 0xE7_c, 0x80_c, 0xAC_c });
+            //         BOOST_REQUIRE(o_found);
+            //         BOOST_TEST(*o_found == 24);
+            //     }
+            //     {
+            //         const auto o_found = double_array_.find(std::string{ 0xE8_c, 0xB5_c, 0xA4_c, 0xE6_c, 0xB0_c, 0xB4_c });
+            //         BOOST_REQUIRE(o_found);
+            //         BOOST_TEST(*o_found == 42);
+            //     }
+            //     {
+            //         // "Suizenji" in Kanji
+            //         const std::string key{ { 0xE6_c, 0xB0_c, 0xB4_c, 0xE5_c, 0x89_c, 0x8D_c, 0xE5_c, 0xAF_c, 0xBA_c } };
+            //         const auto        o_found = double_array_.find(key);
+            //         BOOST_CHECK(!o_found);
+            //     }
+            // }
         }
 
         #[test]
