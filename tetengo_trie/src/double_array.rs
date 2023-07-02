@@ -176,6 +176,60 @@ mod tests {
     ];
 
     /*
+              \0
+        [ 0]+---[ 1]
+            |
+            |' '      \0
+            +---[ 2]----[ 3]
+    */
+
+    #[rustfmt::skip]
+    const EXPECTED_VALUES0: [DoubleArrayElement<'_>; 2] = [
+        ("", 42),
+        (" ", 24),
+    ];
+
+    #[rustfmt::skip]
+    const EXPECTED_BASE_CHECK_ARRAY0: [u32; 35] = [
+        //                  BASE  CHECK  BYTECHECK
+        0x000001FF, // [ 0]    1,    -1,        -1
+        0x00002A00, // [ 1]   42,     0,         0
+        0x000000FF, // [ 2]    0,    -1,        -1
+        0x000000FF, // [ 3]    0,    -1,        -1
+        0x000000FF, // [ 4]    0,    -1,        -1
+        0x000000FF, // [ 5]    0,    -1,        -1
+        0x000000FF, // [ 6]    0,    -1,        -1
+        0x000000FF, // [ 7]    0,    -1,        -1
+        0x000000FF, // [ 8]    0,    -1,        -1
+        0x000000FF, // [ 9]    0,    -1,        -1
+        0x000000FF, // [10]    0,    -1,        -1
+        0x000000FF, // [11]    0,    -1,        -1
+        0x000000FF, // [12]    0,    -1,        -1
+        0x000000FF, // [13]    0,    -1,        -1
+        0x000000FF, // [14]    0,    -1,        -1
+        0x000000FF, // [15]    0,    -1,        -1
+        0x000000FF, // [16]    0,    -1,        -1
+        0x000000FF, // [17]    0,    -1,        -1
+        0x000000FF, // [18]    0,    -1,        -1
+        0x000000FF, // [19]    0,    -1,        -1
+        0x000000FF, // [20]    0,    -1,        -1
+        0x000000FF, // [21]    0,    -1,        -1
+        0x000000FF, // [22]    0,    -1,        -1
+        0x000000FF, // [23]    0,    -1,        -1
+        0x000000FF, // [24]    0,    -1,        -1
+        0x000000FF, // [25]    0,    -1,        -1
+        0x000000FF, // [26]    0,    -1,        -1
+        0x000000FF, // [27]    0,    -1,        -1
+        0x000000FF, // [28]    0,    -1,        -1
+        0x000000FF, // [29]    0,    -1,        -1
+        0x000000FF, // [30]    0,    -1,        -1
+        0x000000FF, // [31]    0,    -1,        -1
+        0x000000FF, // [32]    0,    -1,        -1
+        0x00002220, // [33]   34,     0,        32
+        0x00001800, // [34]   24,    33,         0
+    ];
+
+    /*
               S       E       T       A       \0
         [ 0]+---[ 1]----[ 2]----[ 4]----[ 5]----[ 6]
             |
@@ -212,6 +266,37 @@ mod tests {
         0x00001800, // [13]   24,    12,         0
         0x00000F4F, // [14]   15,     7,        79
         0x00097800, // [15] 2424,    14,         0
+    ];
+
+    /*
+            0xE8    0xB5    0xA4    0xE7    0x80    0xAC      \0
+        [ 0]----[ 1]----[ 2]----[ 3]+---[ 5]----[ 9]----[10]----[11]
+                                    |
+                                    |0xE6   0xB0    0xB4      \0
+                                    +---[ 4]----[ 6]----[ 7]----[ 8]
+    */
+
+    #[rustfmt::skip]
+    const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
+        ("赤瀬", 24), // "Akase" in Kanji
+        ("赤水", 42), // "Akamizu" in Kanji
+    ];
+
+    #[rustfmt::skip]
+    const EXPECTED_BASE_CHECK_ARRAY4: [u32; 12] = [
+        //                  BASE  CHECK  BYTECHECK
+        0xFFFF19FF, // [ 0] -231,    -1,        -1
+        0xFFFF4DE8, // [ 1] -179,     0,       232
+        0xFFFF5FB5, // [ 2] -161,     1,       181
+        0xFFFF1EA4, // [ 3] -226,     2,       164
+        0xFFFF56E6, // [ 4] -170,     3,       230
+        0xFFFF89E7, // [ 5] -119,     3,       231
+        0xFFFF53B0, // [ 6] -173,     4,       176
+        0x000008B4, // [ 7]    8,     6,       180
+        0x00002A00, // [ 8]   42,     7,         0
+        0xFFFF5E80, // [ 9] -162,     5,       128
+        0x00000BAC, // [10]   11,     9,       172
+        0x00001800, // [11]   24,    10,         0
     ];
 
     fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Result<Vec<u32>> {
@@ -271,17 +356,45 @@ mod tests {
 
         #[test]
         fn new_with_elements() {
-            let double_array = DoubleArray::<i32>::new_with_elements(
-                EXPECTED_VALUES3.to_vec(),
-                &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                DEFAULT_DENSITY_FACTOR,
-            )
-            .unwrap();
+            {
+                let double_array = DoubleArray::<i32>::new_with_elements(
+                    EXPECTED_VALUES0.to_vec(),
+                    &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+                    DEFAULT_DENSITY_FACTOR,
+                )
+                .unwrap();
 
-            assert_eq!(
-                base_check_array_of(double_array.storage()).unwrap(),
-                EXPECTED_BASE_CHECK_ARRAY3
-            );
+                assert_eq!(
+                    base_check_array_of(double_array.storage()).unwrap(),
+                    EXPECTED_BASE_CHECK_ARRAY0
+                );
+            }
+            {
+                let double_array = DoubleArray::<i32>::new_with_elements(
+                    EXPECTED_VALUES3.to_vec(),
+                    &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+                    DEFAULT_DENSITY_FACTOR,
+                )
+                .unwrap();
+
+                assert_eq!(
+                    base_check_array_of(double_array.storage()).unwrap(),
+                    EXPECTED_BASE_CHECK_ARRAY3
+                );
+            }
+            {
+                let double_array = DoubleArray::<i32>::new_with_elements(
+                    EXPECTED_VALUES4.to_vec(),
+                    &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+                    DEFAULT_DENSITY_FACTOR,
+                )
+                .unwrap();
+
+                assert_eq!(
+                    base_check_array_of(double_array.storage()).unwrap(),
+                    EXPECTED_BASE_CHECK_ARRAY4
+                );
+            }
         }
 
         #[test]
