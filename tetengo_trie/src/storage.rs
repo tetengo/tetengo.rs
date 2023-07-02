@@ -175,4 +175,12 @@ pub trait Storage<T> {
         writer: &mut dyn Write,
         value_serializer: &ValueSerializer<T>,
     ) -> Result<()>;
+
+    /**
+     * Clone this storage as Box.
+     *
+     * # Returns
+     * A Box of a clone of this storage.
+     */
+    fn clone_box(&self) -> Box<dyn Storage<T>>;
 }

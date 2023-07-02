@@ -323,6 +323,10 @@ impl<T> Storage<T> for MmapStorage<'_, T> {
     ) -> Result<()> {
         unreachable!("Unsupported operation.");
     }
+
+    fn clone_box(&self) -> Box<dyn Storage<T>> {
+        todo!();
+    }
 }
 
 #[cfg(test)]

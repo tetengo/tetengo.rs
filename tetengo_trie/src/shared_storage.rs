@@ -114,6 +114,10 @@ impl<T> Storage<T> for SharedStorage<T> {
     ) -> Result<()> {
         self.entity.serialize(writer, value_serializer)
     }
+
+    fn clone_box(&self) -> Box<dyn Storage<T>> {
+        todo!();
+    }
 }
 
 #[cfg(test)]

@@ -274,6 +274,10 @@ impl<T> Storage<T> for MemoryStorage<T> {
 
         Ok(())
     }
+
+    fn clone_box(&self) -> Box<dyn Storage<T>> {
+        todo!();
+    }
 }
 
 #[cfg(test)]
