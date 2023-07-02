@@ -196,7 +196,7 @@ impl<T> Storage<T> for MemoryStorage<T> {
 
     fn base_at(&self, base_check_index: usize) -> Result<i32> {
         self.ensure_base_check_size(base_check_index + 1);
-        Ok((self.base_check_array.borrow()[base_check_index] >> 8u32) as i32)
+        Ok(self.base_check_array.borrow()[base_check_index] as i32 >> 8i32)
     }
 
     fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {

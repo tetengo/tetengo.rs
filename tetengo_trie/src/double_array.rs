@@ -95,7 +95,7 @@ pub const VACANT_CHECK_VALUE: u8 = 0xFF;
  */
 pub struct DoubleArray<'a, V> {
     storage: Box<dyn Storage<V> + 'a>,
-    _root_base_check_index: usize,
+    root_base_check_index: usize,
 }
 
 impl<'a, V: 'a> DoubleArray<'a, V> {
@@ -112,7 +112,7 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
                 &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
                 DEFAULT_DENSITY_FACTOR,
             )?,
-            _root_base_check_index: 0,
+            root_base_check_index: 0,
         })
     }
 
@@ -175,7 +175,7 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
                 building_observer_set,
                 density_factor,
             )?,
-            _root_base_check_index: 0,
+            root_base_check_index: 0,
         })
     }
 
@@ -187,16 +187,38 @@ impl<'a, V: 'a> DoubleArray<'a, V> {
      *
      * # Returns
      * The value. Or None when the double array does not have the given key.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
-    pub fn find(&self, _key: &str) -> Option<i32> {
-        None
+    pub fn find(&self, key: &str) -> Result<Option<i32>> {
+        let mut terminated_key;
+        let index = self.traverse({
+            terminated_key = String::from(key);
+            terminated_key.push(KEY_TERMINATOR as char);
+            &terminated_key
+        })?;
+        match index {
+            Some(index) => Ok(Some(self.storage.base_at(index)?)),
+            None => Ok(None),
+        }
     }
 
-    //  std::optional<std::int32_t> find(const std::string_view& key) const
-    //  {
-    //      const auto o_index = traverse(std::string{ key } + double_array::key_terminator());
-    //      return o_index ? std::make_optional(m_p_storage->base_at(*o_index)) : std::nullopt;
-    //  }
+    fn traverse(&self, key: &str) -> Result<Option<usize>> {
+        let mut base_check_index = self.root_base_check_index;
+        for c in key.bytes() {
+            let next_base_check_index =
+                (self.storage.base_at(base_check_index)? + c as i32) as usize;
+            if next_base_check_index >= self.storage.base_check_size()?
+                || self.storage.check_at(next_base_check_index)? != c
+            {
+                return Ok(None);
+            }
+            base_check_index = next_base_check_index;
+        }
+
+        Ok(Some(base_check_index))
+    }
 
     /**
      * Returns the storage.
@@ -495,34 +517,32 @@ mod tests {
                 let double_array = DoubleArray::<i32>::new().unwrap();
 
                 {
-                    let found = double_array.find("SETA");
+                    let found = double_array.find("SETA").unwrap();
+                    assert!(found.is_none());
+                }
+            }
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+
+                {
+                    let found = double_array.find("SETA").unwrap().unwrap();
+                    assert_eq!(found, 42);
+                }
+                {
+                    let found = double_array.find("UTIGOSI").unwrap().unwrap();
+                    assert_eq!(found, 24);
+                }
+                {
+                    let found = double_array.find("UTO").unwrap().unwrap();
+                    assert_eq!(found, 2424);
+                }
+                {
+                    let found = double_array.find("SUIZENJI").unwrap();
                     assert!(found.is_none());
                 }
             }
 
-            // {
-            //     const tetengo::trie::double_array double_array_{ expected_values3 };
-
-            //     {
-            //         const auto o_found = double_array_.find("SETA");
-            //         BOOST_REQUIRE(o_found);
-            //         BOOST_TEST(*o_found == 42);
-            //     }
-            //     {
-            //         const auto o_found = double_array_.find("UTIGOSI");
-            //         BOOST_REQUIRE(o_found);
-            //         BOOST_TEST(*o_found == 24);
-            //     }
-            //     {
-            //         const auto o_found = double_array_.find("UTO");
-            //         BOOST_REQUIRE(o_found);
-            //         BOOST_TEST(*o_found == 2424);
-            //     }
-            //     {
-            //         const auto o_found = double_array_.find("SUIZENJI");
-            //         BOOST_CHECK(!o_found);
-            //     }
-            // }
             // {
             //     const tetengo::trie::double_array double_array_{ expected_values4 };
 
