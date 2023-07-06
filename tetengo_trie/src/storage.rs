@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::Any;
 use std::error;
 use std::io::Write;
 
@@ -177,10 +178,26 @@ pub trait Storage<T> {
     ) -> Result<()>;
 
     /**
-     * Clone this storage as Box.
+     * Clones this storage as Box.
      *
      * # Returns
      * A Box of a clone of this storage.
      */
     fn clone_box(&self) -> Box<dyn Storage<T>>;
+
+    /**
+     * Returns this object as 'Any'.
+     *
+     * # Returns
+     * This object as 'Any'.
+     */
+    fn as_any(&self) -> &dyn Any;
+
+    /**
+     * Returns this mutable object as 'Any'.
+     *
+     * # Returns
+     * This mutable object as 'Any'.
+     */
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }

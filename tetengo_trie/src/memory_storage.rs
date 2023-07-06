@@ -5,6 +5,7 @@
  */
 
 use once_cell::sync::Lazy;
+use std::any::Any;
 use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::mem::size_of;
@@ -279,6 +280,14 @@ impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
             base_check_array: RefCell::new(self.base_check_array.borrow().clone()),
             value_array: self.value_array.clone(),
         })
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -695,5 +704,15 @@ mod tests {
             0x0000FE18u32,
         ];
         assert_eq!(base_check_array, &EXPECTED);
+    }
+
+    #[test]
+    fn as_any() {
+        // TODO: Implement it.
+    }
+
+    #[test]
+    fn as_any_mut() {
+        // TODO: Implement it.
     }
 }

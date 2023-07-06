@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::Any;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
@@ -117,6 +118,14 @@ impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
 
     fn clone_box(&self) -> Box<dyn Storage<T>> {
         todo!();
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -460,4 +469,14 @@ mod tests {
     //     // assert_eq!(storage.base_at(0), 2424);
     //     // assert_eq!(storage.check_at(5), 42);
     // }
+
+    #[test]
+    fn as_any() {
+        // TODO: Implement it.
+    }
+
+    #[test]
+    fn as_any_mut() {
+        // TODO: Implement it.
+    }
 }

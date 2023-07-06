@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::Any;
 use std::cell::RefCell;
 use std::fs::File;
 use std::io::Write;
@@ -327,6 +328,14 @@ impl<T: 'static> Storage<T> for MmapStorage<T> {
 
     fn clone_box(&self) -> Box<dyn Storage<T>> {
         todo!();
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -1010,5 +1019,15 @@ mod tests {
         //         assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
         //     }
         // }
+    }
+
+    #[test]
+    fn as_any() {
+        // TODO: Implement it.
+    }
+
+    #[test]
+    fn as_any_mut() {
+        // TODO: Implement it.
     }
 }
