@@ -445,7 +445,7 @@ mod tests {
     }
 
     #[test]
-    fn clone() {
+    fn clone_box() {
         let mut storage = SharedStorage::<u32>::new();
 
         storage.set_base_at(0, 42).unwrap();
