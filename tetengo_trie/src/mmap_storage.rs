@@ -413,7 +413,7 @@ mod tests {
         0x00u8,
     ];
 
-    fn _base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
+    fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
@@ -984,50 +984,52 @@ mod tests {
             let _result = storage.serialize(&mut writer, &serializer);
         }
 
-        // #[test]
-        // fn clone() {
-        //     {
-        //         let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        //         let file_size = file_size_of(&file);
-        //         let file_mapping = Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
-        //         let deserializer = ValueDeserializer::<u32>::new(|serialized| {
-        //             static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
-        //                 Lazy::new(|| IntegerDeserializer::new(false));
-        //             INTEGER_DESERIALIZER.deserialize(serialized)
-        //         });
-        //         let storage = MmapStorage::new(file_mapping,0, file_size, deserializer)
-        //             .expect("Can't create a storage.");
+        #[test]
+        fn clone() {
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = file_size_of(&file);
+                let file_mapping =
+                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                    .expect("Can't create a storage.");
 
-        //         let clone = storage.clone();
-        //         assert_eq!(base_check_array_of(&clone), base_check_array_of(&storage));
-        //         assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
-        //     }
-        //     {
-        //         let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
-        //         let file_size = file_size_of(&file);
-        //         let file_mapping = Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
-        //         let deserializer = ValueDeserializer::<u32>::new(|serialized| {
-        //             static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
-        //                 Lazy::new(|| IntegerDeserializer::new(false));
-        //             INTEGER_DESERIALIZER.deserialize(serialized)
-        //         });
-        //         let storage = MmapStorage::new(file_mapping,5, file_size, deserializer)
-        //             .expect("Can't create a storage.");
+                let clone = storage.clone_box();
+                assert_eq!(base_check_array_of(&*clone), base_check_array_of(&storage));
+                assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
+            }
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file_size = file_size_of(&file);
+                let file_mapping =
+                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                    .expect("Can't create a storage.");
 
-        //         let clone = storage.clone();
-        //         assert_eq!(base_check_array_of(&clone), base_check_array_of(&storage));
-        //         assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
-        //     }
-        // }
-    }
+                let clone = storage.clone_box();
+                assert_eq!(base_check_array_of(&*clone), base_check_array_of(&storage));
+                assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
+            }
+        }
 
-    #[test]
-    fn as_any() {
-        // TODO: Implement it.
-    }
+        #[test]
+        fn as_any() {
+            // TODO: Implement it.
+        }
 
-    #[test]
-    fn as_any_mut() {
-        // TODO: Implement it.
+        #[test]
+        fn as_any_mut() {
+            // TODO: Implement it.
+        }
     }
 }
