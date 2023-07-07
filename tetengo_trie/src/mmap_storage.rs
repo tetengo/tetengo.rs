@@ -117,7 +117,7 @@ impl StorageError for MmapStorageError {}
  * * `T` - A value type.
  */
 #[derive(Debug)]
-pub struct MmapStorage<T> {
+pub struct MmapStorage<T: Clone> {
     file_mapping: Rc<FileMapping>,
     content_offset: usize,
     file_size: usize,
@@ -125,7 +125,7 @@ pub struct MmapStorage<T> {
     value_cache: RefCell<ValueCache<T>>,
 }
 
-impl<T: 'static> MmapStorage<T> {
+impl<T: Clone + 'static> MmapStorage<T> {
     /// A default value cache capacity.
     pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
 
@@ -245,7 +245,7 @@ impl<T: 'static> MmapStorage<T> {
     }
 }
 
-impl<T: 'static> Storage<T> for MmapStorage<T> {
+impl<T: Clone + 'static> Storage<T> for MmapStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         self.read_u32(0).map(|v| v as usize)
     }
@@ -327,7 +327,13 @@ impl<T: 'static> Storage<T> for MmapStorage<T> {
     }
 
     fn clone_box(&self) -> Box<dyn Storage<T>> {
-        todo!();
+        Box::new(Self {
+            file_mapping: self.file_mapping.clone(),
+            file_size: self.file_size,
+            content_offset: self.content_offset,
+            value_deserializer: self.value_deserializer.clone(),
+            value_cache: RefCell::new(self.value_cache.borrow().clone()),
+        })
     }
 
     fn as_any(&self) -> &dyn Any {

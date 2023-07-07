@@ -75,11 +75,11 @@ impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
  * * `T` - A value type.
  */
 #[derive(Clone, Copy)]
-pub struct ValueDeserializer<T> {
+pub struct ValueDeserializer<T: Clone> {
     deserialize: fn(serialized: &[u8]) -> Result<T>,
 }
 
-impl<T> ValueDeserializer<T> {
+impl<T: Clone> ValueDeserializer<T> {
     /**
      * Creates a value deserializer.
      *
@@ -107,7 +107,7 @@ impl<T> ValueDeserializer<T> {
     }
 }
 
-impl<T> fmt::Debug for ValueDeserializer<T> {
+impl<T: Clone> fmt::Debug for ValueDeserializer<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueDeserializer")
             .field("deserialize", &"<fn>")
