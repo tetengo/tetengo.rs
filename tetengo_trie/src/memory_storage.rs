@@ -708,11 +708,15 @@ mod tests {
 
     #[test]
     fn as_any() {
-        // TODO: Implement it.
+        let storage = MemoryStorage::<u32>::new();
+
+        let _ = storage.as_any();
     }
 
     #[test]
     fn as_any_mut() {
-        // TODO: Implement it.
+        let mut storage = MemoryStorage::<u32>::new();
+
+        let _ = storage.as_any_mut();
     }
 }

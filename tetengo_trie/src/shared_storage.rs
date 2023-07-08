@@ -475,11 +475,15 @@ mod tests {
 
     #[test]
     fn as_any() {
-        // TODO: Implement it.
+        let storage = SharedStorage::<u32>::new();
+
+        let _ = storage.as_any();
     }
 
     #[test]
     fn as_any_mut() {
-        // TODO: Implement it.
+        let mut storage = SharedStorage::<u32>::new();
+
+        let _ = storage.as_any_mut();
     }
 }
