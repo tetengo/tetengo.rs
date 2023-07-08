@@ -7,6 +7,7 @@
 use std::fmt::{self, Debug, Formatter};
 
 use crate::double_array_builder;
+use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
 
 /**
@@ -224,7 +225,15 @@ impl<V: Clone + 'static> DoubleArray<V> {
         }
     }
 
-    // TODO: Implement iter().
+    /**
+     * Returns an iterator.
+     *
+     * # Returns
+     * A double array iterator.
+     */
+    pub fn iter(&self) -> DoubleArrayIterator<'_, V> {
+        DoubleArrayIterator::new(self.storage.as_ref(), self.root_base_check_index)
+    }
 
     /**
      * Returns a subtrie.
@@ -270,7 +279,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * The storage.
      */
     pub fn storage(&self) -> &dyn Storage<V> {
-        &*self.storage
+        self.storage.as_ref()
     }
 
     /**
@@ -288,6 +297,7 @@ impl<V> Debug for DoubleArray<V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArray")
             .field("storage", &"Box<dyn Storage<V>")
+            .field("root_base_check_index", &self.root_base_check_index)
             .finish()
     }
 }
@@ -635,7 +645,23 @@ mod tests {
 
         #[test]
         fn iter() {
-            // TODO: Implement it.
+            {
+                let double_array = DoubleArray::<i32>::new().unwrap();
+
+                let _iterator = double_array.iter();
+            }
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+
+                let _iterator = double_array.iter();
+            }
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+
+                let _iterator = double_array.iter();
+            }
         }
 
         #[test]
@@ -666,17 +692,22 @@ mod tests {
                         let found = subtrie.find("SETA").unwrap();
                         assert!(found.is_none());
                     }
-                    //         {
-                    //             auto iterator = std::begin(*o_subtrie);
+                    {
+                        let mut iterator = subtrie.iter();
 
-                    //             BOOST_TEST(*iterator == 24);
-
-                    //             ++iterator;
-                    //             BOOST_TEST(*iterator == 2424);
-
-                    //             ++iterator;
-                    //             BOOST_CHECK(iterator == std::end(*o_subtrie));
-                    //         }
+                        {
+                            let element = iterator.next().unwrap();
+                            assert_eq!(element, 24);
+                        }
+                        {
+                            let element = iterator.next().unwrap();
+                            assert_eq!(element, 2424);
+                        }
+                        {
+                            let element = iterator.next();
+                            assert!(element.is_none());
+                        }
+                    }
 
                     let subtrie2 = subtrie.subtrie("TI").unwrap();
                     {
