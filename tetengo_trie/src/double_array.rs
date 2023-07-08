@@ -288,6 +288,7 @@ impl<V> Debug for DoubleArray<V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArray")
             .field("storage", &"Box<dyn Storage<V>")
+            .field("root_base_check_index", &self.root_base_check_index)
             .finish()
     }
 }
