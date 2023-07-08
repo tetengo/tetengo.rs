@@ -703,25 +703,22 @@ mod tests {
 
         #[test]
         fn storage() {
-            // TODO: Implement it.
-            // {
-            //     let double_array = DoubleArray::<i32>::new().unwrap();
+            let double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
-            //     let base_check_array = _base_check_array_of(double_array.storage()).unwrap();
+            let base_check_array = base_check_array_of(double_array.storage()).unwrap();
 
-            //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
-            // }
+            assert_eq!(base_check_array, EXPECTED_BASE_CHECK_ARRAY3);
         }
 
         #[test]
         fn storage_mut() {
-            // {
-            //     let mut double_array = DoubleArray::<i32>::new().unwrap();
+            let mut double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
-            //     let base_check_array = _base_check_array_of(double_array.storage_mut()).unwrap();
+            let base_check_array = base_check_array_of(double_array.storage_mut()).unwrap();
 
-            //     assert_eq!(base_check_array, _EXPECTED_EMPTY_BASE_CHECK_ARRAY3);
-            // }
+            assert_eq!(base_check_array, EXPECTED_BASE_CHECK_ARRAY3);
         }
     }
 }
