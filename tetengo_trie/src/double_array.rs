@@ -27,6 +27,12 @@ pub enum DoubleArrayError {
      */
     #[error("density_factor must be greater than 0.")]
     InvalidDensityFactor,
+
+    /**
+     * key_prefix is not found.
+     */
+    #[error("key_prefix is not found.")]
+    KeyPrefixNotFound,
 }
 
 /// The double array element type.
@@ -218,6 +224,29 @@ impl<V: Clone + 'static> DoubleArray<V> {
         }
     }
 
+    // TODO: Implement iter().
+
+    /**
+     * Returns a subtrie.
+     *
+     * # Arguments
+     * * `key_prefix` - A key prefix.
+     *
+     * # Returns
+     * A double array of the subtrie.
+     *
+     * # Errors
+     * * When the double array does not have the given key prefix.
+     * * When it fails to access the storage.
+     */
+    pub fn subtrie(&self, key_prefix: &str) -> Result<Self> {
+        let index = self.traverse(key_prefix)?;
+        let Some(index) = index else {
+            return Err(DoubleArrayError::KeyPrefixNotFound.into());
+        };
+        Ok(Self::new_with_storage(self.storage().clone_box(), index))
+    }
+
     fn traverse(&self, key: &str) -> Result<Option<usize>> {
         let mut base_check_index = self.root_base_check_index;
         for c in key.bytes() {
@@ -233,8 +262,6 @@ impl<V: Clone + 'static> DoubleArray<V> {
 
         Ok(Some(base_check_index))
     }
-
-    // TODO: Implement iter().
 
     /**
      * Returns the storage.
@@ -609,6 +636,69 @@ mod tests {
         #[test]
         fn iter() {
             // TODO: Implement it.
+        }
+
+        #[test]
+        fn subtrie() {
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+
+                {
+                    let subtrie = double_array.subtrie("U").unwrap();
+                    {
+                        let found = subtrie.find("TIGOSI").unwrap().unwrap();
+                        assert_eq!(found, 24);
+                    }
+                    {
+                        let found = subtrie.find("TO").unwrap().unwrap();
+                        assert_eq!(found, 2424);
+                    }
+                    {
+                        let found = subtrie.find("SETA").unwrap();
+                        assert!(found.is_none());
+                    }
+                    {
+                        let found = subtrie.find("UTIGOSI").unwrap();
+                        assert!(found.is_none());
+                    }
+                    {
+                        let found = subtrie.find("SETA").unwrap();
+                        assert!(found.is_none());
+                    }
+                    //         {
+                    //             auto iterator = std::begin(*o_subtrie);
+
+                    //             BOOST_TEST(*iterator == 24);
+
+                    //             ++iterator;
+                    //             BOOST_TEST(*iterator == 2424);
+
+                    //             ++iterator;
+                    //             BOOST_CHECK(iterator == std::end(*o_subtrie));
+                    //         }
+
+                    let subtrie2 = subtrie.subtrie("TI").unwrap();
+                    {
+                        let found = subtrie2.find("GOSI").unwrap().unwrap();
+                        assert_eq!(found, 24);
+                    }
+                }
+                {
+                    let subtrie = double_array.subtrie("T");
+                    assert!(subtrie.is_err());
+                }
+            }
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+
+                let subtrie = double_array.subtrie("赤").unwrap();
+                {
+                    let found = subtrie.find("水").unwrap().unwrap();
+                    assert_eq!(found, 42);
+                }
+            }
         }
 
         #[test]
