@@ -180,6 +180,20 @@ impl<V: Clone + 'static> DoubleArray<V> {
     }
 
     /**
+     * Creates a double array.
+     *
+     * # Arguments
+     * * `storage`               - A storage.
+     * * `root_base_check_index` - A root base-check index.
+     */
+    pub fn new_with_storage(storage: Box<dyn Storage<V>>, root_base_check_index: usize) -> Self {
+        Self {
+            storage,
+            root_base_check_index,
+        }
+    }
+
+    /**
      * Finds the value correspoinding the given key.
      *
      * # Arguments
@@ -493,24 +507,53 @@ mod tests {
 
         #[test]
         fn new_with_elements_buldingobserverset_densityfactor() {
-            let mut adding_called = false;
-            let mut done_called = false;
-            let double_array =
-                DoubleArray::<i32>::new_with_elements_buldingobserverset_densityfactor(
-                    EXPECTED_VALUES3.to_vec(),
-                    &mut BuldingObserverSet::new(&mut |_| adding_called = true, &mut || {
-                        done_called = true
-                    }),
-                    DEFAULT_DENSITY_FACTOR,
-                )
-                .unwrap();
+            {
+                let mut adding_called = false;
+                let mut done_called = false;
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements_buldingobserverset_densityfactor(
+                        EXPECTED_VALUES3.to_vec(),
+                        &mut BuldingObserverSet::new(&mut |_| adding_called = true, &mut || {
+                            done_called = true
+                        }),
+                        DEFAULT_DENSITY_FACTOR,
+                    )
+                    .unwrap();
+
+                assert_eq!(
+                    base_check_array_of(double_array.storage()).unwrap(),
+                    EXPECTED_BASE_CHECK_ARRAY3
+                );
+                assert!(adding_called);
+                assert!(done_called);
+            }
+            {
+                let double_array =
+                    DoubleArray::<i32>::new_with_elements_buldingobserverset_densityfactor(
+                        EXPECTED_VALUES3.to_vec(),
+                        &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+                        0,
+                    );
+
+                assert!(double_array.is_err());
+            }
+        }
+
+        #[test]
+        fn new_with_storage() {
+            let double_array0 =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let storage = double_array0.storage();
+
+            let double_array1 = DoubleArray::<i32>::new_with_storage(storage.clone_box(), 8);
 
             assert_eq!(
-                base_check_array_of(double_array.storage()).unwrap(),
+                base_check_array_of(double_array1.storage()).unwrap(),
                 EXPECTED_BASE_CHECK_ARRAY3
             );
-            assert!(adding_called);
-            assert!(done_called);
+
+            let found = double_array1.find("GOSI").unwrap().unwrap();
+            assert_eq!(found, 24);
         }
 
         #[test]
