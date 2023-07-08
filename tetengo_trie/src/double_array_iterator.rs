@@ -178,5 +178,16 @@ mod tests {
                 assert!(element.is_none());
             }
         }
+        {
+            let double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let values = double_array
+                .iter()
+                .filter(|&e| e < 100)
+                .map(|e| e * 2)
+                .collect::<Vec<_>>();
+
+            assert_eq!(values, vec![84, 48]);
+        }
     }
 }
