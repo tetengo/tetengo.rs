@@ -6,15 +6,16 @@
 
 use std::fmt::{self, Debug, Formatter};
 
+use crate::double_array;
 use crate::storage::Storage;
 
 /**
  * A double array iterator.
  */
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct DoubleArrayIterator<'a, T> {
-    _storage: &'a dyn Storage<T>,
-    _root_base_check_index: usize,
+    storage: &'a dyn Storage<T>,
+    base_check_index_key_stack: Vec<(usize, Vec<u8>)>,
 }
 
 impl<'a, T> DoubleArrayIterator<'a, T> {
@@ -27,9 +28,67 @@ impl<'a, T> DoubleArrayIterator<'a, T> {
      */
     pub fn new(storage: &'a dyn Storage<T>, root_base_check_index: usize) -> Self {
         Self {
-            _storage: storage,
-            _root_base_check_index: root_base_check_index,
+            storage,
+            base_check_index_key_stack: vec![(root_base_check_index, Vec::new())],
         }
+    }
+}
+
+impl<T> Iterator for DoubleArrayIterator<'_, T> {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (base_check_index, key) = self.base_check_index_key_stack.pop()?;
+
+        let base = match self.storage.base_at(base_check_index) {
+            Ok(base) => base,
+            Err(e) => {
+                debug_assert!(false, "{}", e);
+                return None;
+            }
+        };
+        let check = match self.storage.check_at(base_check_index) {
+            Ok(check) => check,
+            Err(e) => {
+                debug_assert!(false, "{}", e);
+                return None;
+            }
+        };
+
+        if check == double_array::KEY_TERMINATOR {
+            return Some(base);
+        }
+
+        for char_code in (0..=0xFE).rev() {
+            let char_code_as_uint8 = char_code as u8;
+            let next_index = base + char_code_as_uint8 as i32;
+            if next_index < 0 {
+                continue;
+            }
+            let check_at_next_index = match self.storage.check_at(next_index as usize) {
+                Ok(check) => check,
+                Err(e) => {
+                    debug_assert!(false, "{}", e);
+                    return None;
+                }
+            };
+            if check_at_next_index == char_code_as_uint8 {
+                let mut next_key_tail = if char_code_as_uint8 != double_array::KEY_TERMINATOR {
+                    vec![char_code_as_uint8]
+                } else {
+                    Vec::new()
+                };
+                let next_key = {
+                    let mut next_key = key.clone();
+                    next_key.append(&mut next_key_tail);
+                    next_key
+                };
+                self.base_check_index_key_stack
+                    .push((next_index as usize, next_key));
+            }
+        }
+
+        self.next()
     }
 }
 
@@ -55,7 +114,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const _EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
+    const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
         ("赤瀬", 24), // "Akase" in Kanji
         ("赤水", 42), // "Akamizu" in Kanji
     ];
@@ -65,6 +124,59 @@ mod tests {
         let double_array =
             DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
-        let _ = double_array.iter();
+        let _iterator = double_array.iter();
+    }
+
+    #[test]
+    fn next() {
+        {
+            let double_array = DoubleArray::<i32>::new().unwrap();
+            let mut iterator = double_array.iter();
+
+            {
+                let element = iterator.next();
+                assert!(element.is_none());
+            }
+        }
+        {
+            let double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let mut iterator = double_array.iter();
+
+            {
+                let element = iterator.next().unwrap();
+                assert_eq!(element, 42);
+            }
+            {
+                let element = iterator.next().unwrap();
+                assert_eq!(element, 24);
+            }
+            {
+                let element = iterator.next().unwrap();
+                assert_eq!(element, 2424);
+            }
+            {
+                let element = iterator.next();
+                assert!(element.is_none());
+            }
+        }
+        {
+            let double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+            let mut iterator = double_array.iter();
+
+            {
+                let element = iterator.next().unwrap();
+                assert_eq!(element, 42);
+            }
+            {
+                let element = iterator.next().unwrap();
+                assert_eq!(element, 24);
+            }
+            {
+                let element = iterator.next();
+                assert!(element.is_none());
+            }
+        }
     }
 }
