@@ -121,10 +121,25 @@ mod tests {
 
     #[test]
     fn new() {
-        let double_array =
-            DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+        {
+            let double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
-        let _iterator = double_array.iter();
+            let _iterator = double_array.iter();
+        }
+        {
+            let double_array =
+                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let mut iterator = double_array.iter();
+
+            let _ = iterator.next();
+
+            let mut iterator2 = iterator.clone();
+
+            let element = iterator2.next().unwrap();
+
+            assert_eq!(element, 24);
+        }
     }
 
     #[test]
