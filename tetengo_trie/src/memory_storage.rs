@@ -5,10 +5,12 @@
  */
 
 use once_cell::sync::Lazy;
+use std::any::Any;
 use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::mem::size_of;
 
+use crate::double_array::VACANT_CHECK_VALUE;
 use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
 use crate::serializer::{Deserializer, Serializer};
 use crate::storage::{Result, Storage};
@@ -20,21 +22,19 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * # Type Parameters
  * * `T` - A value type.
  */
-#[derive(Clone, Debug, Default)]
-pub struct MemoryStorage<T> {
+#[derive(Debug, Default)]
+pub struct MemoryStorage<T: Clone> {
     base_check_array: RefCell<Vec<u32>>,
     value_array: Vec<Option<T>>,
 }
 
-impl<T> MemoryStorage<T> {
+impl<T: Clone + 'static> MemoryStorage<T> {
     /**
      * Creates a memory storage.
      */
     pub fn new() -> Self {
         Self {
-            base_check_array: RefCell::new(vec![
-                0xFF, /* TODO: 0x00000000 | tetengo::trie::double_array::key_terminator() */
-            ]),
+            base_check_array: RefCell::new(vec![VACANT_CHECK_VALUE as u32]),
             value_array: Vec::new(),
         }
     }
@@ -183,21 +183,21 @@ impl<T> MemoryStorage<T> {
 
     fn ensure_base_check_size(&self, size: usize) {
         if size > self.base_check_array.borrow().len() {
-            self.base_check_array.borrow_mut().resize(
-                size, 0xFF, /* TODO: 0x00000000U | double_array::vacant_check_value() */
-            );
+            self.base_check_array
+                .borrow_mut()
+                .resize(size, VACANT_CHECK_VALUE as u32);
         }
     }
 }
 
-impl<T> Storage<T> for MemoryStorage<T> {
+impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         Ok(self.base_check_array.borrow().len())
     }
 
     fn base_at(&self, base_check_index: usize) -> Result<i32> {
         self.ensure_base_check_size(base_check_index + 1);
-        Ok((self.base_check_array.borrow()[base_check_index] >> 8u32) as i32)
+        Ok(self.base_check_array.borrow()[base_check_index] as i32 >> 8i32)
     }
 
     fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {
@@ -274,6 +274,20 @@ impl<T> Storage<T> for MemoryStorage<T> {
         Self::serialize_value_array(writer, value_serializer, &self.value_array)?;
 
         Ok(())
+    }
+    fn clone_box(&self) -> Box<dyn Storage<T>> {
+        Box::new(Self {
+            base_check_array: RefCell::new(self.base_check_array.borrow().clone()),
+            value_array: self.value_array.clone(),
+        })
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -461,10 +475,7 @@ mod tests {
     fn check_at() {
         let storage = MemoryStorage::<u32>::new();
 
-        assert_eq!(
-            storage.check_at(42).unwrap(),
-            0xFF /* TODO: tetengo::trie::double_array::vacant_check_value() */
-        );
+        assert_eq!(storage.check_at(42).unwrap(), VACANT_CHECK_VALUE);
     }
 
     #[test]
@@ -676,16 +687,16 @@ mod tests {
     }
 
     #[test]
-    fn clone() {
+    fn clone_box() {
         let mut storage = MemoryStorage::<u32>::new();
 
         storage.set_base_at(0, 42).unwrap();
         storage.set_base_at(1, 0xFE).unwrap();
         storage.set_check_at(1, 24).unwrap();
 
-        let clone = storage.clone();
+        let clone = storage.clone_box();
 
-        let base_check_array = base_check_array_of(&clone);
+        let base_check_array = base_check_array_of(&*clone);
 
         #[rustfmt::skip]
         const EXPECTED: [u32; 2] = [
@@ -693,5 +704,19 @@ mod tests {
             0x0000FE18u32,
         ];
         assert_eq!(base_check_array, &EXPECTED);
+    }
+
+    #[test]
+    fn as_any() {
+        let storage = MemoryStorage::<u32>::new();
+
+        let _ = storage.as_any();
+    }
+
+    #[test]
+    fn as_any_mut() {
+        let mut storage = MemoryStorage::<u32>::new();
+
+        let _ = storage.as_any_mut();
     }
 }

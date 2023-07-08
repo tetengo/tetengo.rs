@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::Any;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
@@ -18,12 +19,12 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * # Type Parameters
  * * `T` - A value type.
  */
-#[derive(Clone, Debug, Default)]
-pub struct SharedStorage<T> {
+#[derive(Debug, Default)]
+pub struct SharedStorage<T: Clone> {
     entity: Rc<MemoryStorage<T>>,
 }
 
-impl<T> SharedStorage<T> {
+impl<T: Clone + 'static> SharedStorage<T> {
     /**
      * Creates a shared storage.
      */
@@ -55,7 +56,7 @@ impl<T> SharedStorage<T> {
     }
 }
 
-impl<T> Storage<T> for SharedStorage<T> {
+impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
     fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }
@@ -114,6 +115,20 @@ impl<T> Storage<T> for SharedStorage<T> {
     ) -> Result<()> {
         self.entity.serialize(writer, value_serializer)
     }
+
+    fn clone_box(&self) -> Box<dyn Storage<T>> {
+        Box::new(Self {
+            entity: self.entity.clone(),
+        })
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
 }
 
 #[cfg(test)]
@@ -121,6 +136,7 @@ mod tests {
     use once_cell::sync::Lazy;
     use std::io::Cursor;
 
+    use crate::double_array::VACANT_CHECK_VALUE;
     use crate::serializer::{Deserializer, Serializer};
     use crate::string_serializer::{StringDeserializer, StringSerializer};
 
@@ -253,10 +269,7 @@ mod tests {
     fn check_at() {
         let storage = SharedStorage::<u32>::new();
 
-        assert_eq!(
-            storage.check_at(42).unwrap(),
-            0xFF, /* TODO: double_array::vacant_check_value() */
-        );
+        assert_eq!(storage.check_at(42).unwrap(), VACANT_CHECK_VALUE);
     }
 
     #[test]
@@ -425,25 +438,26 @@ mod tests {
         assert_eq!(serialized, &EXPECTED);
     }
 
-    impl<T> SharedStorage<T> {
+    impl<T: Clone> SharedStorage<T> {
         fn shared_with(&self, another: &SharedStorage<T>) -> bool {
             Rc::ptr_eq(&self.entity, &another.entity)
         }
     }
 
     #[test]
-    fn clone() {
+    fn clone_box() {
         let mut storage = SharedStorage::<u32>::new();
 
         storage.set_base_at(0, 42).unwrap();
         storage.set_base_at(1, 0xFE).unwrap();
         storage.set_check_at(1, 24).unwrap();
 
-        let /* mut */ clone = storage.clone();
+        let clone = storage.clone_box();
 
-        assert!(clone.shared_with(&storage));
+        let clone_as_shared_storage = clone.as_any().downcast_ref::<SharedStorage<u32>>().unwrap();
+        assert!(clone_as_shared_storage.shared_with(&storage));
 
-        let base_check_array = base_check_array_of(&clone);
+        let base_check_array = base_check_array_of(&*clone);
 
         const EXPECTED: [u32; 2] = [0x00002AFFu32, 0x0000FE18u32];
         assert_eq!(base_check_array, &EXPECTED);
@@ -457,5 +471,19 @@ mod tests {
 
         // assert_eq!(storage.base_at(0), 2424);
         // assert_eq!(storage.check_at(5), 42);
+    }
+
+    #[test]
+    fn as_any() {
+        let storage = SharedStorage::<u32>::new();
+
+        let _ = storage.as_any();
+    }
+
+    #[test]
+    fn as_any_mut() {
+        let mut storage = SharedStorage::<u32>::new();
+
+        let _ = storage.as_any_mut();
     }
 }

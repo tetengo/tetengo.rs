@@ -241,6 +241,8 @@ fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Resu
 
 #[cfg(test)]
 mod tests {
+    use crate::double_array::KEY_TERMINATOR;
+
     use super::*;
 
     const fn nul_byte() -> u8 {
@@ -264,9 +266,7 @@ mod tests {
             let expected_serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
-            assert!(!serialized
-                .iter()
-                .any(|&b| b == 0x00u8 /* TODO: tetengo::trie::double_array::key_terminator() */));
+            assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
         }
         {
             let serializer = IntegerSerializer::<u32>::new(false);
@@ -283,9 +283,7 @@ mod tests {
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
-            assert!(!serialized
-                .iter()
-                .any(|&b| b == 0x00u8 /* TODO: tetengo::trie::double_array::key_terminator() */));
+            assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
         }
     }
 
