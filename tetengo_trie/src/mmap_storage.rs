@@ -1006,7 +1006,10 @@ mod tests {
                     .expect("Can't create a storage.");
 
                 let clone = storage.clone_box();
-                assert_eq!(base_check_array_of(&*clone), base_check_array_of(&storage));
+                assert_eq!(
+                    base_check_array_of(clone.as_ref()),
+                    base_check_array_of(&storage)
+                );
                 assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
             }
             {
@@ -1023,7 +1026,10 @@ mod tests {
                     .expect("Can't create a storage.");
 
                 let clone = storage.clone_box();
-                assert_eq!(base_check_array_of(&*clone), base_check_array_of(&storage));
+                assert_eq!(
+                    base_check_array_of(clone.as_ref()),
+                    base_check_array_of(&storage)
+                );
                 assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
             }
         }

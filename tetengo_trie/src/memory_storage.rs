@@ -696,7 +696,7 @@ mod tests {
 
         let clone = storage.clone_box();
 
-        let base_check_array = base_check_array_of(&*clone);
+        let base_check_array = base_check_array_of(clone.as_ref());
 
         #[rustfmt::skip]
         const EXPECTED: [u32; 2] = [

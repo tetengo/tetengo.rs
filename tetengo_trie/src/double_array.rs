@@ -7,6 +7,7 @@
 use std::fmt::{self, Debug, Formatter};
 
 use crate::double_array_builder;
+use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
 
 /**
@@ -224,7 +225,15 @@ impl<V: Clone + 'static> DoubleArray<V> {
         }
     }
 
-    // TODO: Implement iter().
+    /**
+     * Returns an iterator.
+     *
+     * # Returns
+     * A double array iterator.
+     */
+    pub fn iter(&self) -> DoubleArrayIterator<'_, V> {
+        DoubleArrayIterator::new(self.storage.as_ref(), self.root_base_check_index)
+    }
 
     /**
      * Returns a subtrie.
@@ -270,7 +279,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * The storage.
      */
     pub fn storage(&self) -> &dyn Storage<V> {
-        &*self.storage
+        self.storage.as_ref()
     }
 
     /**

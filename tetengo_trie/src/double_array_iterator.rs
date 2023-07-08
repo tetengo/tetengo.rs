@@ -62,7 +62,9 @@ mod tests {
 
     #[test]
     fn new() {
-        let _double_array =
+        let double_array =
             DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+
+        let _ = double_array.iter();
     }
 }
