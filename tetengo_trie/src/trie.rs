@@ -41,14 +41,36 @@ impl<Key: ?Sized, Value: Clone + 'static, KeySerializer: Serializer>
             _key_serializer: KeySerializer::new(true),
         })
     }
+
+    /**
+     * Creates a trie.
+     *
+     * # Arguments
+     * * `key_serializer` - A key serializer.
+     */
+    pub fn new_with_keyserializer(key_serializer: KeySerializer) -> Result<Self> {
+        Ok(Self {
+            _phantom: std::marker::PhantomData,
+            _double_array: DoubleArray::new()?,
+            _key_serializer: key_serializer,
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Trie;
+    use crate::string_serializer::StringSerializer;
+
+    use super::*;
 
     #[test]
     fn test_new() {
         let _trie = Trie::<str, i32>::new().unwrap();
+    }
+
+    #[test]
+    fn new_with_keyserializer() {
+        let key_serializer = StringSerializer::new(true);
+        let _trie = Trie::<str, i32>::new_with_keyserializer(key_serializer).unwrap();
     }
 }
