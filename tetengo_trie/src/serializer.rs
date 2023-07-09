@@ -16,6 +16,14 @@ pub trait Serializer {
     type Object: ?Sized;
 
     /**
+     * Creates an integer serializer.
+     *
+     * # Arguments
+     * * `fe_escape` - Set true to escape 0xFE.
+     */
+    fn new(fe_escape: bool) -> Self;
+
+    /**
      * Serializes an object.
      *
      * # Arguments
@@ -48,6 +56,14 @@ pub trait Deserializer {
      * An object type.
      */
     type Object;
+
+    /**
+     * Creates an integer deserializer.
+     *
+     * # Arguments
+     * * `fe_escape` - Set true to escape 0xFE.
+     */
+    fn new(fe_escape: bool) -> Self;
 
     /**
      * Deserializes an object.

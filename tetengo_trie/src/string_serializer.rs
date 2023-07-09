@@ -12,17 +12,12 @@ use crate::serializer::{Deserializer, DeserializerOf, Result, Serializer, Serial
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringSerializer;
 
-impl StringSerializer {
-    /**
-     * Creates a string serializer.
-     */
-    pub fn new() -> Self {
-        StringSerializer {}
-    }
-}
-
 impl Serializer for StringSerializer {
     type Object = str;
+
+    fn new(_: bool) -> Self {
+        StringSerializer {}
+    }
 
     fn serialize(&self, object: &str) -> Vec<u8> {
         object.as_bytes().to_vec()
@@ -35,17 +30,12 @@ impl Serializer for StringSerializer {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringDeserializer;
 
-impl StringDeserializer {
-    /**
-     * Creates a string deserializer.
-     */
-    pub fn new() -> Self {
-        StringDeserializer {}
-    }
-}
-
 impl Deserializer for StringDeserializer {
     type Object = String;
+
+    fn new(_: bool) -> Self {
+        StringDeserializer {}
+    }
 
     fn deserialize(&self, bytes: &[u8]) -> Result<String> {
         String::from_utf8(bytes.to_vec()).map_err(Into::into)
@@ -68,7 +58,7 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let serializer = <() as SerializerOf<str>>::Type::new();
+        let serializer = <() as SerializerOf<str>>::Type::new(false);
 
         let object = "Sakuramachi";
         let expected_serialized = "Sakuramachi";
@@ -83,7 +73,7 @@ mod tests {
     #[test]
     fn deserialize() {
         {
-            let deserializer = <() as DeserializerOf<String>>::Type::new();
+            let deserializer = <() as DeserializerOf<String>>::Type::new(false);
 
             let serialized = "Sakuramachi".as_bytes();
             let expected_object = "Sakuramachi";
@@ -91,7 +81,7 @@ mod tests {
             assert_eq!(object.as_str(), expected_object);
         }
         {
-            let deserializer = <() as DeserializerOf<String>>::Type::new();
+            let deserializer = <() as DeserializerOf<String>>::Type::new(false);
 
             let serialized = &[0xFFu8, 0xFFu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(serialized) {

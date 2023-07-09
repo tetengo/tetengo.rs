@@ -63,23 +63,15 @@ pub struct IntegerSerializer<Object: Integer<Object>> {
     _phantom: marker::PhantomData<Object>,
 }
 
-impl<Object: Integer<Object>> IntegerSerializer<Object> {
-    /**
-     * Creates an integer serializer.
-     *
-     * # Arguments
-     * * `fe_escape` - Set true to escape 0xFE.
-     */
-    pub fn new(fe_escape: bool) -> Self {
+impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
+    type Object = Object;
+
+    fn new(fe_escape: bool) -> Self {
         IntegerSerializer {
             fe_escape,
             _phantom: marker::PhantomData,
         }
     }
-}
-
-impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
-    type Object = Object;
 
     fn serialize(&self, object: &Object) -> Vec<u8> {
         to_bytes(object, self.fe_escape)
@@ -129,24 +121,15 @@ pub struct IntegerDeserializer<Object: Integer<Object>> {
     _phantom: marker::PhantomData<Object>,
 }
 
-impl<Object: Integer<Object>> IntegerDeserializer<Object> {
-    /**
-     * Creates an integer deserializer.
-     *
-     * # Arguments
-     * * `fe_escape` - Set true to escape 0xFE.
-     */
-    pub fn new(fe_escape: bool) -> Self {
+impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
+    type Object = Object;
+
+    fn new(fe_escape: bool) -> Self {
         IntegerDeserializer {
             fe_escape,
             _phantom: marker::PhantomData,
         }
     }
-}
-
-impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
-    type Object = Object;
-
     fn deserialize(&self, bytes: &[u8]) -> Result<Object> {
         from_bytes(bytes, self.fe_escape)
     }
