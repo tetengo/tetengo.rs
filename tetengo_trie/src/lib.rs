@@ -9,6 +9,7 @@ pub mod serializer;
 pub mod shared_storage;
 pub mod storage;
 pub mod string_serializer;
+pub mod trie;
 pub mod value_serializer;
 
 mod double_array_builder;
