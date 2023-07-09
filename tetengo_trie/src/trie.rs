@@ -4,6 +4,11 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use crate::double_array::DEFAULT_DENSITY_FACTOR;
+
+/// The default double array density factor.
+const _DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
+
 /**
  * A trie.
  */
