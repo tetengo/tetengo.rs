@@ -51,12 +51,12 @@ impl FileMapping {
 }
 
 #[derive(Clone, Debug)]
-struct ValueCache<T> {
+struct ValueCache<Value> {
     cache_capacity: usize,
-    map: LinkedHashMap<usize, Option<T>>,
+    map: LinkedHashMap<usize, Option<Value>>,
 }
 
-impl<T> ValueCache<T> {
+impl<Value> ValueCache<Value> {
     fn new(cache_capacity: usize) -> Self {
         Self {
             cache_capacity,
@@ -68,12 +68,12 @@ impl<T> ValueCache<T> {
         self.map.contains_key(&index)
     }
 
-    fn at(&mut self, index: usize) -> Option<&Option<T>> {
+    fn at(&mut self, index: usize) -> Option<&Option<Value>> {
         let _ = self.map.to_back(&index);
         self.map.get(&index)
     }
 
-    fn insert(&mut self, index: usize, value: Option<T>) {
+    fn insert(&mut self, index: usize, value: Option<Value>) {
         debug_assert!(!self.has(index));
 
         while self.map.len() >= self.cache_capacity {
@@ -114,18 +114,18 @@ impl StorageError for MmapStorageError {}
  * An mmap storage.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
 #[derive(Debug)]
-pub struct MmapStorage<T: Clone> {
+pub struct MmapStorage<Value: Clone> {
     file_mapping: Rc<FileMapping>,
     content_offset: usize,
     file_size: usize,
-    value_deserializer: ValueDeserializer<T>,
-    value_cache: RefCell<ValueCache<T>>,
+    value_deserializer: ValueDeserializer<Value>,
+    value_cache: RefCell<ValueCache<Value>>,
 }
 
-impl<T: Clone + 'static> MmapStorage<T> {
+impl<Value: Clone + 'static> MmapStorage<Value> {
     /// A default value cache capacity.
     pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
 
@@ -151,7 +151,7 @@ impl<T: Clone + 'static> MmapStorage<T> {
         file_mapping: Rc<FileMapping>,
         content_offset: usize,
         file_size: usize,
-        value_deserializer: ValueDeserializer<T>,
+        value_deserializer: ValueDeserializer<Value>,
     ) -> Result<Self> {
         Self::new_with_value_cache_capacity(
             file_mapping,
@@ -183,7 +183,7 @@ impl<T: Clone + 'static> MmapStorage<T> {
         file_mapping: Rc<FileMapping>,
         content_offset: usize,
         file_size: usize,
-        value_deserializer: ValueDeserializer<T>,
+        value_deserializer: ValueDeserializer<Value>,
         value_cache_capacity: usize,
     ) -> Result<Self> {
         let self_ = Self {
@@ -245,7 +245,7 @@ impl<T: Clone + 'static> MmapStorage<T> {
     }
 }
 
-impl<T: Clone + 'static> Storage<T> for MmapStorage<T> {
+impl<Value: Clone + 'static> Storage<Value> for MmapStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         self.read_u32(0).map(|v| v as usize)
     }
@@ -277,7 +277,7 @@ impl<T: Clone + 'static> Storage<T> for MmapStorage<T> {
     fn for_value_at(
         &self,
         value_index: usize,
-        operation: &dyn Fn(&Option<T>) -> Result<()>,
+        operation: &dyn Fn(&Option<Value>) -> Result<()>,
     ) -> Result<()> {
         self.ensure_value_cached(value_index)?;
         operation(
@@ -291,7 +291,7 @@ impl<T: Clone + 'static> Storage<T> for MmapStorage<T> {
     fn for_value_at_mut(
         &self,
         value_index: usize,
-        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+        operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
     ) -> Result<()> {
         self.ensure_value_cached(value_index)?;
         operation(
@@ -302,7 +302,7 @@ impl<T: Clone + 'static> Storage<T> for MmapStorage<T> {
         )
     }
 
-    fn add_value_at(&mut self, _: usize, _: T) -> Result<()> {
+    fn add_value_at(&mut self, _: usize, _: Value) -> Result<()> {
         unreachable!("Unsupported operation.");
     }
 
@@ -321,12 +321,12 @@ impl<T: Clone + 'static> Storage<T> for MmapStorage<T> {
     fn serialize(
         &self,
         _writer: &mut dyn Write,
-        _value_serializer: &ValueSerializer<T>,
+        _value_serializer: &ValueSerializer<Value>,
     ) -> Result<()> {
         unreachable!("Unsupported operation.");
     }
 
-    fn clone_box(&self) -> Box<dyn Storage<T>> {
+    fn clone_box(&self) -> Box<dyn Storage<Value>> {
         Box::new(Self {
             file_mapping: self.file_mapping.clone(),
             file_size: self.file_size,
@@ -419,7 +419,7 @@ mod tests {
         0x00u8,
     ];
 
-    fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
+    fn base_check_array_of<Value>(storage: &dyn Storage<Value>) -> Vec<u32> {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {

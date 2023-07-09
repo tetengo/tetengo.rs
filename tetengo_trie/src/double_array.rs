@@ -99,13 +99,16 @@ pub const VACANT_CHECK_VALUE: u8 = 0xFF;
 
 /**
  * A double array.
+ *
+ * # Type Parameters
+ * * `Value` - A value type.
  */
-pub struct DoubleArray<V> {
-    storage: Box<dyn Storage<V>>,
+pub struct DoubleArray<Value> {
+    storage: Box<dyn Storage<Value>>,
     root_base_check_index: usize,
 }
 
-impl<V: Clone + 'static> DoubleArray<V> {
+impl<Value: Clone + 'static> DoubleArray<Value> {
     /**
      * Creates a double array.
      *
@@ -114,7 +117,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      */
     pub fn new() -> Result<Self> {
         Ok(Self {
-            storage: double_array_builder::build::<V>(
+            storage: double_array_builder::build::<Value>(
                 vec![],
                 &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
                 DEFAULT_DENSITY_FACTOR,
@@ -177,7 +180,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
         density_factor: usize,
     ) -> Result<Self> {
         Ok(Self {
-            storage: double_array_builder::build::<V>(
+            storage: double_array_builder::build::<Value>(
                 elements,
                 building_observer_set,
                 density_factor,
@@ -193,7 +196,10 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * * `storage`               - A storage.
      * * `root_base_check_index` - A root base-check index.
      */
-    pub fn new_with_storage(storage: Box<dyn Storage<V>>, root_base_check_index: usize) -> Self {
+    pub fn new_with_storage(
+        storage: Box<dyn Storage<Value>>,
+        root_base_check_index: usize,
+    ) -> Self {
         Self {
             storage,
             root_base_check_index,
@@ -231,7 +237,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Returns
      * A double array iterator.
      */
-    pub fn iter(&self) -> DoubleArrayIterator<'_, V> {
+    pub fn iter(&self) -> DoubleArrayIterator<'_, Value> {
         DoubleArrayIterator::new(self.storage.as_ref(), self.root_base_check_index)
     }
 
@@ -278,7 +284,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Returns
      * The storage.
      */
-    pub fn storage(&self) -> &dyn Storage<V> {
+    pub fn storage(&self) -> &dyn Storage<Value> {
         self.storage.as_ref()
     }
 
@@ -288,15 +294,15 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Returns
      * The mutable storage.
      */
-    pub fn storage_mut(&mut self) -> &mut dyn Storage<V> {
+    pub fn storage_mut(&mut self) -> &mut dyn Storage<Value> {
         &mut *self.storage
     }
 }
 
-impl<V> Debug for DoubleArray<V> {
+impl<Value> Debug for DoubleArray<Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArray")
-            .field("storage", &"Box<dyn Storage<V>")
+            .field("storage", &"Box<dyn Storage<Value>")
             .field("root_base_check_index", &self.root_base_check_index)
             .finish()
     }

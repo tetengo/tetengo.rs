@@ -17,19 +17,19 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * A shared storage.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
 #[derive(Debug, Default)]
-pub struct SharedStorage<T: Clone> {
-    entity: Rc<MemoryStorage<T>>,
+pub struct SharedStorage<Value: Clone> {
+    entity: Rc<MemoryStorage<Value>>,
 }
 
-impl<T: Clone + 'static> SharedStorage<T> {
+impl<Value: Clone + 'static> SharedStorage<Value> {
     /**
      * Creates a shared storage.
      */
     pub fn new() -> Self {
-        let entity = MemoryStorage::<T>::new();
+        let entity = MemoryStorage::<Value>::new();
         Self {
             entity: Rc::new(entity),
         }
@@ -47,16 +47,16 @@ impl<T: Clone + 'static> SharedStorage<T> {
      */
     pub fn from_reader(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<T>,
+        value_deserializer: &ValueDeserializer<Value>,
     ) -> Result<Self> {
-        let entity = MemoryStorage::<T>::from_reader(reader, value_deserializer)?;
+        let entity = MemoryStorage::<Value>::from_reader(reader, value_deserializer)?;
         Ok(Self {
             entity: Rc::new(entity),
         })
     }
 }
 
-impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
+impl<Value: Clone + 'static> Storage<Value> for SharedStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }
@@ -86,7 +86,7 @@ impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
     fn for_value_at(
         &self,
         value_index: usize,
-        operation: &dyn Fn(&Option<T>) -> Result<()>,
+        operation: &dyn Fn(&Option<Value>) -> Result<()>,
     ) -> Result<()> {
         self.entity.for_value_at(value_index, operation)
     }
@@ -94,12 +94,12 @@ impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
     fn for_value_at_mut(
         &self,
         value_index: usize,
-        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+        operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
     ) -> Result<()> {
         self.entity.for_value_at_mut(value_index, operation)
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
         let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
         entity.add_value_at(value_index, value)
     }
@@ -111,12 +111,12 @@ impl<T: Clone + 'static> Storage<T> for SharedStorage<T> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<T>,
+        value_serializer: &ValueSerializer<Value>,
     ) -> Result<()> {
         self.entity.serialize(writer, value_serializer)
     }
 
-    fn clone_box(&self) -> Box<dyn Storage<T>> {
+    fn clone_box(&self) -> Box<dyn Storage<Value>> {
         Box::new(Self {
             entity: self.entity.clone(),
         })
@@ -181,7 +181,7 @@ mod tests {
 
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
-    fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
+    fn base_check_array_of<Value>(storage: &dyn Storage<Value>) -> Vec<u32> {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
@@ -438,8 +438,8 @@ mod tests {
         assert_eq!(serialized, &EXPECTED);
     }
 
-    impl<T: Clone> SharedStorage<T> {
-        fn shared_with(&self, another: &SharedStorage<T>) -> bool {
+    impl<Value: Clone> SharedStorage<Value> {
+        fn shared_with(&self, another: &SharedStorage<Value>) -> bool {
             Rc::ptr_eq(&self.entity, &another.entity)
         }
     }

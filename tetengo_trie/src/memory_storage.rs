@@ -20,15 +20,15 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  * A memory storage.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
 #[derive(Debug, Default)]
-pub struct MemoryStorage<T: Clone> {
+pub struct MemoryStorage<Value: Clone> {
     base_check_array: RefCell<Vec<u32>>,
-    value_array: Vec<Option<T>>,
+    value_array: Vec<Option<Value>>,
 }
 
-impl<T: Clone + 'static> MemoryStorage<T> {
+impl<Value: Clone + 'static> MemoryStorage<Value> {
     /**
      * Creates a memory storage.
      */
@@ -51,7 +51,7 @@ impl<T: Clone + 'static> MemoryStorage<T> {
      */
     pub fn from_reader(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<T>,
+        value_deserializer: &ValueDeserializer<Value>,
     ) -> Result<Self> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
@@ -71,8 +71,8 @@ impl<T: Clone + 'static> MemoryStorage<T> {
 
     fn serialize_value_array(
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<T>,
-        value_array: &[Option<T>],
+        value_serializer: &ValueSerializer<Value>,
+        value_array: &[Option<Value>],
     ) -> Result<()> {
         assert!(value_array.len() < u32::MAX as usize);
         Self::write_u32(writer, value_array.len() as u32)?;
@@ -118,8 +118,8 @@ impl<T: Clone + 'static> MemoryStorage<T> {
 
     fn deserialize(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<T>,
-    ) -> Result<(Vec<u32>, Vec<Option<T>>)> {
+        value_deserializer: &ValueDeserializer<Value>,
+    ) -> Result<(Vec<u32>, Vec<Option<Value>>)> {
         let base_check_array = Self::deserialize_base_check_array(reader)?;
         let value_array = Self::deserialize_value_array(reader, value_deserializer)?;
         Ok((base_check_array, value_array))
@@ -136,8 +136,8 @@ impl<T: Clone + 'static> MemoryStorage<T> {
 
     fn deserialize_value_array(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<T>,
-    ) -> Result<Vec<Option<T>>> {
+        value_deserializer: &ValueDeserializer<Value>,
+    ) -> Result<Vec<Option<Value>>> {
         let size = Self::read_u32(reader)? as usize;
 
         let fixed_value_size = Self::read_u32(reader)? as usize;
@@ -190,7 +190,7 @@ impl<T: Clone + 'static> MemoryStorage<T> {
     }
 }
 
-impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
+impl<Value: Clone + 'static> Storage<Value> for MemoryStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         Ok(self.base_check_array.borrow().len())
     }
@@ -226,7 +226,7 @@ impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
     fn for_value_at(
         &self,
         value_index: usize,
-        operation: &dyn Fn(&Option<T>) -> Result<()>,
+        operation: &dyn Fn(&Option<Value>) -> Result<()>,
     ) -> Result<()> {
         if value_index >= self.value_array.len() {
             operation(&None)
@@ -238,7 +238,7 @@ impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
     fn for_value_at_mut(
         &self,
         value_index: usize,
-        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+        operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
     ) -> Result<()> {
         if value_index >= self.value_array.len() {
             operation(&None)
@@ -247,7 +247,7 @@ impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
         }
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()> {
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
         if value_index >= self.value_array.len() {
             self.value_array.resize_with(value_index + 1, || None);
         }
@@ -268,14 +268,14 @@ impl<T: Clone + 'static> Storage<T> for MemoryStorage<T> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<T>,
+        value_serializer: &ValueSerializer<Value>,
     ) -> Result<()> {
         Self::serialize_base_check_array(writer, &self.base_check_array.borrow())?;
         Self::serialize_value_array(writer, value_serializer, &self.value_array)?;
 
         Ok(())
     }
-    fn clone_box(&self) -> Box<dyn Storage<T>> {
+    fn clone_box(&self) -> Box<dyn Storage<Value>> {
         Box::new(Self {
             base_check_array: RefCell::new(self.base_check_array.borrow().clone()),
             value_array: self.value_array.clone(),
@@ -347,7 +347,7 @@ mod tests {
 
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
-    fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Vec<u32> {
+    fn base_check_array_of<Value>(storage: &dyn Storage<Value>) -> Vec<u32> {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {

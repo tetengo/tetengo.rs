@@ -27,9 +27,9 @@ pub trait StorageError: error::Error {}
  * A storage.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
-pub trait Storage<T> {
+pub trait Storage<Value> {
     /**
      * Returns the base-check size.
      *
@@ -118,7 +118,7 @@ pub trait Storage<T> {
     fn for_value_at(
         &self,
         value_index: usize,
-        operation: &dyn Fn(&Option<T>) -> Result<()>,
+        operation: &dyn Fn(&Option<Value>) -> Result<()>,
     ) -> Result<()>;
 
     /**
@@ -135,7 +135,7 @@ pub trait Storage<T> {
     fn for_value_at_mut(
         &self,
         value_index: usize,
-        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
+        operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
     ) -> Result<()>;
 
     /**
@@ -148,7 +148,7 @@ pub trait Storage<T> {
      * # Errors
      * * When it fails to write the value object.
      */
-    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()>;
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()>;
 
     /**
      * Returns the filling rate.
@@ -174,7 +174,7 @@ pub trait Storage<T> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<T>,
+        value_serializer: &ValueSerializer<Value>,
     ) -> Result<()>;
 
     /**
@@ -183,7 +183,7 @@ pub trait Storage<T> {
      * # Returns
      * A Box of a clone of this storage.
      */
-    fn clone_box(&self) -> Box<dyn Storage<T>>;
+    fn clone_box(&self) -> Box<dyn Storage<Value>>;
 
     /**
      * Returns this object as 'Any'.
