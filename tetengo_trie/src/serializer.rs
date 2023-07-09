@@ -70,7 +70,7 @@ pub trait Deserializer {
  * # Type Parameters
  * * `Object` - An object type.
  */
-pub trait SerializerOf<Object> {
+pub trait SerializerOf<Object: ?Sized> {
     /// The serializer type.
     type Type;
 }

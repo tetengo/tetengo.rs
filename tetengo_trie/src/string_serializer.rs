@@ -4,7 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use crate::serializer::{Deserializer, Result, Serializer};
+use crate::serializer::{Deserializer, DeserializerOf, Result, Serializer, SerializerOf};
 
 /**
  * A string serializer.
@@ -52,6 +52,14 @@ impl Deserializer for StringDeserializer {
     }
 }
 
+impl SerializerOf<str> for () {
+    type Type = StringSerializer;
+}
+
+impl DeserializerOf<String> for () {
+    type Type = StringDeserializer;
+}
+
 #[cfg(test)]
 mod tests {
     use std::string::FromUtf8Error;
@@ -60,7 +68,7 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let serializer = StringSerializer::new();
+        let serializer = <() as SerializerOf<str>>::Type::new();
 
         let object = "Sakuramachi";
         let expected_serialized = "Sakuramachi";
@@ -75,7 +83,7 @@ mod tests {
     #[test]
     fn deserialize() {
         {
-            let deserializer = StringDeserializer::new();
+            let deserializer = <() as DeserializerOf<String>>::Type::new();
 
             let serialized = "Sakuramachi".as_bytes();
             let expected_object = "Sakuramachi";
@@ -83,7 +91,7 @@ mod tests {
             assert_eq!(object.as_str(), expected_object);
         }
         {
-            let deserializer = StringDeserializer::new();
+            let deserializer = <() as DeserializerOf<String>>::Type::new();
 
             let serialized = &[0xFFu8, 0xFFu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(serialized) {
