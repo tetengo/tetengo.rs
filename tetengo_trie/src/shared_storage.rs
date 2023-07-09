@@ -412,7 +412,7 @@ mod tests {
             |value| {
                 static STRING_SERIALIZER: Lazy<StringSerializer> =
                     Lazy::new(|| StringSerializer::new(false));
-                STRING_SERIALIZER.serialize(value)
+                STRING_SERIALIZER.serialize(&value.as_str())
             },
             0,
         );

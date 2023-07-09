@@ -65,12 +65,12 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let _trie = Trie::<str, i32>::new().unwrap();
+        let _trie = Trie::<&str, i32>::new().unwrap();
     }
 
     #[test]
     fn new_with_keyserializer() {
         let key_serializer = StringSerializer::new(true);
-        let _trie = Trie::<str, i32>::new_with_keyserializer(key_serializer).unwrap();
+        let _trie = Trie::<&str, i32>::new_with_keyserializer(key_serializer).unwrap();
     }
 }

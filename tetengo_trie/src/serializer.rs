@@ -13,7 +13,7 @@ pub trait Serializer {
     /**
      * An object type.
      */
-    type Object: ?Sized;
+    type Object<'a>;
 
     /**
      * Creates an integer serializer.
@@ -32,7 +32,7 @@ pub trait Serializer {
      * # Returns
      * * The serialized object.
      */
-    fn serialize(&self, object: &Self::Object) -> Vec<u8>;
+    fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8>;
 }
 
 /**
@@ -86,7 +86,7 @@ pub trait Deserializer {
  * # Type Parameters
  * * `Object` - An object type.
  */
-pub trait SerializerOf<Object: ?Sized> {
+pub trait SerializerOf<Object> {
     /// The serializer type.
     type Type;
 }

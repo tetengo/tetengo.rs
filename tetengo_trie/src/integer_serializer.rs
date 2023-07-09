@@ -64,7 +64,7 @@ pub struct IntegerSerializer<Object: Integer<Object>> {
 }
 
 impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
-    type Object = Object;
+    type Object<'a> = Object;
 
     fn new(fe_escape: bool) -> Self {
         IntegerSerializer {
@@ -73,7 +73,7 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
         }
     }
 
-    fn serialize(&self, object: &Object) -> Vec<u8> {
+    fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
         to_bytes(object, self.fe_escape)
     }
 }
@@ -130,7 +130,7 @@ impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
             _phantom: marker::PhantomData,
         }
     }
-    fn deserialize(&self, bytes: &[u8]) -> Result<Object> {
+    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
         from_bytes(bytes, self.fe_escape)
     }
 }

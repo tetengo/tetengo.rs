@@ -13,13 +13,13 @@ use crate::serializer::{Deserializer, DeserializerOf, Result, Serializer, Serial
 pub struct StringSerializer;
 
 impl Serializer for StringSerializer {
-    type Object = str;
+    type Object<'a> = &'a str;
 
     fn new(_: bool) -> Self {
         StringSerializer {}
     }
 
-    fn serialize(&self, object: &str) -> Vec<u8> {
+    fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
         object.as_bytes().to_vec()
     }
 }
@@ -37,12 +37,12 @@ impl Deserializer for StringDeserializer {
         StringDeserializer {}
     }
 
-    fn deserialize(&self, bytes: &[u8]) -> Result<String> {
+    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
         String::from_utf8(bytes.to_vec()).map_err(Into::into)
     }
 }
 
-impl SerializerOf<str> for () {
+impl SerializerOf<&str> for () {
     type Type = StringSerializer;
 }
 
@@ -58,11 +58,11 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let serializer = <() as SerializerOf<str>>::Type::new(false);
+        let serializer = <() as SerializerOf<&str>>::Type::new(false);
 
         let object = "Sakuramachi";
         let expected_serialized = "Sakuramachi";
-        let serialized = serializer.serialize(object);
+        let serialized = serializer.serialize(&object);
         assert_eq!(
             std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
             expected_serialized
