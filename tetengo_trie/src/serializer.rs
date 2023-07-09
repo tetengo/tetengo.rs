@@ -63,3 +63,25 @@ pub trait Deserializer {
      */
     fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object>;
 }
+
+/**
+ * A serializer selector.
+ *
+ * # Type Parameters
+ * * `Object` - An object type.
+ */
+pub trait SerializerOf<Object> {
+    /// The serializer type.
+    type Type;
+}
+
+/**
+ * A deserializer selector.
+ *
+ * # Type Parameters
+ * * `Object` - An object type.
+ */
+pub trait DeserializerOf<Object> {
+    /// The deserializer type.
+    type Type;
+}
