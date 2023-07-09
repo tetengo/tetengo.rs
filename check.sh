@@ -9,4 +9,4 @@ cargo fmt --check
 cargo clippy --tests
 cargo doc
 cargo build --all-targets
-cargo test --all-targets
+cargo test --all-targets --quiet

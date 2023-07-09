@@ -17,6 +17,6 @@ if errorlevel 1 exit /b 1
 cargo build --all-targets
 if errorlevel 1 exit /b 1
 
-cargo test --all-targets
+cargo test --all-targets --quiet
 if errorlevel 1 exit /b 1
 
