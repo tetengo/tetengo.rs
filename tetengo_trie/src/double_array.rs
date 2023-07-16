@@ -43,8 +43,8 @@ pub type DoubleArrayElement<'a> = (&'a str, i32);
  * A building observer set.
  */
 pub struct BuldingObserverSet<'a> {
-    pub(crate) adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
-    pub(crate) done: &'a mut dyn FnMut(),
+    adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
+    done: &'a mut dyn FnMut(),
 }
 
 impl<'a> BuldingObserverSet<'a> {
