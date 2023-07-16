@@ -98,6 +98,16 @@ mod tests {
 
     use super::*;
 
+    const KUMAMOTO: &str = "熊本";
+
+    static TAMANA: &str = "玉名";
+
+    static _TAMARAI: &str = "玉来";
+
+    static _TAMA: &str = "玉";
+
+    static _UTO: &str = "宇土";
+
     #[test]
     fn test_new() {
         let _trie = Trie::<&str, i32>::new().unwrap();
@@ -111,8 +121,20 @@ mod tests {
 
     #[test]
     fn new_with_elements() {
-        let _trie =
-            Trie::<&str, i32>::new_with_elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
-                .unwrap();
+        {
+            let _trie =
+                Trie::<&str, i32>::new_with_elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
+                    .unwrap();
+        }
+        {
+            let _trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+        }
     }
 }
