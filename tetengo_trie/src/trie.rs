@@ -61,7 +61,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
     }
 
     /**
-     * Creates a trie with elements and a key serializer.
+     * Creates a trie.
      *
      * # Arguments
      * * `elements`       - Elements.
@@ -101,6 +101,22 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
             _double_array: double_array,
             _key_serializer: key_serializer,
         })
+    }
+
+    /**
+     * Creates a trie.
+     *
+     * # Arguments
+     * * `elements`              - Elements.
+     * * `key_serializer`        - A key serializer.
+     * * `building_observer_set` - A building observer set.
+     */
+    pub fn new_with_elements_keyserializer_buildingobserverset(
+        _elements: Vec<(KeySerializer::Object<'_>, Value)>,
+        _key_serializer: KeySerializer,
+        _building_observer_set: (),
+    ) -> Result<Self> {
+        todo!()
     }
 }
 
@@ -162,5 +178,10 @@ mod tests {
             StringSerializer::new(true),
         )
         .unwrap();
+    }
+
+    #[test]
+    fn new_with_elements_keyserializer_buildingobserverset() {
+        // TODO: Implement it.
     }
 }
