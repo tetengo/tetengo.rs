@@ -57,8 +57,20 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * `elements` - Elements.
      */
     pub fn new_with_elements(elements: Vec<(KeySerializer::Object<'_>, Value)>) -> Result<Self> {
-        let key_serializer = KeySerializer::new(true);
+        Self::new_with_elements_keyserializer(elements, KeySerializer::new(true))
+    }
 
+    /**
+     * Creates a trie with elements and a key serializer.
+     *
+     * # Arguments
+     * * `elements`       - Elements.
+     * * `key_serializer` - A key serializer.
+     */
+    pub fn new_with_elements_keyserializer(
+        elements: Vec<(KeySerializer::Object<'_>, Value)>,
+        key_serializer: KeySerializer,
+    ) -> Result<Self> {
         let mut double_array_content_keys = Vec::<String>::with_capacity(elements.len());
         for element in &elements {
             let (key, _) = &element;
@@ -136,5 +148,19 @@ mod tests {
             )
             .unwrap();
         }
+    }
+
+    #[test]
+    fn new_with_elements_keyserializer() {
+        let content = [
+            ("kumamoto", KUMAMOTO.to_string()),
+            ("tamana", TAMANA.to_string()),
+        ]
+        .to_vec();
+        let _trie = Trie::<&str, String>::new_with_elements_keyserializer(
+            content,
+            StringSerializer::new(true),
+        )
+        .unwrap();
     }
 }
