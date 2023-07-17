@@ -224,6 +224,19 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
             _key_serializer: key_serializer,
         }
     }
+
+    /**
+     * Returns true when the trie is empty.
+     *
+     * # Returns
+     * True when the trie is empty.
+     *
+     * # Errors
+     * When it fails to read the value count.
+     */
+    pub fn is_empty(&self) -> Result<bool> {
+        Ok(self._double_array.storage().value_count()? == 0)
+    }
 }
 
 #[cfg(test)]
@@ -404,5 +417,34 @@ mod tests {
             storage,
             StringSerializer::new(true),
         );
+    }
+
+    #[test]
+    fn is_empy() {
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            assert!(trie.is_empty().unwrap());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [(KUMAMOTO, KUMAMOTO.to_string())].to_vec(),
+            )
+            .unwrap();
+
+            assert!(!trie.is_empty().unwrap());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+
+            assert!(!trie.is_empty().unwrap());
+        }
     }
 }
