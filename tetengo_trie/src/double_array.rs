@@ -452,7 +452,7 @@ mod tests {
         #[test]
         fn adding() {
             let mut added = None;
-            let mut adding = |e: &DoubleArrayElement<'_>| added = Some((e.0.to_vec(), e.1));
+            let mut adding = |&(k, v): &DoubleArrayElement<'_>| added = Some((k.to_vec(), v));
             let mut done = || {};
             let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
 
