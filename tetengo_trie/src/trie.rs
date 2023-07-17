@@ -4,9 +4,10 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 
-use crate::double_array::{DoubleArray, DEFAULT_DENSITY_FACTOR};
+use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
 
 /**
@@ -120,6 +121,26 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         elements: Vec<(KeySerializer::Object<'_>, Value)>,
         key_serializer: KeySerializer,
     ) -> Result<Self> {
+        Self::new_with_elements_keyserializer_buildingobserverset(
+            elements,
+            key_serializer,
+            &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
+        )
+    }
+
+    /**
+     * Creates a trie.
+     *
+     * # Arguments
+     * * `elements`              - Elements.
+     * * `key_serializer`        - A key serializer.
+     * * `building_observer_set` - A building observer set.
+     */
+    pub fn new_with_elements_keyserializer_buildingobserverset(
+        elements: Vec<(KeySerializer::Object<'_>, Value)>,
+        key_serializer: KeySerializer,
+        building_observer_set: &mut BuldingObserverSet<'_>,
+    ) -> Result<Self> {
         let mut double_array_content_keys = Vec::<Vec<u8>>::with_capacity(elements.len());
         for element in &elements {
             let (key, _) = &element;
@@ -131,14 +152,20 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
             double_array_contents.push((&double_array_content_keys[i], i as i32));
         }
 
-        //     const double_array::building_observer_set_type double_array_building_observer_set{
-        //         [&building_observer_set](const std::pair<std::string_view, std::int32_t>& element) {
-        //             building_observer_set.adding(element.first);
-        //         },
-        //         [&building_observer_set]() { building_observer_set.done(); }
-        //     };
-
-        let mut double_array = DoubleArray::<Value>::new_with_elements(double_array_contents)?;
+        let building_observer_set_ref_cell = RefCell::new(building_observer_set);
+        let mut double_array = DoubleArray::<Value>::new_with_elements_buldingobserverset(
+            double_array_contents,
+            &mut double_array::BuldingObserverSet::new(
+                &mut |element| {
+                    building_observer_set_ref_cell
+                        .borrow_mut()
+                        .adding(element.0);
+                },
+                &mut || {
+                    building_observer_set_ref_cell.borrow_mut().done();
+                },
+            ),
+        )?;
 
         for (i, element) in elements.into_iter().enumerate() {
             let (_, value) = element;
@@ -151,27 +178,12 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
             _key_serializer: key_serializer,
         })
     }
-
-    /**
-     * Creates a trie.
-     *
-     * # Arguments
-     * * `elements`              - Elements.
-     * * `key_serializer`        - A key serializer.
-     * * `building_observer_set` - A building observer set.
-     */
-    pub fn new_with_elements_keyserializer_buildingobserverset(
-        _elements: Vec<(KeySerializer::Object<'_>, Value)>,
-        _key_serializer: KeySerializer,
-        _building_observer_set: (),
-    ) -> Result<Self> {
-        todo!()
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::string_serializer::StringSerializer;
+    use crate::serializer::Deserializer;
+    use crate::string_serializer::{StringDeserializer, StringSerializer};
 
     use super::*;
 
@@ -231,6 +243,36 @@ mod tests {
 
     #[test]
     fn new_with_elements_keyserializer_buildingobserverset() {
-        // TODO: Implement it.
+        let mut added_serialized_keys = Vec::<Vec<u8>>::new();
+        let mut done = false;
+        let _trie = Trie::<&str, i32>::new_with_elements_keyserializer_buildingobserverset(
+            [("Kumamoto", 42), ("Tamana", 24)].to_vec(),
+            StringSerializer::new(true),
+            &mut BuldingObserverSet::new(
+                &mut |serialized_keys| {
+                    added_serialized_keys.push(serialized_keys.to_vec());
+                },
+                &mut || {
+                    done = true;
+                },
+            ),
+        )
+        .unwrap();
+
+        let key_deserializer = StringDeserializer::new(true);
+        assert_eq!(added_serialized_keys.len(), 2);
+        assert_eq!(
+            key_deserializer
+                .deserialize(added_serialized_keys[0].as_ref())
+                .unwrap(),
+            "Kumamoto"
+        );
+        assert_eq!(
+            key_deserializer
+                .deserialize(added_serialized_keys[1].as_ref())
+                .unwrap(),
+            "Tamana"
+        );
+        assert!(done);
     }
 }
