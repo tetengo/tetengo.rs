@@ -232,21 +232,11 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * True when the trie is empty.
      *
      * # Errors
-     * When The access to the storage fails.
+     * When it fails to access the storage.
      */
     pub fn is_empty(&self) -> Result<bool> {
         Ok(self.double_array.storage().value_count()? == 0)
     }
-
-    // /*!
-    //     \brief Returns the size of the trie.
-
-    //     \return The size.
-    // */
-    // [[nodiscard]] std::size_t size() const
-    // {
-    //     return std::size(m_impl);
-    // }
 
     /**
      * Returns the size of the trie.
@@ -255,10 +245,27 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * The size.
      *
      * # Errors
-     * When The access to the storage fails.
+     * When it fails to access the storage.
      */
     pub fn size(&self) -> Result<usize> {
         self.double_array.storage().value_count()
+    }
+
+    /**
+     * Returns true when the trie contains the given key.
+     *
+     * # Arguments
+     * * `key` - A key.
+     *
+     * # Returns
+     * True when the trie contains the given key.
+     *
+     * # Errors
+     * When it fails to access the storage.
+     */
+    pub fn contains(&self, key: KeySerializer::Object<'_>) -> Result<bool> {
+        let serialized_key = self._key_serializer.serialize(&key);
+        Ok(self.double_array.find(&serialized_key)?.is_some())
     }
 }
 
@@ -282,7 +289,7 @@ mod tests {
 
     static _TAMA: &str = "玉";
 
-    static _UTO: &str = "宇土";
+    static UTO: &str = "宇土";
 
     #[rustfmt::skip]
     const SERIALIZED: [u8;76] = [
@@ -497,6 +504,29 @@ mod tests {
             .unwrap();
 
             assert_eq!(trie.size().unwrap(), 2);
+        }
+    }
+
+    #[test]
+    fn contains() {
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            assert!(!trie.contains(KUMAMOTO).unwrap());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+
+            assert!(trie.contains(KUMAMOTO).unwrap());
+            assert!(trie.contains(TAMANA).unwrap());
+            assert!(!trie.contains(UTO).unwrap());
         }
     }
 }
