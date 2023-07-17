@@ -75,6 +75,9 @@ pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>
 impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, KeySerializer> {
     /**
      * Creates a trie.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
     pub fn new() -> Result<Self> {
         Self::new_with_keyserializer(KeySerializer::new(true))
@@ -85,6 +88,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      *
      * # Arguments
      * * `key_serializer` - A key serializer.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
     pub fn new_with_keyserializer(key_serializer: KeySerializer) -> Result<Self> {
         Ok(Self {
@@ -99,6 +105,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      *
      * # Arguments
      * * `elements` - Elements.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
     pub fn new_with_elements(elements: Vec<(KeySerializer::Object<'_>, Value)>) -> Result<Self> {
         Self::new_with_elements_keyserializer(elements, KeySerializer::new(true))
@@ -110,6 +119,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * # Arguments
      * * `elements`       - Elements.
      * * `key_serializer` - A key serializer.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
     pub fn new_with_elements_keyserializer(
         elements: Vec<(KeySerializer::Object<'_>, Value)>,
@@ -129,6 +141,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * `elements`              - Elements.
      * * `key_serializer`        - A key serializer.
      * * `building_observer_set` - A building observer set.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
     pub fn new_with_elements_keyserializer_buildingobserverset(
         elements: Vec<(KeySerializer::Object<'_>, Value)>,
@@ -151,6 +166,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * `key_serializer`              - A key serializer.
      * * `building_observer_set`       - A building observer set.
      * * `double_array_density_factor` - A double array density factor.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
     pub fn new_with_elements_keyserializer_buildingobserverset_densityfactor(
         elements: Vec<(KeySerializer::Object<'_>, Value)>,
@@ -232,7 +250,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * True when the trie is empty.
      *
      * # Errors
-     * When it fails to access the storage.
+     * * When it fails to access the storage.
      */
     pub fn is_empty(&self) -> Result<bool> {
         Ok(self.double_array.storage().value_count()? == 0)
@@ -245,7 +263,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * The size.
      *
      * # Errors
-     * When it fails to access the storage.
+     * * When it fails to access the storage.
      */
     pub fn size(&self) -> Result<usize> {
         self.double_array.storage().value_count()
@@ -261,11 +279,55 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * True when the trie contains the given key.
      *
      * # Errors
-     * When it fails to access the storage.
+     * * When it fails to access the storage.
      */
     pub fn contains(&self, key: KeySerializer::Object<'_>) -> Result<bool> {
         let serialized_key = self._key_serializer.serialize(&key);
         Ok(self.double_array.find(&serialized_key)?.is_some())
+    }
+
+    // /*!
+    //     \brief Finds the value object correspoinding the given key.
+
+    //     \param key A key.
+
+    //     \return A pointer to the value object. Or nullptr when the trie does not have the given key.
+    // */
+    // [[nodiscard]] const value_type* find(const key_type& key) const
+    // {
+    //     const auto* const p_found = [this, &key]() {
+    //         if constexpr (std::is_same_v<key_type, std::string_view> || std::is_same_v<key_type, std::string>)
+    //         {
+    //             return m_impl.find(m_key_serializer(key));
+    //         }
+    //         else
+    //         {
+    //             const auto serialized_key = m_key_serializer(key);
+    //             return m_impl.find(std::string_view{ std::data(serialized_key), std::size(serialized_key) });
+    //         }
+    //     }();
+    //     if (!p_found)
+    //     {
+    //         return nullptr;
+    //     }
+    //     return std::any_cast<value_type>(p_found);
+    // }
+
+    /**
+     * Finds the value object correspoinding the given key.
+     *
+     * # Arguments
+     * * `key` - A key.
+     *
+     * # Returns
+     * A reference to the value object.
+     *
+     * # Errors
+     * * When the trie does not have the given key.
+     * * When it fails to access the storage.
+     */
+    pub fn find(&self, _key: KeySerializer::Object<'_>) -> Result<&Value> {
+        todo!()
     }
 }
 
@@ -528,5 +590,10 @@ mod tests {
             assert!(trie.contains(TAMANA).unwrap());
             assert!(!trie.contains(UTO).unwrap());
         }
+    }
+
+    #[test]
+    fn find() {
+        // TODO: Implement it.
     }
 }
