@@ -10,6 +10,7 @@ use std::fmt::{self, Debug, Formatter};
 
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
+use crate::storage::Storage;
 
 /**
  * A building observer set.
@@ -195,12 +196,31 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
             _key_serializer: key_serializer,
         })
     }
+
+    /**
+     * Creates a trie.
+     *
+     * # Arguments
+     * * `storage` - A storage.
+     */
+    pub fn new_with_storage(storage: Box<dyn Storage<Value>>) -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+            _double_array: DoubleArray::new_with_storage(storage, 0),
+            _key_serializer: KeySerializer::new(true),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use once_cell::sync::Lazy;
+    use std::io::Cursor;
+
+    use crate::memory_storage::MemoryStorage;
     use crate::serializer::Deserializer;
     use crate::string_serializer::{StringDeserializer, StringSerializer};
+    use crate::value_serializer::ValueDeserializer;
 
     use super::*;
 
@@ -213,6 +233,35 @@ mod tests {
     static _TAMA: &str = "玉";
 
     static _UTO: &str = "宇土";
+
+    #[rustfmt::skip]
+    const SERIALIZED: [u8;76] = [
+        // base check array
+        0x00u8, 0x00u8, 0x00u8, 0x0Bu8,
+        0xFFu8, 0xFFu8, 0x90u8, 0xFFu8,
+        0xFFu8, 0xFFu8, 0x78u8, 0x71u8,
+        0xFFu8, 0xFFu8, 0x9Du8, 0x8Au8,
+        0xFFu8, 0xFFu8, 0x7Eu8, 0x73u8,
+        0xFFu8, 0xFFu8, 0xD9u8, 0x67u8,
+        0x00u8, 0x00u8, 0x06u8, 0x2Cu8,
+        0x00u8, 0x00u8, 0x00u8, 0x00u8,
+        0xFFu8, 0xFFu8, 0xB4u8, 0x89u8,
+        0xFFu8, 0xFFu8, 0xFCu8, 0x54u8,
+        0x00u8, 0x00u8, 0x0Au8, 0x0Du8,
+        0x00u8, 0x00u8, 0x01u8, 0x00u8,
+
+        // value array
+        0x00u8, 0x00u8, 0x00u8, 0x02u8,
+        0x00u8, 0x00u8, 0x00u8, 0x00u8,
+        0x00u8, 0x00u8, 0x00u8, 0x06u8,
+        0xE7u8, 0x86u8, 0x8Au8, 0xE6u8, 0x9Cu8, 0xACu8,
+        0x00u8, 0x00u8, 0x00u8, 0x06u8,
+        0xE7u8, 0x8Eu8, 0x89u8, 0xE5u8, 0x90u8, 0x8Du8,
+    ];
+
+    fn create_input_stream() -> Box<dyn std::io::Read> {
+        Box::new(Cursor::new(SERIALIZED))
+    }
 
     #[test]
     fn test_new() {
@@ -312,5 +361,18 @@ mod tests {
                 DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR,
             )
             .unwrap();
+    }
+
+    #[test]
+    fn new_with_storage() {
+        let mut reader = create_input_stream();
+        let value_deserializer = ValueDeserializer::new(|serialized| {
+            static STRING_DESERIALIZER: Lazy<StringDeserializer> =
+                Lazy::new(|| StringDeserializer::new(false));
+            STRING_DESERIALIZER.deserialize(serialized)
+        });
+        let storage =
+            Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
+        let _trie = Trie::<&str, String>::new_with_storage(storage);
     }
 }
