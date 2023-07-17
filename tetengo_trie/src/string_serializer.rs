@@ -4,7 +4,9 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use crate::serializer::{Deserializer, DeserializerOf, Result, Serializer, SerializerOf};
+use anyhow::Result;
+
+use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
 /**
  * A string serializer.

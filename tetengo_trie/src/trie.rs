@@ -4,19 +4,12 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
-
-/**
- * A result type.
- *
- * # Type Parameters
- * * `T` - A type.
- */
-pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A building observer set.

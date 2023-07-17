@@ -4,9 +4,8 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::fmt;
-
-use crate::serializer::Result;
 
 /**
  * A value serializer.

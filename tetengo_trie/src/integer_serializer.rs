@@ -4,12 +4,13 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::marker;
 use std::mem;
 use std::ops;
 
 use crate::serializer::{
-    DeserializationError, Deserializer, DeserializerOf, Result, Serializer, SerializerOf,
+    DeserializationError, Deserializer, DeserializerOf, Serializer, SerializerOf,
 };
 
 /**

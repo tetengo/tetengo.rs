@@ -4,12 +4,12 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::any::Any;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
 use crate::memory_storage::MemoryStorage;
-use crate::storage::Result;
 use crate::storage::Storage;
 use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 

@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use once_cell::sync::Lazy;
 use std::any::Any;
 use std::cell::RefCell;
@@ -13,7 +14,7 @@ use std::mem::size_of;
 use crate::double_array::VACANT_CHECK_VALUE;
 use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
 use crate::serializer::{Deserializer, Serializer};
-use crate::storage::{Result, Storage};
+use crate::storage::Storage;
 use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
 /**

@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::error;
 
 /**
@@ -39,14 +40,6 @@ pub trait Serializer {
  * A deserialization error.
  */
 pub trait DeserializationError: error::Error {}
-
-/**
- * A result type.
- *
- * # Type Parameters
- * * `T` - A type.
- */
-pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A deserializer.

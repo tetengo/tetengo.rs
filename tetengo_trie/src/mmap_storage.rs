@@ -4,6 +4,7 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::any::Any;
 use std::cell::RefCell;
 use std::fs::File;
@@ -18,7 +19,7 @@ use tempfile as _;
 
 use crate::integer_serializer::IntegerDeserializer;
 use crate::serializer::Deserializer;
-use crate::storage::{Result, Storage, StorageError};
+use crate::storage::{Storage, StorageError};
 use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
 /**

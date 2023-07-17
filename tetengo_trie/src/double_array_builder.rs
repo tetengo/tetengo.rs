@@ -4,11 +4,11 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::collections::HashSet;
 
 use crate::double_array::{
-    BuldingObserverSet, DoubleArrayElement, DoubleArrayError, Result, KEY_TERMINATOR,
-    VACANT_CHECK_VALUE,
+    BuldingObserverSet, DoubleArrayElement, DoubleArrayError, KEY_TERMINATOR, VACANT_CHECK_VALUE,
 };
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;

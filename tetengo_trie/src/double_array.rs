@@ -4,19 +4,12 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::fmt::{self, Debug, Formatter};
 
 use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
-
-/**
- * A result type.
- *
- * # Type Parameters
- * * `T` - A type.
- */
-pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A double array error.

@@ -4,19 +4,12 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::any::Any;
 use std::error;
 use std::io::Write;
 
 use crate::value_serializer::ValueSerializer;
-
-/**
- * A result type.
- *
- * # Type Parameters
- * * `T` - A type.
- */
-pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A storage error.
