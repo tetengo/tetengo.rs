@@ -153,9 +153,9 @@ fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Ve
     firsts
 }
 
-fn char_code_at(string: &str, index: usize) -> u8 {
-    if index < string.len() {
-        string.as_bytes()[index]
+fn char_code_at(bytes: &[u8], index: usize) -> u8 {
+    if index < bytes.len() {
+        bytes[index]
     } else {
         KEY_TERMINATOR
     }

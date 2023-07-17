@@ -37,7 +37,7 @@ pub enum DoubleArrayError {
 }
 
 /// The double array element type.
-pub type DoubleArrayElement<'a> = (&'a str, i32);
+pub type DoubleArrayElement<'a> = (&'a [u8], i32);
 
 /**
  * A building observer set.
@@ -317,8 +317,8 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES0: [DoubleArrayElement<'_>; 2] = [
-        ("", 42),
-        (" ", 24),
+        (b"", 42),
+        (b" ", 24),
     ];
 
     #[rustfmt::skip]
@@ -374,9 +374,9 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
-        ("UTIGOSI", 24),
-        ("UTO", 2424),
-        ("SETA", 42),
+        (b"UTIGOSI", 24),
+        (b"UTO", 2424),
+        (b"SETA", 42),
     ];
 
     #[rustfmt::skip]
@@ -410,8 +410,8 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
-        ("赤瀬", 24), // "Akase" in Kanji
-        ("赤水", 42), // "Akamizu" in Kanji
+        ("赤瀬".as_bytes(), 24),
+        ("赤水".as_bytes(), 42),
     ];
 
     #[rustfmt::skip]
@@ -451,13 +451,13 @@ mod tests {
         #[test]
         fn adding() {
             let mut added = None;
-            let mut adding = |e: &DoubleArrayElement<'_>| added = Some((e.0.to_string(), e.1));
+            let mut adding = |e: &DoubleArrayElement<'_>| added = Some((e.0.to_vec(), e.1));
             let mut done = || {};
             let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
 
-            observer_set.adding(&("hoge", 42));
+            observer_set.adding(&(b"hoge", 42));
 
-            assert_eq!(added.unwrap(), (String::from("hoge"), 42));
+            assert_eq!(added.unwrap(), (b"hoge".to_vec(), 42));
         }
 
         #[test]

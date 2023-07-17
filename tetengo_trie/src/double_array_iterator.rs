@@ -108,15 +108,15 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
-        ("UTIGOSI", 24),
-        ("UTO", 2424),
-        ("SETA", 42),
+        (b"UTIGOSI", 24),
+        (b"UTO", 2424),
+        (b"SETA", 42),
     ];
 
     #[rustfmt::skip]
     const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
-        ("赤瀬", 24), // "Akase" in Kanji
-        ("赤水", 42), // "Akamizu" in Kanji
+        ("赤瀬".as_bytes(), 24), // "Akase" in Kanji
+        ("赤水".as_bytes(), 42), // "Akamizu" in Kanji
     ];
 
     #[test]

@@ -71,13 +71,13 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         elements: Vec<(KeySerializer::Object<'_>, Value)>,
         key_serializer: KeySerializer,
     ) -> Result<Self> {
-        let mut double_array_content_keys = Vec::<String>::with_capacity(elements.len());
+        let mut double_array_content_keys = Vec::<Vec<u8>>::with_capacity(elements.len());
         for element in &elements {
             let (key, _) = &element;
-            let serialized_key = String::from_utf8(key_serializer.serialize(key))?;
+            let serialized_key = key_serializer.serialize(key);
             double_array_content_keys.push(serialized_key);
         }
-        let mut double_array_contents = Vec::<(&str, i32)>::with_capacity(elements.len());
+        let mut double_array_contents = Vec::<(&[u8], i32)>::with_capacity(elements.len());
         for (i, _) in elements.iter().enumerate() {
             double_array_contents.push((&double_array_content_keys[i], i as i32));
         }
