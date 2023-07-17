@@ -116,14 +116,7 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
      * * When it fails to build a double array.
      */
     pub fn new() -> Result<Self> {
-        Ok(Self {
-            storage: double_array_builder::build::<Value>(
-                vec![],
-                &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                DEFAULT_DENSITY_FACTOR,
-            )?,
-            root_base_check_index: 0,
-        })
+        Self::new_with_elements(vec![])
     }
 
     /**
@@ -179,14 +172,10 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         building_observer_set: &mut BuldingObserverSet<'_>,
         density_factor: usize,
     ) -> Result<Self> {
-        Ok(Self {
-            storage: double_array_builder::build::<Value>(
-                elements,
-                building_observer_set,
-                density_factor,
-            )?,
-            root_base_check_index: 0,
-        })
+        Ok(Self::new_with_storage(
+            double_array_builder::build::<Value>(elements, building_observer_set, density_factor)?,
+            0,
+        ))
     }
 
     /**
