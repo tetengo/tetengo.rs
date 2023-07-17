@@ -204,10 +204,24 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * `storage` - A storage.
      */
     pub fn new_with_storage(storage: Box<dyn Storage<Value>>) -> Self {
+        Self::new_with_storage_keyserializer(storage, KeySerializer::new(true))
+    }
+
+    /**
+     * Creates a trie.
+     *
+     * # Arguments
+     * * `storage`        - A storage.
+     * * `key_serializer` - A key serializer.
+     */
+    pub fn new_with_storage_keyserializer(
+        storage: Box<dyn Storage<Value>>,
+        key_serializer: KeySerializer,
+    ) -> Self {
         Self {
             _phantom: std::marker::PhantomData,
             _double_array: DoubleArray::new_with_storage(storage, 0),
-            _key_serializer: KeySerializer::new(true),
+            _key_serializer: key_serializer,
         }
     }
 }
@@ -374,5 +388,21 @@ mod tests {
         let storage =
             Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
         let _trie = Trie::<&str, String>::new_with_storage(storage);
+    }
+
+    #[test]
+    fn new_with_storage_keyserializer() {
+        let mut reader = create_input_stream();
+        let value_deserializer = ValueDeserializer::new(|serialized| {
+            static STRING_DESERIALIZER: Lazy<StringDeserializer> =
+                Lazy::new(|| StringDeserializer::new(false));
+            STRING_DESERIALIZER.deserialize(serialized)
+        });
+        let storage =
+            Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
+        let _trie = Trie::<&str, String>::new_with_storage_keyserializer(
+            storage,
+            StringSerializer::new(true),
+        );
     }
 }
