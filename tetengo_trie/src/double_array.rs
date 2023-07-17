@@ -207,11 +207,11 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn find(&self, key: &str) -> Result<Option<i32>> {
-        let mut terminated_key;
+    pub fn find(&self, key: &[u8]) -> Result<Option<i32>> {
+        let mut terminated_key: Vec<u8>;
         let index = self.traverse({
-            terminated_key = String::from(key);
-            terminated_key.push(KEY_TERMINATOR as char);
+            terminated_key = Vec::from(key);
+            terminated_key.push(KEY_TERMINATOR);
             &terminated_key
         })?;
         match index {
@@ -243,7 +243,7 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
      * * When the double array does not have the given key prefix.
      * * When it fails to access the storage.
      */
-    pub fn subtrie(&self, key_prefix: &str) -> Result<Self> {
+    pub fn subtrie(&self, key_prefix: &[u8]) -> Result<Self> {
         let index = self.traverse(key_prefix)?;
         let Some(index) = index else {
             return Err(DoubleArrayError::KeyPrefixNotFound.into());
@@ -251,13 +251,13 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         Ok(Self::new_with_storage(self.storage().clone_box(), index))
     }
 
-    fn traverse(&self, key: &str) -> Result<Option<usize>> {
+    fn traverse(&self, key: &[u8]) -> Result<Option<usize>> {
         let mut base_check_index = self.root_base_check_index;
-        for c in key.bytes() {
+        for c in key {
             let next_base_check_index =
-                (self.storage.base_at(base_check_index)? + c as i32) as usize;
+                (self.storage.base_at(base_check_index)? + *c as i32) as usize;
             if next_base_check_index >= self.storage.base_check_size()?
-                || self.storage.check_at(next_base_check_index)? != c
+                || self.storage.check_at(next_base_check_index)? != *c
             {
                 return Ok(None);
             }
@@ -584,7 +584,7 @@ mod tests {
                 EXPECTED_BASE_CHECK_ARRAY3
             );
 
-            let found = double_array1.find("GOSI").unwrap().unwrap();
+            let found = double_array1.find(b"GOSI").unwrap().unwrap();
             assert_eq!(found, 24);
         }
 
@@ -594,7 +594,7 @@ mod tests {
                 let double_array = DoubleArray::<i32>::new().unwrap();
 
                 {
-                    let found = double_array.find("SETA").unwrap();
+                    let found = double_array.find(b"SETA").unwrap();
                     assert!(found.is_none());
                 }
             }
@@ -603,19 +603,19 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
                 {
-                    let found = double_array.find("SETA").unwrap().unwrap();
+                    let found = double_array.find(b"SETA").unwrap().unwrap();
                     assert_eq!(found, 42);
                 }
                 {
-                    let found = double_array.find("UTIGOSI").unwrap().unwrap();
+                    let found = double_array.find(b"UTIGOSI").unwrap().unwrap();
                     assert_eq!(found, 24);
                 }
                 {
-                    let found = double_array.find("UTO").unwrap().unwrap();
+                    let found = double_array.find(b"UTO").unwrap().unwrap();
                     assert_eq!(found, 2424);
                 }
                 {
-                    let found = double_array.find("SUIZENJI").unwrap();
+                    let found = double_array.find(b"SUIZENJI").unwrap();
                     assert!(found.is_none());
                 }
             }
@@ -624,15 +624,15 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
                 {
-                    let found = double_array.find("赤瀬").unwrap().unwrap(); // "Akase" in Kanji
+                    let found = double_array.find("赤瀬".as_bytes()).unwrap().unwrap(); // "Akase" in Kanji
                     assert_eq!(found, 24);
                 }
                 {
-                    let found = double_array.find("赤水").unwrap().unwrap(); // "Akamizu" in Kanji
+                    let found = double_array.find("赤水".as_bytes()).unwrap().unwrap(); // "Akamizu" in Kanji
                     assert_eq!(found, 42);
                 }
                 {
-                    let found = double_array.find("水前寺").unwrap(); // "Suizenji" in Kanji
+                    let found = double_array.find("水前寺".as_bytes()).unwrap(); // "Suizenji" in Kanji
                     assert!(found.is_none());
                 }
             }
@@ -666,25 +666,25 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
                 {
-                    let subtrie = double_array.subtrie("U").unwrap();
+                    let subtrie = double_array.subtrie(b"U").unwrap();
                     {
-                        let found = subtrie.find("TIGOSI").unwrap().unwrap();
+                        let found = subtrie.find(b"TIGOSI").unwrap().unwrap();
                         assert_eq!(found, 24);
                     }
                     {
-                        let found = subtrie.find("TO").unwrap().unwrap();
+                        let found = subtrie.find(b"TO").unwrap().unwrap();
                         assert_eq!(found, 2424);
                     }
                     {
-                        let found = subtrie.find("SETA").unwrap();
+                        let found = subtrie.find(b"SETA").unwrap();
                         assert!(found.is_none());
                     }
                     {
-                        let found = subtrie.find("UTIGOSI").unwrap();
+                        let found = subtrie.find(b"UTIGOSI").unwrap();
                         assert!(found.is_none());
                     }
                     {
-                        let found = subtrie.find("SETA").unwrap();
+                        let found = subtrie.find(b"SETA").unwrap();
                         assert!(found.is_none());
                     }
                     {
@@ -704,14 +704,14 @@ mod tests {
                         }
                     }
 
-                    let subtrie2 = subtrie.subtrie("TI").unwrap();
+                    let subtrie2 = subtrie.subtrie(b"TI").unwrap();
                     {
-                        let found = subtrie2.find("GOSI").unwrap().unwrap();
+                        let found = subtrie2.find(b"GOSI").unwrap().unwrap();
                         assert_eq!(found, 24);
                     }
                 }
                 {
-                    let subtrie = double_array.subtrie("T");
+                    let subtrie = double_array.subtrie(b"T");
                     assert!(subtrie.is_err());
                 }
             }
@@ -719,9 +719,9 @@ mod tests {
                 let double_array =
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
-                let subtrie = double_array.subtrie("赤").unwrap();
+                let subtrie = double_array.subtrie("赤".as_bytes()).unwrap();
                 {
-                    let found = subtrie.find("水").unwrap().unwrap();
+                    let found = subtrie.find("水".as_bytes()).unwrap().unwrap();
                     assert_eq!(found, 42);
                 }
             }
