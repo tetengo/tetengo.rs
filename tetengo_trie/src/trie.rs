@@ -68,7 +68,7 @@ const DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
 #[derive(Debug)]
 pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
     _phantom: std::marker::PhantomData<Key>,
-    _double_array: DoubleArray<Value>,
+    double_array: DoubleArray<Value>,
     _key_serializer: KeySerializer,
 }
 
@@ -89,7 +89,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
     pub fn new_with_keyserializer(key_serializer: KeySerializer) -> Result<Self> {
         Ok(Self {
             _phantom: std::marker::PhantomData,
-            _double_array: DoubleArray::new()?,
+            double_array: DoubleArray::new()?,
             _key_serializer: key_serializer,
         })
     }
@@ -192,7 +192,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
 
         Ok(Self {
             _phantom: std::marker::PhantomData,
-            _double_array: double_array,
+            double_array,
             _key_serializer: key_serializer,
         })
     }
@@ -220,7 +220,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
     ) -> Self {
         Self {
             _phantom: std::marker::PhantomData,
-            _double_array: DoubleArray::new_with_storage(storage, 0),
+            double_array: DoubleArray::new_with_storage(storage, 0),
             _key_serializer: key_serializer,
         }
     }
@@ -232,10 +232,33 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * True when the trie is empty.
      *
      * # Errors
-     * When it fails to read the value count.
+     * When The access to the storage fails.
      */
     pub fn is_empty(&self) -> Result<bool> {
-        Ok(self._double_array.storage().value_count()? == 0)
+        Ok(self.double_array.storage().value_count()? == 0)
+    }
+
+    // /*!
+    //     \brief Returns the size of the trie.
+
+    //     \return The size.
+    // */
+    // [[nodiscard]] std::size_t size() const
+    // {
+    //     return std::size(m_impl);
+    // }
+
+    /**
+     * Returns the size of the trie.
+     *
+     * # Returns
+     * The size.
+     *
+     * # Errors
+     * When The access to the storage fails.
+     */
+    pub fn size(&self) -> Result<usize> {
+        self.double_array.storage().value_count()
     }
 }
 
@@ -445,6 +468,35 @@ mod tests {
             .unwrap();
 
             assert!(!trie.is_empty().unwrap());
+        }
+    }
+
+    #[test]
+    fn size() {
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            assert_eq!(trie.size().unwrap(), 0);
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [(KUMAMOTO, KUMAMOTO.to_string())].to_vec(),
+            )
+            .unwrap();
+
+            assert_eq!(trie.size().unwrap(), 1);
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+
+            assert_eq!(trie.size().unwrap(), 2);
         }
     }
 }
