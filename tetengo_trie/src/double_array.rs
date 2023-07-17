@@ -84,6 +84,7 @@ impl Debug for BuldingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
             .field("adding", &"Box<dyn FnOnce(&DoubleArrayElement<'_>)>")
+            .field("done", &"Box<dyn FnOnce()>")
             .finish()
     }
 }

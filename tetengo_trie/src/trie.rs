@@ -4,6 +4,8 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::fmt::{self, Debug, Formatter};
+
 use crate::double_array::{DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
 
@@ -14,6 +16,53 @@ use crate::serializer::{Serializer, SerializerOf};
  * * `T` - A type.
  */
 pub type Result<T> = anyhow::Result<T>;
+
+/**
+ * A building observer set.
+ */
+pub struct BuldingObserverSet<'a> {
+    adding: &'a mut dyn FnMut(&[u8]),
+    done: &'a mut dyn FnMut(),
+}
+
+impl<'a> BuldingObserverSet<'a> {
+    /**
+     * Creates a building observer set.
+     *
+     * # Parameters
+     * * `adding` - An adding observer.
+     * * `done` - A done observer.
+     */
+    pub fn new(adding: &'a mut dyn FnMut(&[u8]), done: &'a mut dyn FnMut()) -> Self {
+        Self { adding, done }
+    }
+
+    /**
+     * Calls `adding`.
+     *
+     * # Arguments
+     * * `serialized_key` - A serialized key.
+     */
+    pub fn adding(&mut self, serialized_key: &[u8]) {
+        (self.adding)(serialized_key);
+    }
+
+    /**
+     * Calls `done`.
+     */
+    pub fn done(&mut self) {
+        (self.done)();
+    }
+}
+
+impl Debug for BuldingObserverSet<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("BuldingObserverSet")
+            .field("adding", &"Box<dyn FnOnce(&[u8])>")
+            .field("done", &"Box<dyn FnOnce()>")
+            .finish()
+    }
+}
 
 /// The default double array density factor.
 const _DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
