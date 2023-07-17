@@ -66,7 +66,7 @@ impl Debug for BuldingObserverSet<'_> {
 }
 
 /// The default double array density factor.
-const _DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
+const DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
 
 /**
  * A trie.
@@ -141,6 +141,29 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         key_serializer: KeySerializer,
         building_observer_set: &mut BuldingObserverSet<'_>,
     ) -> Result<Self> {
+        Self::new_with_elements_keyserializer_buildingobserverset_densityfactor(
+            elements,
+            key_serializer,
+            building_observer_set,
+            DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR,
+        )
+    }
+
+    /**
+     * Creates a trie.
+     *
+     * # Arguments
+     * * `elements`                    - Elements.
+     * * `key_serializer`              - A key serializer.
+     * * `building_observer_set`       - A building observer set.
+     * * `double_array_density_factor` - A double array density factor.
+     */
+    pub fn new_with_elements_keyserializer_buildingobserverset_densityfactor(
+        elements: Vec<(KeySerializer::Object<'_>, Value)>,
+        key_serializer: KeySerializer,
+        building_observer_set: &mut BuldingObserverSet<'_>,
+        double_array_density_factor: usize,
+    ) -> Result<Self> {
         let mut double_array_content_keys = Vec::<Vec<u8>>::with_capacity(elements.len());
         for element in &elements {
             let (key, _) = &element;
@@ -161,10 +184,12 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         };
         let observer_set = &mut double_array::BuldingObserverSet::new(adding, done);
 
-        let mut double_array = DoubleArray::<Value>::new_with_elements_buldingobserverset(
-            double_array_contents,
-            observer_set,
-        )?;
+        let mut double_array =
+            DoubleArray::<Value>::new_with_elements_buldingobserverset_densityfactor(
+                double_array_contents,
+                observer_set,
+                double_array_density_factor,
+            )?;
 
         for (i, element) in elements.into_iter().enumerate() {
             let (_, value) = element;
@@ -273,5 +298,26 @@ mod tests {
             "Tamana"
         );
         assert!(done);
+    }
+
+    #[test]
+    fn new_with_elements_buldingobserverset_densityfactor() {
+        let mut added_serialized_keys = Vec::<Vec<u8>>::new();
+        let mut done = false;
+        let _trie =
+            Trie::<&str, i32>::new_with_elements_keyserializer_buildingobserverset_densityfactor(
+                [("Kumamoto", 42), ("Tamana", 24)].to_vec(),
+                StringSerializer::new(true),
+                &mut BuldingObserverSet::new(
+                    &mut |serialized_keys| {
+                        added_serialized_keys.push(serialized_keys.to_vec());
+                    },
+                    &mut || {
+                        done = true;
+                    },
+                ),
+                DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR,
+            )
+            .unwrap();
     }
 }
