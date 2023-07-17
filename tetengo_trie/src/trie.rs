@@ -153,18 +153,17 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         }
 
         let building_observer_set_ref_cell = RefCell::new(building_observer_set);
+        let adding = &mut |&(key, _): &(&[u8], i32)| {
+            building_observer_set_ref_cell.borrow_mut().adding(key);
+        };
+        let done = &mut || {
+            building_observer_set_ref_cell.borrow_mut().done();
+        };
+        let observer_set = &mut double_array::BuldingObserverSet::new(adding, done);
+
         let mut double_array = DoubleArray::<Value>::new_with_elements_buldingobserverset(
             double_array_contents,
-            &mut double_array::BuldingObserverSet::new(
-                &mut |element| {
-                    building_observer_set_ref_cell
-                        .borrow_mut()
-                        .adding(element.0);
-                },
-                &mut || {
-                    building_observer_set_ref_cell.borrow_mut().done();
-                },
-            ),
+            observer_set,
         )?;
 
         for (i, element) in elements.into_iter().enumerate() {
