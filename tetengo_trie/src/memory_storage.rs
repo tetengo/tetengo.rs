@@ -231,33 +231,12 @@ impl<Value: Clone + 'static> Storage<Value> for MemoryStorage<Value> {
         Ok(self.value_array.len())
     }
 
-    fn value_at(&self, _value_index: usize) -> Result<Option<Rc<Value>>> {
-        todo!()
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>> {
+        let Some(value) = self.value_array.get(value_index) else {
+            return Ok(None);
+        };
+        Ok(value.clone())
     }
-
-    // fn for_value_at(
-    //     &self,
-    //     _value_index: usize,
-    //     _operation: &dyn Fn(&Option<Value>) -> Result<()>,
-    // ) -> Result<()> {
-    //     if value_index >= self.value_array.len() {
-    //         operation(&None)
-    //     } else {
-    //         operation(&self.value_array[value_index])
-    //     }
-    // }
-
-    // fn for_value_at_mut(
-    //     &self,
-    //     _value_index: usize,
-    //     _operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
-    // ) -> Result<()> {
-    //     if value_index >= self.value_array.len() {
-    //         operation(&None)
-    //     } else {
-    //         operation(&self.value_array[value_index])
-    //     }
-    // }
 
     fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
         if value_index >= self.value_array.len() {
@@ -394,25 +373,9 @@ mod tests {
             let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            // TODO: Implement it.
-            // storage
-            //     .for_value_at(4, &|value| {
-            //         assert_eq!(value.as_ref().unwrap(), "hoge");
-            //         Ok(())
-            //     })
-            //     .unwrap();
-            // storage
-            //     .for_value_at(2, &|value| {
-            //         assert_eq!(value.as_ref().unwrap(), "fuga");
-            //         Ok(())
-            //     })
-            //     .unwrap();
-            // storage
-            //     .for_value_at(1, &|value| {
-            //         assert_eq!(value.as_ref().unwrap(), "piyo");
-            //         Ok(())
-            //     })
-            //     .unwrap();
+            assert_eq!(storage.value_at(4).unwrap().unwrap().as_ref(), "hoge");
+            assert_eq!(storage.value_at(2).unwrap().unwrap().as_ref(), "fuga");
+            assert_eq!(storage.value_at(1).unwrap().unwrap().as_ref(), "piyo");
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
@@ -424,25 +387,9 @@ mod tests {
             let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            // TODO: Implement it.
-            // storage
-            //     .for_value_at(4, &|value| {
-            //         assert_eq!(value.unwrap(), 3);
-            //         Ok(())
-            //     })
-            //     .unwrap();
-            // storage
-            //     .for_value_at(2, &|value| {
-            //         assert_eq!(value.unwrap(), 14);
-            //         Ok(())
-            //     })
-            //     .unwrap();
-            // storage
-            //     .for_value_at(1, &|value| {
-            //         assert_eq!(value.unwrap(), 159);
-            //         Ok(())
-            //     })
-            //     .unwrap();
+            assert_eq!(*storage.value_at(4).unwrap().unwrap().as_ref(), 3);
+            assert_eq!(*storage.value_at(2).unwrap().unwrap().as_ref(), 14);
+            assert_eq!(*storage.value_at(1).unwrap().unwrap().as_ref(), 159);
         }
         {
             let mut reader = create_input_stream_broken();
@@ -516,29 +463,12 @@ mod tests {
         assert_eq!(storage.value_count().unwrap(), 43);
     }
 
-    // #[test]
-    // fn for_value_at() {
-    //     let storage = MemoryStorage::<u32>::new();
+    #[test]
+    fn value_at() {
+        let storage = MemoryStorage::<u32>::new();
 
-    //     storage
-    //         .for_value_at(42, &|value| {
-    //             assert!(value.is_none());
-    //             Ok(())
-    //         })
-    //         .unwrap();
-    // }
-
-    // #[test]
-    // fn for_value_at_mut() {
-    //     let storage = MemoryStorage::<u32>::new();
-
-    //     storage
-    //         .for_value_at_mut(42, &mut |value| {
-    //             assert!(value.is_none());
-    //             Ok(())
-    //         })
-    //         .unwrap();
-    // }
+        assert!(storage.value_at(42).unwrap().is_none());
+    }
 
     #[test]
     fn add_value_at() {
@@ -546,57 +476,19 @@ mod tests {
 
         storage.add_value_at(24, String::from("hoge")).unwrap();
 
-        // TODO: Implement it.
-        // storage
-        //     .for_value_at(0, &|value| {
-        //         assert!(value.is_none());
-        //         Ok(())
-        //     })
-        //     .unwrap();
-        // storage
-        //     .for_value_at(24, &|value| {
-        //         assert_eq!(value.as_ref().unwrap(), "hoge");
-        //         Ok(())
-        //     })
-        //     .unwrap();
-        // storage
-        //     .for_value_at(42, &|value| {
-        //         assert!(value.is_none());
-        //         Ok(())
-        //     })
-        //     .unwrap();
+        assert!(storage.value_at(0).unwrap().is_none());
+        assert_eq!(storage.value_at(24).unwrap().unwrap().as_ref(), "hoge");
+        assert!(storage.value_at(42).unwrap().is_none());
 
         storage.add_value_at(42, String::from("fuga")).unwrap();
 
-        // TODO: Implement it.
-        // storage
-        //     .for_value_at(42, &|value| {
-        //         assert_eq!(value.as_ref().unwrap(), "fuga");
-        //         Ok(())
-        //     })
-        //     .unwrap();
-        // storage
-        //     .for_value_at(4242, &|value| {
-        //         assert!(value.is_none());
-        //         Ok(())
-        //     })
-        //     .unwrap();
+        assert_eq!(storage.value_at(42).unwrap().unwrap().as_ref(), "fuga");
+        assert!(storage.value_at(4242).unwrap().is_none());
 
         storage.add_value_at(0, String::from("piyo")).unwrap();
 
-        // TODO: Implement it.
-        // storage
-        //     .for_value_at(0, &|value| {
-        //         assert_eq!(value.as_ref().unwrap(), "piyo");
-        //         Ok(())
-        //     })
-        //     .unwrap();
-        // storage
-        //     .for_value_at(42, &|value| {
-        //         assert_eq!(value.as_ref().unwrap(), "fuga");
-        //         Ok(())
-        //     })
-        //     .unwrap();
+        assert_eq!(storage.value_at(0).unwrap().unwrap().as_ref(), "piyo");
+        assert_eq!(storage.value_at(42).unwrap().unwrap().as_ref(), "fuga");
     }
 
     #[test]
