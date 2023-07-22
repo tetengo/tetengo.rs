@@ -231,6 +231,10 @@ impl<Value: Clone + 'static> Storage<Value> for MemoryStorage<Value> {
         Ok(self.value_array.len())
     }
 
+    fn value_at(&self, _value_index: usize) -> Result<Option<Rc<Value>>> {
+        todo!()
+    }
+
     // fn for_value_at(
     //     &self,
     //     _value_index: usize,

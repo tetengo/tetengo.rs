@@ -8,6 +8,7 @@ use anyhow::Result;
 use std::any::Any;
 use std::error;
 use std::io::Write;
+use std::rc::Rc;
 
 use crate::value_serializer::ValueSerializer;
 
@@ -97,39 +98,19 @@ pub trait Storage<Value> {
      */
     fn value_count(&self) -> Result<usize>;
 
-    // /**
-    //  * Applies an operation for the specified value object.
-    //  *
-    //  * # Arguments
-    //  * * `value_index` - A value index.
-    //  * * `operation`   - An operation.
-    //  *
-    //  * # Errors
-    //  * * When it fails to read the value object.
-    //  * * When the operation fails.
-    //  */
-    // fn for_value_at(
-    //     &self,
-    //     value_index: usize,
-    //     operation: &dyn Fn(&Option<Value>) -> Result<()>,
-    // ) -> Result<()>;
-
-    // /**
-    //  * Applies a mutable operation for the specified value object.
-    //  *
-    //  * # Arguments
-    //  * * `value_index` - A value index.
-    //  * * `operation`   - An operation.
-    //  *
-    //  * # Errors
-    //  * * When it fails to read the value object.
-    //  * * When the operation fails.
-    //  */
-    // fn for_value_at_mut(
-    //     &self,
-    //     value_index: usize,
-    //     operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
-    // ) -> Result<()>;
+    /**
+     * Returns the value object.
+     *
+     * # Arguments
+     * * `value_index` - A value index.
+     *
+     * # Returns
+     * The value object. Or None when there is no corresponding value object.
+     *
+     * # Errors
+     * * When it fails to read the value object.
+     */
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>>;
 
     /**
      * Adds a value object.

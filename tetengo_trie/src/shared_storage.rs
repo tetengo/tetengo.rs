@@ -83,6 +83,10 @@ impl<Value: Clone + 'static> Storage<Value> for SharedStorage<Value> {
         self.entity.value_count()
     }
 
+    fn value_at(&self, _value_index: usize) -> Result<Option<Rc<Value>>> {
+        todo!()
+    }
+
     // fn for_value_at(
     //     &self,
     //     _value_index: usize,
