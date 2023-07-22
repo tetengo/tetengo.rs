@@ -320,13 +320,18 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * `key` - A key.
      *
      * # Returns
-     * A reference to the value object.
+     * A reference to the value object. Or None when the trie does not have the given key.
      *
      * # Errors
-     * * When the trie does not have the given key.
      * * When it fails to access the storage.
      */
-    pub fn find(&self, _key: KeySerializer::Object<'_>) -> Result<&Value> {
+    pub fn find(&self, key: KeySerializer::Object<'_>) -> Result<Option<&Value>> {
+        let serialized_key = self._key_serializer.serialize(&key);
+        let index = self.double_array.find(&serialized_key)?;
+        let Some(_index) = index else {
+            return Ok(None);
+        };
+
         todo!()
     }
 }
@@ -594,6 +599,34 @@ mod tests {
 
     #[test]
     fn find() {
-        // TODO: Implement it.
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            let found = trie.find(KUMAMOTO).unwrap();
+            assert!(found.is_none());
+        }
+        // {
+        //     let trie = Trie::<&str, String>::new_with_elements(
+        //         [
+        //             (KUMAMOTO, KUMAMOTO.to_string()),
+        //             (TAMANA, TAMANA.to_string()),
+        //         ]
+        //         .to_vec(),
+        //     )
+        //     .unwrap();
+
+        //     {
+        //         let found = trie.find(KUMAMOTO).unwrap().unwrap();
+        //         assert_eq!(*found, KUMAMOTO.to_string());
+        //     }
+        //     {
+        //         let found = trie.find(TAMANA).unwrap().unwrap();
+        //         assert_eq!(*found, TAMANA.to_string());
+        //     }
+        //     {
+        //         let found = trie.find(UTO).unwrap();
+        //         assert!(found.is_none());
+        //     }
+        // }
     }
 }
