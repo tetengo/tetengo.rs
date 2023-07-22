@@ -83,21 +83,21 @@ impl<Value: Clone + 'static> Storage<Value> for SharedStorage<Value> {
         self.entity.value_count()
     }
 
-    fn for_value_at(
-        &self,
-        value_index: usize,
-        operation: &dyn Fn(&Option<Value>) -> Result<()>,
-    ) -> Result<()> {
-        self.entity.for_value_at(value_index, operation)
-    }
+    // fn for_value_at(
+    //     &self,
+    //     _value_index: usize,
+    //     _operation: &dyn Fn(&Option<Value>) -> Result<()>,
+    // ) -> Result<()> {
+    //     self.entity.for_value_at(value_index, operation)
+    // }
 
-    fn for_value_at_mut(
-        &self,
-        value_index: usize,
-        operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
-    ) -> Result<()> {
-        self.entity.for_value_at_mut(value_index, operation)
-    }
+    // fn for_value_at_mut(
+    //     &self,
+    //     _value_index: usize,
+    //     _operation: &mut dyn FnMut(&Option<Value>) -> Result<()>,
+    // ) -> Result<()> {
+    //     self.entity.for_value_at_mut(value_index, operation)
+    // }
 
     fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
         let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
@@ -205,24 +205,25 @@ mod tests {
             let storage = SharedStorage::from_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
-            storage
-                .for_value_at(4, &|value| {
-                    assert_eq!(value.as_ref().unwrap(), "hoge");
-                    Ok(())
-                })
-                .unwrap();
-            storage
-                .for_value_at(2, &|value| {
-                    assert_eq!(value.as_ref().unwrap(), "fuga");
-                    Ok(())
-                })
-                .unwrap();
-            storage
-                .for_value_at(1, &|value| {
-                    assert_eq!(value.as_ref().unwrap(), "piyo");
-                    Ok(())
-                })
-                .unwrap();
+            // TODO: Implement it.
+            // storage
+            //     .for_value_at(4, &|value| {
+            //         assert_eq!(value.as_ref().unwrap(), "hoge");
+            //         Ok(())
+            //     })
+            //     .unwrap();
+            // storage
+            //     .for_value_at(2, &|value| {
+            //         assert_eq!(value.as_ref().unwrap(), "fuga");
+            //         Ok(())
+            //     })
+            //     .unwrap();
+            // storage
+            //     .for_value_at(1, &|value| {
+            //         assert_eq!(value.as_ref().unwrap(), "piyo");
+            //         Ok(())
+            //     })
+            //     .unwrap();
         }
         {
             let mut reader = create_input_stream_broken();
@@ -296,29 +297,29 @@ mod tests {
         assert_eq!(storage.value_count().unwrap(), 43);
     }
 
-    #[test]
-    fn for_value_at() {
-        let storage = SharedStorage::<u32>::new();
+    // #[test]
+    // fn for_value_at() {
+    //     let storage = SharedStorage::<u32>::new();
 
-        storage
-            .for_value_at(42, &|value| {
-                assert!(value.is_none());
-                Ok(())
-            })
-            .unwrap();
-    }
+    //     storage
+    //         .for_value_at(42, &|value| {
+    //             assert!(value.is_none());
+    //             Ok(())
+    //         })
+    //         .unwrap();
+    // }
 
-    #[test]
-    fn for_value_at_mut() {
-        let storage = SharedStorage::<u32>::new();
+    // #[test]
+    // fn for_value_at_mut() {
+    //     let storage = SharedStorage::<u32>::new();
 
-        storage
-            .for_value_at_mut(42, &mut |value| {
-                assert!(value.is_none());
-                Ok(())
-            })
-            .unwrap();
-    }
+    //     storage
+    //         .for_value_at_mut(42, &mut |value| {
+    //             assert!(value.is_none());
+    //             Ok(())
+    //         })
+    //         .unwrap();
+    // }
 
     #[test]
     fn add_value_at() {
@@ -326,54 +327,57 @@ mod tests {
 
         storage.add_value_at(24, String::from("hoge")).unwrap();
 
-        storage
-            .for_value_at(0, &|value| {
-                assert!(value.is_none());
-                Ok(())
-            })
-            .unwrap();
-        storage
-            .for_value_at(24, &|value| {
-                assert_eq!(value.as_ref().unwrap(), "hoge");
-                Ok(())
-            })
-            .unwrap();
-        storage
-            .for_value_at(42, &|value| {
-                assert!(value.is_none());
-                Ok(())
-            })
-            .unwrap();
+        // TODO: Implement it.
+        // storage
+        //     .for_value_at(0, &|value| {
+        //         assert!(value.is_none());
+        //         Ok(())
+        //     })
+        //     .unwrap();
+        // storage
+        //     .for_value_at(24, &|value| {
+        //         assert_eq!(value.as_ref().unwrap(), "hoge");
+        //         Ok(())
+        //     })
+        //     .unwrap();
+        // storage
+        //     .for_value_at(42, &|value| {
+        //         assert!(value.is_none());
+        //         Ok(())
+        //     })
+        //     .unwrap();
 
         storage.add_value_at(42, String::from("fuga")).unwrap();
 
-        storage
-            .for_value_at(42, &|value| {
-                assert_eq!(value.as_ref().unwrap(), "fuga");
-                Ok(())
-            })
-            .unwrap();
-        storage
-            .for_value_at(4242, &|value| {
-                assert!(value.is_none());
-                Ok(())
-            })
-            .unwrap();
+        // TODO: Implement it.
+        // storage
+        //     .for_value_at(42, &|value| {
+        //         assert_eq!(value.as_ref().unwrap(), "fuga");
+        //         Ok(())
+        //     })
+        //     .unwrap();
+        // storage
+        //     .for_value_at(4242, &|value| {
+        //         assert!(value.is_none());
+        //         Ok(())
+        //     })
+        //     .unwrap();
 
         storage.add_value_at(0, String::from("piyo")).unwrap();
 
-        storage
-            .for_value_at(0, &|value| {
-                assert_eq!(value.as_ref().unwrap(), "piyo");
-                Ok(())
-            })
-            .unwrap();
-        storage
-            .for_value_at(42, &|value| {
-                assert_eq!(value.as_ref().unwrap(), "fuga");
-                Ok(())
-            })
-            .unwrap();
+        // TODO: Implement it.
+        // storage
+        //     .for_value_at(0, &|value| {
+        //         assert_eq!(value.as_ref().unwrap(), "piyo");
+        //         Ok(())
+        //     })
+        //     .unwrap();
+        // storage
+        //     .for_value_at(42, &|value| {
+        //         assert_eq!(value.as_ref().unwrap(), "fuga");
+        //         Ok(())
+        //     })
+        //     .unwrap();
     }
 
     #[test]
