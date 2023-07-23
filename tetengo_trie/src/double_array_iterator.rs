@@ -11,6 +11,9 @@ use crate::storage::Storage;
 
 /**
  * A double array iterator.
+ *
+ * # Type Parameters
+ * * `T` - A type.
  */
 #[derive(Clone)]
 pub struct DoubleArrayIterator<'a, T> {
