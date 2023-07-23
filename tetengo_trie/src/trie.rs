@@ -65,6 +65,11 @@ const DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
 
 /**
  * A trie.
+ *
+ * # Type Parameters
+ * * `Key`           - A key type.
+ * * `Value`         - A value type.
+ * * `KeySerializer` - A key serializer type.
  */
 #[derive(Debug)]
 pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
