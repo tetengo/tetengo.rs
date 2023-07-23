@@ -313,6 +313,58 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
 
         self.double_array.storage().value_at(index as usize)
     }
+
+    // /*!
+    //     \brief Returns a subtrie.
+
+    //     \param key_prefix A key prefix.
+
+    //     \return A unique pointer to a subtrie.
+    //             Or nullptr when the trie does not have the given key prefix.
+    // */
+    // [[nodiscard]] std::unique_ptr<trie> subtrie(const key_type& key_prefix) const
+    // {
+    //     auto p_trie_impl = [this, &key_prefix]() {
+    //         if constexpr (std::is_same_v<key_type, std::string_view> || std::is_same_v<key_type, std::string>)
+    //         {
+    //             return m_impl.subtrie(m_key_serializer(key_prefix));
+    //         }
+    //         else
+    //         {
+    //             const auto serialized_key_prefix = m_key_serializer(key_prefix);
+    //             return m_impl.subtrie(
+    //                 std::string_view{ std::data(serialized_key_prefix), std::size(serialized_key_prefix) });
+    //         }
+    //     }();
+    //     if (!p_trie_impl)
+    //     {
+    //         return nullptr;
+    //     }
+    //     std::unique_ptr<trie> p_trie{ new trie{ std::move(p_trie_impl), m_key_serializer } };
+    //     return p_trie;
+    // }
+    // std::unique_ptr<trie_impl> subtrie(const std::string_view& key_prefix) const
+    // {
+    //     auto p_subtrie = m_p_double_array->subtrie(key_prefix);
+    //     if (!p_subtrie)
+    //     {
+    //         return nullptr;
+    //     }
+    //     return std::make_unique<trie_impl>(std::move(p_subtrie));
+    // }
+
+    /**
+     * Returns a subtrie.
+     *
+     * # Arguments
+     * * `key_prefix` - A key prefix.
+     *
+     * # Returns
+     * A subtrie. Or None when the trie does not have the given key prefix.
+     */
+    pub fn subtrie(&self, _key_prefix: KeySerializer::Object<'_>) -> Result<Option<Self>> {
+        todo!()
+    }
 }
 
 #[cfg(test)]
@@ -607,5 +659,10 @@ mod tests {
                 assert!(found.is_none());
             }
         }
+    }
+
+    #[test]
+    fn subtrie() {
+        // TODO: Implement it.
     }
 }
