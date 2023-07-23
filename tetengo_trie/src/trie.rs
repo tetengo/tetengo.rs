@@ -7,6 +7,7 @@
 use anyhow::Result;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
+use std::rc::Rc;
 
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
@@ -286,33 +287,6 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         Ok(self.double_array.find(&serialized_key)?.is_some())
     }
 
-    // /*!
-    //     \brief Finds the value object correspoinding the given key.
-
-    //     \param key A key.
-
-    //     \return A pointer to the value object. Or nullptr when the trie does not have the given key.
-    // */
-    // [[nodiscard]] const value_type* find(const key_type& key) const
-    // {
-    //     const auto* const p_found = [this, &key]() {
-    //         if constexpr (std::is_same_v<key_type, std::string_view> || std::is_same_v<key_type, std::string>)
-    //         {
-    //             return m_impl.find(m_key_serializer(key));
-    //         }
-    //         else
-    //         {
-    //             const auto serialized_key = m_key_serializer(key);
-    //             return m_impl.find(std::string_view{ std::data(serialized_key), std::size(serialized_key) });
-    //         }
-    //     }();
-    //     if (!p_found)
-    //     {
-    //         return nullptr;
-    //     }
-    //     return std::any_cast<value_type>(p_found);
-    // }
-
     /**
      * Finds the value object correspoinding the given key.
      *
@@ -320,19 +294,19 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * `key` - A key.
      *
      * # Returns
-     * A reference to the value object. Or None when the trie does not have the given key.
+     * The value object. Or None when the trie does not have the given key.
      *
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn find(&self, key: KeySerializer::Object<'_>) -> Result<Option<&Value>> {
+    pub fn find(&self, key: KeySerializer::Object<'_>) -> Result<Option<Rc<Value>>> {
         let serialized_key = self._key_serializer.serialize(&key);
         let index = self.double_array.find(&serialized_key)?;
-        let Some(_index) = index else {
+        let Some(index) = index else {
             return Ok(None);
         };
 
-        todo!()
+        self.double_array.storage().value_at(index as usize)
     }
 }
 
@@ -605,28 +579,28 @@ mod tests {
             let found = trie.find(KUMAMOTO).unwrap();
             assert!(found.is_none());
         }
-        // {
-        //     let trie = Trie::<&str, String>::new_with_elements(
-        //         [
-        //             (KUMAMOTO, KUMAMOTO.to_string()),
-        //             (TAMANA, TAMANA.to_string()),
-        //         ]
-        //         .to_vec(),
-        //     )
-        //     .unwrap();
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
 
-        //     {
-        //         let found = trie.find(KUMAMOTO).unwrap().unwrap();
-        //         assert_eq!(*found, KUMAMOTO.to_string());
-        //     }
-        //     {
-        //         let found = trie.find(TAMANA).unwrap().unwrap();
-        //         assert_eq!(*found, TAMANA.to_string());
-        //     }
-        //     {
-        //         let found = trie.find(UTO).unwrap();
-        //         assert!(found.is_none());
-        //     }
-        // }
+            {
+                let found = trie.find(KUMAMOTO).unwrap().unwrap();
+                assert_eq!(*found, KUMAMOTO.to_string());
+            }
+            {
+                let found = trie.find(TAMANA).unwrap().unwrap();
+                assert_eq!(*found, TAMANA.to_string());
+            }
+            {
+                let found = trie.find(UTO).unwrap();
+                assert!(found.is_none());
+            }
+        }
     }
 }
