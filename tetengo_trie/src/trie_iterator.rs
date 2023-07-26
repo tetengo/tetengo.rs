@@ -14,7 +14,7 @@ use crate::storage::Storage;
  */
 #[derive(Clone)]
 pub struct TrieIterator<'a, T> {
-    _double_array_iterator: DoubleArrayIterator<'a, T>,
+    double_array_iterator: DoubleArrayIterator<'a, T>,
     _storage: &'a dyn Storage<T>,
 }
 
@@ -31,7 +31,7 @@ impl<'a, T> TrieIterator<'a, T> {
         storage: &'a dyn Storage<T>,
     ) -> Self {
         Self {
-            _double_array_iterator: double_array_iterator,
+            double_array_iterator,
             _storage: storage,
         }
     }
@@ -40,7 +40,7 @@ impl<'a, T> TrieIterator<'a, T> {
 impl<T> Debug for TrieIterator<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("TrieIterator")
-            .field("double_array_iterator", &self._double_array_iterator)
+            .field("double_array_iterator", &self.double_array_iterator)
             .field("storage", &"&'a dyn Storage<T>")
             .finish()
     }
