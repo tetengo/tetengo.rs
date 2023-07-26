@@ -674,7 +674,23 @@ mod tests {
 
     #[test]
     fn iter() {
-        // TODO: Implement it.
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            let _iterator = trie.iter();
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+
+            let _iterator = trie.iter();
+        }
     }
 
     #[test]

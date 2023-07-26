@@ -86,6 +86,19 @@ mod tests {
 
             let _iterator = trie.iter();
         }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(vec![
+                (KUMAMOTO, KUMAMOTO.to_string()),
+                (TAMANA, TAMANA.to_string()),
+            ])
+            .unwrap();
+
+            let mut iterator = trie.iter();
+            let mut clone = iterator.clone();
+            assert_eq!(clone.next(), iterator.next());
+            assert_eq!(clone.next(), iterator.next());
+            assert_eq!(clone.next(), iterator.next());
+        }
     }
 
     #[test]
