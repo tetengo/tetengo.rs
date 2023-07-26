@@ -99,6 +99,10 @@ impl<T> Debug for DoubleArrayIterator<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArrayIterator")
             .field("storage", &" &'a dyn Storage<T>")
+            .field(
+                "base_check_index_key_stack",
+                &self.base_check_index_key_stack,
+            )
             .finish()
     }
 }

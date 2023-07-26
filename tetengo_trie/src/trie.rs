@@ -12,6 +12,7 @@ use std::rc::Rc;
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
 use crate::storage::Storage;
+use crate::trie_iterator::TrieIterator;
 
 /**
  * A building observer set.
@@ -312,6 +313,16 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         };
 
         self.double_array.storage().value_at(index as usize)
+    }
+
+    /**
+     * Returns an iterator.
+     *
+     * # Returns
+     * A double array iterator.
+     */
+    pub fn iter(&self) -> TrieIterator<'_, Value> {
+        TrieIterator::new(self.double_array.iter(), self.double_array.storage())
     }
 
     // /*!
@@ -659,6 +670,11 @@ mod tests {
                 assert!(found.is_none());
             }
         }
+    }
+
+    #[test]
+    fn iter() {
+        // TODO: Implement it.
     }
 
     #[test]
