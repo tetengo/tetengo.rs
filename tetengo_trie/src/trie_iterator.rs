@@ -5,6 +5,7 @@
  */
 
 use std::fmt::{self, Debug, Formatter};
+use std::rc::Rc;
 
 use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
@@ -15,7 +16,7 @@ use crate::storage::Storage;
 #[derive(Clone)]
 pub struct TrieIterator<'a, T> {
     double_array_iterator: DoubleArrayIterator<'a, T>,
-    _storage: &'a dyn Storage<T>,
+    storage: &'a dyn Storage<T>,
 }
 
 impl<'a, T> TrieIterator<'a, T> {
@@ -32,7 +33,22 @@ impl<'a, T> TrieIterator<'a, T> {
     ) -> Self {
         Self {
             double_array_iterator,
-            _storage: storage,
+            storage,
+        }
+    }
+}
+
+impl<T> Iterator for TrieIterator<'_, T> {
+    type Item = Rc<T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let value_index = self.double_array_iterator.next()?;
+        match self.storage.value_at(value_index as usize) {
+            Ok(value) => value,
+            Err(e) => {
+                debug_assert!(false, "{}", e);
+                None
+            }
         }
     }
 }
@@ -56,12 +72,41 @@ mod tests {
 
     #[test]
     fn new() {
-        let trie = Trie::<&str, String>::new_with_elements(vec![
-            (KUMAMOTO, KUMAMOTO.to_string()),
-            (TAMANA, TAMANA.to_string()),
-        ])
-        .unwrap();
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
 
-        let _iterator = trie.iter();
+            let _iterator = trie.iter();
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(vec![
+                (KUMAMOTO, KUMAMOTO.to_string()),
+                (TAMANA, TAMANA.to_string()),
+            ])
+            .unwrap();
+
+            let _iterator = trie.iter();
+        }
+    }
+
+    #[test]
+    fn next() {
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+            let mut iterator = trie.iter();
+
+            assert!(iterator.next().is_none());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(vec![
+                (KUMAMOTO, KUMAMOTO.to_string()),
+                (TAMANA, TAMANA.to_string()),
+            ])
+            .unwrap();
+            let mut iterator = trie.iter();
+
+            assert_eq!(*iterator.next().unwrap().as_ref(), KUMAMOTO.to_string());
+            assert_eq!(*iterator.next().unwrap().as_ref(), TAMANA.to_string());
+            assert!(iterator.next().is_none());
+        }
     }
 }
