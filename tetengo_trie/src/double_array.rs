@@ -21,12 +21,6 @@ pub enum DoubleArrayError {
      */
     #[error("density_factor must be greater than 0.")]
     InvalidDensityFactor,
-
-    /**
-     * key_prefix is not found.
-     */
-    #[error("key_prefix is not found.")]
-    KeyPrefixNotFound,
 }
 
 /// The double array element type.
@@ -231,18 +225,20 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
      * * `key_prefix` - A key prefix.
      *
      * # Returns
-     * A double array of the subtrie.
+     * A double array of the subtrie. Or None when the double array does not have the given key prefix.
      *
      * # Errors
-     * * When the double array does not have the given key prefix.
      * * When it fails to access the storage.
      */
-    pub fn subtrie(&self, key_prefix: &[u8]) -> Result<Self> {
+    pub fn subtrie(&self, key_prefix: &[u8]) -> Result<Option<Self>> {
         let index = self.traverse(key_prefix)?;
         let Some(index) = index else {
-            return Err(DoubleArrayError::KeyPrefixNotFound.into());
+            return Ok(None);
         };
-        Ok(Self::new_with_storage(self.storage().clone_box(), index))
+        Ok(Some(Self::new_with_storage(
+            self.storage().clone_box(),
+            index,
+        )))
     }
 
     fn traverse(&self, key: &[u8]) -> Result<Option<usize>> {
@@ -660,7 +656,7 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
                 {
-                    let subtrie = double_array.subtrie(b"U").unwrap();
+                    let subtrie = double_array.subtrie(b"U").unwrap().unwrap();
                     {
                         let found = subtrie.find(b"TIGOSI").unwrap().unwrap();
                         assert_eq!(found, 24);
@@ -698,22 +694,22 @@ mod tests {
                         }
                     }
 
-                    let subtrie2 = subtrie.subtrie(b"TI").unwrap();
+                    let subtrie2 = subtrie.subtrie(b"TI").unwrap().unwrap();
                     {
                         let found = subtrie2.find(b"GOSI").unwrap().unwrap();
                         assert_eq!(found, 24);
                     }
                 }
                 {
-                    let subtrie = double_array.subtrie(b"T");
-                    assert!(subtrie.is_err());
+                    let subtrie = double_array.subtrie(b"T").unwrap();
+                    assert!(subtrie.is_none());
                 }
             }
             {
                 let double_array =
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
-                let subtrie = double_array.subtrie("赤".as_bytes()).unwrap();
+                let subtrie = double_array.subtrie("赤".as_bytes()).unwrap().unwrap();
                 {
                     let found = subtrie.find("水".as_bytes()).unwrap().unwrap();
                     assert_eq!(found, 42);
