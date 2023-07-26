@@ -7,6 +7,7 @@
 use anyhow::Result;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
+use std::marker::PhantomData;
 use std::rc::Rc;
 
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
@@ -74,12 +75,14 @@ const DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
  */
 #[derive(Debug)]
 pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
-    _phantom: std::marker::PhantomData<Key>,
+    _phantom: PhantomData<Key>,
     double_array: DoubleArray<Value>,
-    _key_serializer: KeySerializer,
+    key_serializer: KeySerializer,
 }
 
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, KeySerializer> {
+impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
+    Trie<Key, Value, KeySerializer>
+{
     /**
      * Creates a trie.
      *
@@ -101,9 +104,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      */
     pub fn new_with_keyserializer(key_serializer: KeySerializer) -> Result<Self> {
         Ok(Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: PhantomData,
             double_array: DoubleArray::new()?,
-            _key_serializer: key_serializer,
+            key_serializer,
         })
     }
 
@@ -216,9 +219,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         }
 
         Ok(Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: PhantomData,
             double_array,
-            _key_serializer: key_serializer,
+            key_serializer,
         })
     }
 
@@ -244,9 +247,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         key_serializer: KeySerializer,
     ) -> Self {
         Self {
-            _phantom: std::marker::PhantomData,
+            _phantom: PhantomData,
             double_array: DoubleArray::new_with_storage(storage, 0),
-            _key_serializer: key_serializer,
+            key_serializer,
         }
     }
 
@@ -289,7 +292,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * When it fails to access the storage.
      */
     pub fn contains(&self, key: KeySerializer::Object<'_>) -> Result<bool> {
-        let serialized_key = self._key_serializer.serialize(&key);
+        let serialized_key = self.key_serializer.serialize(&key);
         Ok(self.double_array.find(&serialized_key)?.is_some())
     }
 
@@ -306,7 +309,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      * * When it fails to access the storage.
      */
     pub fn find(&self, key: KeySerializer::Object<'_>) -> Result<Option<Rc<Value>>> {
-        let serialized_key = self._key_serializer.serialize(&key);
+        let serialized_key = self.key_serializer.serialize(&key);
         let index = self.double_array.find(&serialized_key)?;
         let Some(index) = index else {
             return Ok(None);
@@ -325,45 +328,6 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
         TrieIterator::new(self.double_array.iter(), self.double_array.storage())
     }
 
-    // /*!
-    //     \brief Returns a subtrie.
-
-    //     \param key_prefix A key prefix.
-
-    //     \return A unique pointer to a subtrie.
-    //             Or nullptr when the trie does not have the given key prefix.
-    // */
-    // [[nodiscard]] std::unique_ptr<trie> subtrie(const key_type& key_prefix) const
-    // {
-    //     auto p_trie_impl = [this, &key_prefix]() {
-    //         if constexpr (std::is_same_v<key_type, std::string_view> || std::is_same_v<key_type, std::string>)
-    //         {
-    //             return m_impl.subtrie(m_key_serializer(key_prefix));
-    //         }
-    //         else
-    //         {
-    //             const auto serialized_key_prefix = m_key_serializer(key_prefix);
-    //             return m_impl.subtrie(
-    //                 std::string_view{ std::data(serialized_key_prefix), std::size(serialized_key_prefix) });
-    //         }
-    //     }();
-    //     if (!p_trie_impl)
-    //     {
-    //         return nullptr;
-    //     }
-    //     std::unique_ptr<trie> p_trie{ new trie{ std::move(p_trie_impl), m_key_serializer } };
-    //     return p_trie;
-    // }
-    // std::unique_ptr<trie_impl> subtrie(const std::string_view& key_prefix) const
-    // {
-    //     auto p_subtrie = m_p_double_array->subtrie(key_prefix);
-    //     if (!p_subtrie)
-    //     {
-    //         return nullptr;
-    //     }
-    //     return std::make_unique<trie_impl>(std::move(p_subtrie));
-    // }
-
     /**
      * Returns a subtrie.
      *
@@ -372,9 +336,21 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer> Trie<Key, Value, Ke
      *
      * # Returns
      * A subtrie. Or None when the trie does not have the given key prefix.
+     *
+     * # Errors
+     * * When it fails to access the storage.
      */
-    pub fn subtrie(&self, _key_prefix: KeySerializer::Object<'_>) -> Result<Option<Self>> {
-        todo!()
+    pub fn subtrie(&self, key_prefix: KeySerializer::Object<'_>) -> Result<Option<Self>> {
+        let serialized_key_prefix = self.key_serializer.serialize(&key_prefix);
+        let subdouble_array = self.double_array.subtrie(&serialized_key_prefix)?;
+        let Some(subdouble_array) = subdouble_array else {
+            return Ok(None);
+        };
+        Ok(Some(Self {
+            _phantom: PhantomData,
+            double_array: subdouble_array,
+            key_serializer: self.key_serializer.clone(),
+        }))
     }
 }
 
@@ -396,7 +372,7 @@ mod tests {
 
     static _TAMARAI: &str = "玉来";
 
-    static _TAMA: &str = "玉";
+    static TAMA: &str = "玉";
 
     static UTO: &str = "宇土";
 
@@ -695,6 +671,123 @@ mod tests {
 
     #[test]
     fn subtrie() {
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            let subtrie = trie.subtrie(TAMA).unwrap();
+            assert!(subtrie.is_none());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [(KUMAMOTO, KUMAMOTO.to_string())].to_vec(),
+            )
+            .unwrap();
+
+            let subtrie = trie.subtrie(TAMA).unwrap();
+            assert!(subtrie.is_none());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+
+            let subtrie = trie.subtrie(TAMA).unwrap().unwrap();
+
+            let mut iterator = subtrie.iter();
+            assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
+            assert!(iterator.next().is_none());
+        }
+        // {
+        //     let trie = Trie::<&str, String>::new_with_elements(
+        //         [
+        //             (KUMAMOTO, KUMAMOTO.to_string()),
+        //             (TAMANA, TAMANA.to_string()),
+        //             (TAMARAI, TAMARAI.to_string()),
+        //         ]
+        //         .to_vec(),
+        //     )
+        //     .unwrap();
+
+        //     let _mem = trie.double_array.storage().as_any().downcast_ref::<MemoryStorage<String>>().unwrap();
+
+        //     let subtrie = trie.subtrie(TAMA).unwrap().unwrap();
+
+        //     let mut iterator = subtrie.iter();
+        //     assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
+        //     assert_eq!(*iterator.next().unwrap(), TAMARAI.to_string());
+        //     assert!(iterator.next().is_none());
+        // }
         // TODO: Implement it.
     }
+    // {
+    //     const tetengo::trie::trie<std::wstring, copy_detector<std::string>> trie_{
+    //         { kumamoto2, detect_copy(kumamoto1) },
+    //         { tamana2, detect_copy(tamana1) },
+    //         { tamarai2, detect_copy(tamarai1) }
+    //     };
+
+    //     const auto p_subtrie = trie_.subtrie(tama2);
+    //     BOOST_REQUIRE(p_subtrie);
+
+    //     auto iterator_ = std::begin(*p_subtrie);
+    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
+    //     BOOST_CHECK(iterator_->value == tamana1);
+
+    //     ++iterator_;
+    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
+    //     BOOST_CHECK(iterator_->value == tamarai1);
+
+    //     ++iterator_;
+    //     BOOST_CHECK(iterator_ == std::end(*p_subtrie));
+    // }
+
+    // {
+    //     const tetengo::trie::trie<std::string_view, int> trie_{};
+
+    //     const auto p_subtrie = trie_.subtrie("Kuma");
+    //     BOOST_CHECK(!p_subtrie);
+    // }
+    // {
+    //     const tetengo::trie::trie<std::string_view, int> trie_{ { "Kumamoto", 42 } };
+
+    //     const auto p_subtrie = trie_.subtrie("Kuma");
+    //     BOOST_REQUIRE(p_subtrie);
+
+    //     auto iterator_ = std::begin(*p_subtrie);
+    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
+    //     BOOST_CHECK(*iterator_ == 42);
+
+    //     ++iterator_;
+    //     BOOST_CHECK(iterator_ == std::end(*p_subtrie));
+    // }
+
+    // {
+    //     std::vector<std::pair<std::string_view, std::string>>    content{};
+    //     const tetengo::trie::trie<std::string_view, std::string> trie_{ std::make_move_iterator(std::begin(content)),
+    //                                                                     std::make_move_iterator(std::end(content)) };
+
+    //     const auto p_subtrie = trie_.subtrie("Kuma");
+    //     BOOST_CHECK(!p_subtrie);
+    // }
+    // {
+    //     std::vector<std::pair<std::string_view, std::string>>    content{ { "Kumamoto", kumamoto1 },
+    //                                                                    { "Tamana", tamana1 } };
+    //     const tetengo::trie::trie<std::string_view, std::string> trie_{ std::make_move_iterator(std::begin(content)),
+    //                                                                     std::make_move_iterator(std::end(content)) };
+
+    //     const auto p_subtrie = trie_.subtrie("Kuma");
+    //     BOOST_REQUIRE(p_subtrie);
+
+    //     auto iterator_ = std::begin(*p_subtrie);
+    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
+    //     BOOST_CHECK(*iterator_ == kumamoto1);
+
+    //     ++iterator_;
+    //     BOOST_CHECK(iterator_ == std::end(*p_subtrie));
+    // }
 }
