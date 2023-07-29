@@ -125,9 +125,7 @@ fn calc_base<T>(
                     Err(e) => Some(Err(e)),
                 }
             });
-        if let Some(occupied) = occupied {
-            occupied?
-        } else {
+        if occupied.is_none() && !base_uniquer.contains(&base) {
             let _ = base_uniquer.insert(base);
             return Ok(base);
         }

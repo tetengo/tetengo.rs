@@ -370,7 +370,7 @@ mod tests {
 
     static TAMANA: &str = "玉名";
 
-    static _TAMARAI: &str = "玉来";
+    static TAMARAI: &str = "玉来";
 
     static TAMA: &str = "玉";
 
@@ -702,26 +702,31 @@ mod tests {
             assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
             assert!(iterator.next().is_none());
         }
-        // {
-        //     let trie = Trie::<&str, String>::new_with_elements(
-        //         [
-        //             (KUMAMOTO, KUMAMOTO.to_string()),
-        //             (TAMANA, TAMANA.to_string()),
-        //             (TAMARAI, TAMARAI.to_string()),
-        //         ]
-        //         .to_vec(),
-        //     )
-        //     .unwrap();
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                    (TAMARAI, TAMARAI.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
 
-        //     let _mem = trie.double_array.storage().as_any().downcast_ref::<MemoryStorage<String>>().unwrap();
+            let _mem = trie
+                .double_array
+                .storage()
+                .as_any()
+                .downcast_ref::<MemoryStorage<String>>()
+                .unwrap();
 
-        //     let subtrie = trie.subtrie(TAMA).unwrap().unwrap();
+            let subtrie = trie.subtrie(TAMA).unwrap().unwrap();
 
-        //     let mut iterator = subtrie.iter();
-        //     assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
-        //     assert_eq!(*iterator.next().unwrap(), TAMARAI.to_string());
-        //     assert!(iterator.next().is_none());
-        // }
+            let mut iterator = subtrie.iter();
+            assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
+            assert_eq!(*iterator.next().unwrap(), TAMARAI.to_string());
+            assert!(iterator.next().is_none());
+        }
         // TODO: Implement it.
     }
     // {
