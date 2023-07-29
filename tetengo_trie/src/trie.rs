@@ -727,72 +727,44 @@ mod tests {
             assert_eq!(*iterator.next().unwrap(), TAMARAI.to_string());
             assert!(iterator.next().is_none());
         }
-        // TODO: Implement it.
+
+        {
+            let trie = Trie::<&str, i32>::new().unwrap();
+
+            let subtrie = trie.subtrie("Kuma").unwrap();
+            assert!(subtrie.is_none());
+        }
+        {
+            let trie = Trie::<&str, i32>::new_with_elements([("Kumamoto", 42)].to_vec()).unwrap();
+
+            let subtrie = trie.subtrie("Kuma").unwrap().unwrap();
+
+            let mut iterator = subtrie.iter();
+            assert_eq!(*iterator.next().unwrap(), 42);
+            assert!(iterator.next().is_none());
+        }
+
+        {
+            let trie = Trie::<&str, String>::new().unwrap();
+
+            let subtrie = trie.subtrie("Kuma").unwrap();
+            assert!(subtrie.is_none());
+        }
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [
+                    ("Kumamoto", KUMAMOTO.to_string()),
+                    ("Tamana", TAMANA.to_string()),
+                ]
+                .to_vec(),
+            )
+            .unwrap();
+
+            let subtrie = trie.subtrie("Kuma").unwrap().unwrap();
+
+            let mut iterator = subtrie.iter();
+            assert_eq!(*iterator.next().unwrap(), KUMAMOTO.to_string());
+            assert!(iterator.next().is_none());
+        }
     }
-    // {
-    //     const tetengo::trie::trie<std::wstring, copy_detector<std::string>> trie_{
-    //         { kumamoto2, detect_copy(kumamoto1) },
-    //         { tamana2, detect_copy(tamana1) },
-    //         { tamarai2, detect_copy(tamarai1) }
-    //     };
-
-    //     const auto p_subtrie = trie_.subtrie(tama2);
-    //     BOOST_REQUIRE(p_subtrie);
-
-    //     auto iterator_ = std::begin(*p_subtrie);
-    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
-    //     BOOST_CHECK(iterator_->value == tamana1);
-
-    //     ++iterator_;
-    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
-    //     BOOST_CHECK(iterator_->value == tamarai1);
-
-    //     ++iterator_;
-    //     BOOST_CHECK(iterator_ == std::end(*p_subtrie));
-    // }
-
-    // {
-    //     const tetengo::trie::trie<std::string_view, int> trie_{};
-
-    //     const auto p_subtrie = trie_.subtrie("Kuma");
-    //     BOOST_CHECK(!p_subtrie);
-    // }
-    // {
-    //     const tetengo::trie::trie<std::string_view, int> trie_{ { "Kumamoto", 42 } };
-
-    //     const auto p_subtrie = trie_.subtrie("Kuma");
-    //     BOOST_REQUIRE(p_subtrie);
-
-    //     auto iterator_ = std::begin(*p_subtrie);
-    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
-    //     BOOST_CHECK(*iterator_ == 42);
-
-    //     ++iterator_;
-    //     BOOST_CHECK(iterator_ == std::end(*p_subtrie));
-    // }
-
-    // {
-    //     std::vector<std::pair<std::string_view, std::string>>    content{};
-    //     const tetengo::trie::trie<std::string_view, std::string> trie_{ std::make_move_iterator(std::begin(content)),
-    //                                                                     std::make_move_iterator(std::end(content)) };
-
-    //     const auto p_subtrie = trie_.subtrie("Kuma");
-    //     BOOST_CHECK(!p_subtrie);
-    // }
-    // {
-    //     std::vector<std::pair<std::string_view, std::string>>    content{ { "Kumamoto", kumamoto1 },
-    //                                                                    { "Tamana", tamana1 } };
-    //     const tetengo::trie::trie<std::string_view, std::string> trie_{ std::make_move_iterator(std::begin(content)),
-    //                                                                     std::make_move_iterator(std::end(content)) };
-
-    //     const auto p_subtrie = trie_.subtrie("Kuma");
-    //     BOOST_REQUIRE(p_subtrie);
-
-    //     auto iterator_ = std::begin(*p_subtrie);
-    //     BOOST_REQUIRE(iterator_ != std::end(*p_subtrie));
-    //     BOOST_CHECK(*iterator_ == kumamoto1);
-
-    //     ++iterator_;
-    //     BOOST_CHECK(iterator_ == std::end(*p_subtrie));
-    // }
 }
