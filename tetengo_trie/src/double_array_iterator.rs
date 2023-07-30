@@ -16,7 +16,7 @@ use crate::storage::Storage;
  * * `T` - A type.
  */
 #[derive(Clone)]
-pub struct DoubleArrayIterator<'a, T> {
+pub(super) struct DoubleArrayIterator<'a, T> {
     storage: &'a dyn Storage<T>,
     base_check_index_key_stack: Vec<(usize, Vec<u8>)>,
 }
@@ -29,7 +29,7 @@ impl<'a, T> DoubleArrayIterator<'a, T> {
      * * `storage`               - A storage.
      * * `root_base_check_index` - A root base-check index.
      */
-    pub fn new(storage: &'a dyn Storage<T>, root_base_check_index: usize) -> Self {
+    pub(super) fn new(storage: &'a dyn Storage<T>, root_base_check_index: usize) -> Self {
         Self {
             storage,
             base_check_index_key_stack: vec![(root_base_check_index, Vec::new())],
