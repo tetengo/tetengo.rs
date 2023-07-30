@@ -4,7 +4,9 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use crate::serializer::{Deserializer, Result, Serializer};
+use anyhow::Result;
+
+use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
 /**
  * A string serializer.
@@ -12,19 +14,14 @@ use crate::serializer::{Deserializer, Result, Serializer};
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringSerializer;
 
-impl StringSerializer {
-    /**
-     * Creates a string serializer.
-     */
-    pub fn new() -> Self {
+impl Serializer for StringSerializer {
+    type Object<'a> = &'a str;
+
+    fn new(_: bool) -> Self {
         StringSerializer {}
     }
-}
 
-impl Serializer for StringSerializer {
-    type Object = str;
-
-    fn serialize(&self, object: &str) -> Vec<u8> {
+    fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
         object.as_bytes().to_vec()
     }
 }
@@ -35,21 +32,24 @@ impl Serializer for StringSerializer {
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringDeserializer;
 
-impl StringDeserializer {
-    /**
-     * Creates a string deserializer.
-     */
-    pub fn new() -> Self {
-        StringDeserializer {}
-    }
-}
-
 impl Deserializer for StringDeserializer {
     type Object = String;
 
-    fn deserialize(&self, bytes: &[u8]) -> Result<String> {
+    fn new(_: bool) -> Self {
+        StringDeserializer {}
+    }
+
+    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
         String::from_utf8(bytes.to_vec()).map_err(Into::into)
     }
+}
+
+impl SerializerOf<&str> for () {
+    type Type = StringSerializer;
+}
+
+impl DeserializerOf<String> for () {
+    type Type = StringDeserializer;
 }
 
 #[cfg(test)]
@@ -60,11 +60,11 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let serializer = StringSerializer::new();
+        let serializer = <() as SerializerOf<&str>>::Type::new(false);
 
         let object = "Sakuramachi";
         let expected_serialized = "Sakuramachi";
-        let serialized = serializer.serialize(object);
+        let serialized = serializer.serialize(&object);
         assert_eq!(
             std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
             expected_serialized
@@ -75,7 +75,7 @@ mod tests {
     #[test]
     fn deserialize() {
         {
-            let deserializer = StringDeserializer::new();
+            let deserializer = <() as DeserializerOf<String>>::Type::new(false);
 
             let serialized = "Sakuramachi".as_bytes();
             let expected_object = "Sakuramachi";
@@ -83,7 +83,7 @@ mod tests {
             assert_eq!(object.as_str(), expected_object);
         }
         {
-            let deserializer = StringDeserializer::new();
+            let deserializer = <() as DeserializerOf<String>>::Type::new(false);
 
             let serialized = &[0xFFu8, 0xFFu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(serialized) {

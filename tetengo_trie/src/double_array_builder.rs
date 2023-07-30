@@ -4,11 +4,11 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::collections::HashSet;
 
 use crate::double_array::{
-    BuldingObserverSet, DoubleArrayElement, DoubleArrayError, Result, KEY_TERMINATOR,
-    VACANT_CHECK_VALUE,
+    BuldingObserverSet, DoubleArrayElement, DoubleArrayError, KEY_TERMINATOR, VACANT_CHECK_VALUE,
 };
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
@@ -66,12 +66,14 @@ fn build_iter<T>(
     storage.set_base_at(base_check_index, base)?;
 
     for i in &children_firsts[0..children_firsts.len() - 1] {
-        let char_code = char_code_at(elements[*i].0, key_offset);
+        let (element_key, _) = elements[*i];
+        let char_code = char_code_at(element_key, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
         storage.set_check_at(next_base_check_index, char_code)?;
     }
     for i in &children_firsts[0..children_firsts.len() - 1] {
-        let char_code = char_code_at(elements[*i].0, key_offset);
+        let (element_key, _) = elements[*i];
+        let char_code = char_code_at(element_key, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
         if char_code == KEY_TERMINATOR {
             observer.adding(&elements[*i]);
@@ -100,8 +102,9 @@ fn calc_base<T>(
     density_factor: usize,
     base_uniquer: &mut HashSet<i32>,
 ) -> Result<i32> {
+    let (element_key, _) = elements[0];
     let base_first = (base_check_index - (base_check_index / density_factor)) as i32
-        - char_code_at(elements[0].0, key_offset) as i32
+        - char_code_at(element_key, key_offset) as i32
         + 1;
     for base in base_first.. {
         let first_last = firsts[firsts.len() - 1];
@@ -122,9 +125,7 @@ fn calc_base<T>(
                     Err(e) => Some(Err(e)),
                 }
             });
-        if let Some(occupied) = occupied {
-            occupied?
-        } else {
+        if occupied.is_none() && !base_uniquer.contains(&base) {
             let _ = base_uniquer.insert(base);
             return Ok(base);
         }
@@ -136,7 +137,7 @@ fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Ve
     let mut firsts = vec![0];
     let mut child_first = 0;
     while child_first < elements.len() {
-        let child_first_element_key = elements[child_first].0;
+        let (child_first_element_key, _) = elements[child_first];
         let child_last = elements
             .iter()
             .skip(child_first)
@@ -153,9 +154,9 @@ fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Ve
     firsts
 }
 
-fn char_code_at(string: &str, index: usize) -> u8 {
-    if index < string.len() {
-        string.as_bytes()[index]
+fn char_code_at(bytes: &[u8], index: usize) -> u8 {
+    if index < bytes.len() {
+        bytes[index]
     } else {
         KEY_TERMINATOR
     }

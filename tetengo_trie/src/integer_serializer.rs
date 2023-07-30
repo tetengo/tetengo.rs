@@ -4,11 +4,14 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::marker;
 use std::mem;
 use std::ops;
 
-use crate::serializer::{DeserializationError, Deserializer, Result, Serializer};
+use crate::serializer::{
+    DeserializationError, Deserializer, DeserializerOf, Serializer, SerializerOf,
+};
 
 /**
  * A trait for integers.
@@ -61,25 +64,17 @@ pub struct IntegerSerializer<Object: Integer<Object>> {
     _phantom: marker::PhantomData<Object>,
 }
 
-impl<Object: Integer<Object>> IntegerSerializer<Object> {
-    /**
-     * Creates an integer serializer.
-     *
-     * # Arguments
-     * * `fe_escape` - Set true to escape 0xFE.
-     */
-    pub fn new(fe_escape: bool) -> Self {
+impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
+    type Object<'a> = Object;
+
+    fn new(fe_escape: bool) -> Self {
         IntegerSerializer {
             fe_escape,
             _phantom: marker::PhantomData,
         }
     }
-}
 
-impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
-    type Object = Object;
-
-    fn serialize(&self, object: &Object) -> Vec<u8> {
+    fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
         to_bytes(object, self.fe_escape)
     }
 }
@@ -127,25 +122,16 @@ pub struct IntegerDeserializer<Object: Integer<Object>> {
     _phantom: marker::PhantomData<Object>,
 }
 
-impl<Object: Integer<Object>> IntegerDeserializer<Object> {
-    /**
-     * Creates an integer deserializer.
-     *
-     * # Arguments
-     * * `fe_escape` - Set true to escape 0xFE.
-     */
-    pub fn new(fe_escape: bool) -> Self {
+impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
+    type Object = Object;
+
+    fn new(fe_escape: bool) -> Self {
         IntegerDeserializer {
             fe_escape,
             _phantom: marker::PhantomData,
         }
     }
-}
-
-impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
-    type Object = Object;
-
-    fn deserialize(&self, bytes: &[u8]) -> Result<Object> {
+    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
         from_bytes(bytes, self.fe_escape)
     }
 }
@@ -239,6 +225,70 @@ fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Resu
     Ok(object)
 }
 
+impl SerializerOf<u8> for () {
+    type Type = IntegerSerializer<u8>;
+}
+
+impl SerializerOf<u16> for () {
+    type Type = IntegerSerializer<u16>;
+}
+
+impl SerializerOf<u32> for () {
+    type Type = IntegerSerializer<u32>;
+}
+
+impl SerializerOf<u64> for () {
+    type Type = IntegerSerializer<u64>;
+}
+
+impl SerializerOf<i16> for () {
+    type Type = IntegerSerializer<i16>;
+}
+
+impl SerializerOf<i32> for () {
+    type Type = IntegerSerializer<i32>;
+}
+
+impl SerializerOf<i64> for () {
+    type Type = IntegerSerializer<i64>;
+}
+
+impl SerializerOf<i128> for () {
+    type Type = IntegerSerializer<i128>;
+}
+
+impl DeserializerOf<u8> for () {
+    type Type = IntegerDeserializer<u8>;
+}
+
+impl DeserializerOf<u16> for () {
+    type Type = IntegerDeserializer<u16>;
+}
+
+impl DeserializerOf<u32> for () {
+    type Type = IntegerDeserializer<u32>;
+}
+
+impl DeserializerOf<u64> for () {
+    type Type = IntegerDeserializer<u64>;
+}
+
+impl DeserializerOf<i16> for () {
+    type Type = IntegerDeserializer<i16>;
+}
+
+impl DeserializerOf<i32> for () {
+    type Type = IntegerDeserializer<i32>;
+}
+
+impl DeserializerOf<i64> for () {
+    type Type = IntegerDeserializer<i64>;
+}
+
+impl DeserializerOf<i128> for () {
+    type Type = IntegerDeserializer<i128>;
+}
+
 #[cfg(test)]
 mod tests {
     use crate::double_array::KEY_TERMINATOR;
@@ -252,7 +302,7 @@ mod tests {
     #[test]
     fn serialize() {
         {
-            let serializer = IntegerSerializer::<i32>::new(false);
+            let serializer = <() as SerializerOf<i32>>::Type::new(false);
 
             let object = 0x001234AB;
             let expected_serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
@@ -260,7 +310,7 @@ mod tests {
             assert_eq!(serialized, expected_serialized);
         }
         {
-            let serializer = IntegerSerializer::<i32>::new(true);
+            let serializer = <() as SerializerOf<i32>>::Type::new(true);
 
             let object = 0x001234AB;
             let expected_serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
@@ -269,7 +319,7 @@ mod tests {
             assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
         }
         {
-            let serializer = IntegerSerializer::<u32>::new(false);
+            let serializer = <() as SerializerOf<u32>>::Type::new(false);
 
             let object = 0xFCFDFEFF;
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
@@ -277,7 +327,7 @@ mod tests {
             assert_eq!(serialized, expected_serialized);
         }
         {
-            let serializer = IntegerSerializer::<u32>::new(true);
+            let serializer = <() as SerializerOf<u32>>::Type::new(true);
 
             let object = 0xFCFDFEFF;
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
@@ -290,7 +340,7 @@ mod tests {
     #[test]
     fn deserialize() {
         {
-            let deserializer = IntegerDeserializer::<i32>::new(false);
+            let deserializer = <() as DeserializerOf<i32>>::Type::new(false);
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
@@ -298,7 +348,7 @@ mod tests {
             assert_eq!(object, expected_object);
         }
         {
-            let deserializer = IntegerDeserializer::<i32>::new(true);
+            let deserializer = <() as DeserializerOf<i32>>::Type::new(true);
 
             let serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let expected_object = 0x001234AB;
@@ -306,7 +356,7 @@ mod tests {
             assert_eq!(object, expected_object);
         }
         {
-            let deserializer = IntegerDeserializer::<u32>::new(false);
+            let deserializer = <() as DeserializerOf<u32>>::Type::new(false);
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
@@ -314,7 +364,7 @@ mod tests {
             assert_eq!(object, expected_object);
         }
         {
-            let deserializer = IntegerDeserializer::<u32>::new(true);
+            let deserializer = <() as DeserializerOf<u32>>::Type::new(true);
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let expected_object = 0xFCFDFEFF;
@@ -322,7 +372,7 @@ mod tests {
             assert_eq!(object, expected_object);
         }
         {
-            let deserializer = IntegerDeserializer::<i32>::new(false);
+            let deserializer = <() as DeserializerOf<i32>>::Type::new(false);
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
@@ -335,7 +385,7 @@ mod tests {
             });
         }
         {
-            let deserializer = IntegerDeserializer::<i32>::new(true);
+            let deserializer = <() as DeserializerOf<i32>>::Type::new(true);
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
@@ -348,7 +398,7 @@ mod tests {
             });
         }
         {
-            let deserializer = IntegerDeserializer::<u32>::new(true);
+            let deserializer = <() as DeserializerOf<u32>>::Type::new(true);
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
@@ -361,7 +411,7 @@ mod tests {
             });
         }
         {
-            let deserializer = IntegerDeserializer::<u32>::new(true);
+            let deserializer = <() as DeserializerOf<u32>>::Type::new(true);
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFDu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {

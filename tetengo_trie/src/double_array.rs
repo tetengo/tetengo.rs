@@ -4,19 +4,12 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::fmt::{self, Debug, Formatter};
 
 use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
-
-/**
- * A result type.
- *
- * # Type Parameters
- * * `T` - A type.
- */
-pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A double array error.
@@ -28,23 +21,17 @@ pub enum DoubleArrayError {
      */
     #[error("density_factor must be greater than 0.")]
     InvalidDensityFactor,
-
-    /**
-     * key_prefix is not found.
-     */
-    #[error("key_prefix is not found.")]
-    KeyPrefixNotFound,
 }
 
 /// The double array element type.
-pub type DoubleArrayElement<'a> = (&'a str, i32);
+pub type DoubleArrayElement<'a> = (&'a [u8], i32);
 
 /**
  * A building observer set.
  */
 pub struct BuldingObserverSet<'a> {
-    pub(crate) adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
-    pub(crate) done: &'a mut dyn FnMut(),
+    adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
+    done: &'a mut dyn FnMut(),
 }
 
 impl<'a> BuldingObserverSet<'a> {
@@ -84,6 +71,7 @@ impl Debug for BuldingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
             .field("adding", &"Box<dyn FnOnce(&DoubleArrayElement<'_>)>")
+            .field("done", &"Box<dyn FnOnce()>")
             .finish()
     }
 }
@@ -99,13 +87,16 @@ pub const VACANT_CHECK_VALUE: u8 = 0xFF;
 
 /**
  * A double array.
+ *
+ * # Type Parameters
+ * * `Value` - A value type.
  */
-pub struct DoubleArray<V> {
-    storage: Box<dyn Storage<V>>,
+pub struct DoubleArray<Value> {
+    storage: Box<dyn Storage<Value>>,
     root_base_check_index: usize,
 }
 
-impl<V: Clone + 'static> DoubleArray<V> {
+impl<Value: Clone + 'static> DoubleArray<Value> {
     /**
      * Creates a double array.
      *
@@ -113,14 +104,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * * When it fails to build a double array.
      */
     pub fn new() -> Result<Self> {
-        Ok(Self {
-            storage: double_array_builder::build::<V>(
-                vec![],
-                &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                DEFAULT_DENSITY_FACTOR,
-            )?,
-            root_base_check_index: 0,
-        })
+        Self::new_with_elements(vec![])
     }
 
     /**
@@ -176,14 +160,10 @@ impl<V: Clone + 'static> DoubleArray<V> {
         building_observer_set: &mut BuldingObserverSet<'_>,
         density_factor: usize,
     ) -> Result<Self> {
-        Ok(Self {
-            storage: double_array_builder::build::<V>(
-                elements,
-                building_observer_set,
-                density_factor,
-            )?,
-            root_base_check_index: 0,
-        })
+        Ok(Self::new_with_storage(
+            double_array_builder::build::<Value>(elements, building_observer_set, density_factor)?,
+            0,
+        ))
     }
 
     /**
@@ -193,7 +173,10 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * * `storage`               - A storage.
      * * `root_base_check_index` - A root base-check index.
      */
-    pub fn new_with_storage(storage: Box<dyn Storage<V>>, root_base_check_index: usize) -> Self {
+    pub fn new_with_storage(
+        storage: Box<dyn Storage<Value>>,
+        root_base_check_index: usize,
+    ) -> Self {
         Self {
             storage,
             root_base_check_index,
@@ -212,11 +195,11 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn find(&self, key: &str) -> Result<Option<i32>> {
-        let mut terminated_key;
+    pub fn find(&self, key: &[u8]) -> Result<Option<i32>> {
+        let mut terminated_key: Vec<u8>;
         let index = self.traverse({
-            terminated_key = String::from(key);
-            terminated_key.push(KEY_TERMINATOR as char);
+            terminated_key = Vec::from(key);
+            terminated_key.push(KEY_TERMINATOR);
             &terminated_key
         })?;
         match index {
@@ -231,7 +214,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Returns
      * A double array iterator.
      */
-    pub fn iter(&self) -> DoubleArrayIterator<'_, V> {
+    pub fn iter(&self) -> DoubleArrayIterator<'_, Value> {
         DoubleArrayIterator::new(self.storage.as_ref(), self.root_base_check_index)
     }
 
@@ -242,27 +225,29 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * * `key_prefix` - A key prefix.
      *
      * # Returns
-     * A double array of the subtrie.
+     * A double array of the subtrie. Or None when the double array does not have the given key prefix.
      *
      * # Errors
-     * * When the double array does not have the given key prefix.
      * * When it fails to access the storage.
      */
-    pub fn subtrie(&self, key_prefix: &str) -> Result<Self> {
+    pub fn subtrie(&self, key_prefix: &[u8]) -> Result<Option<Self>> {
         let index = self.traverse(key_prefix)?;
         let Some(index) = index else {
-            return Err(DoubleArrayError::KeyPrefixNotFound.into());
+            return Ok(None);
         };
-        Ok(Self::new_with_storage(self.storage().clone_box(), index))
+        Ok(Some(Self::new_with_storage(
+            self.storage().clone_box(),
+            index,
+        )))
     }
 
-    fn traverse(&self, key: &str) -> Result<Option<usize>> {
+    fn traverse(&self, key: &[u8]) -> Result<Option<usize>> {
         let mut base_check_index = self.root_base_check_index;
-        for c in key.bytes() {
+        for c in key {
             let next_base_check_index =
-                (self.storage.base_at(base_check_index)? + c as i32) as usize;
+                (self.storage.base_at(base_check_index)? + *c as i32) as usize;
             if next_base_check_index >= self.storage.base_check_size()?
-                || self.storage.check_at(next_base_check_index)? != c
+                || self.storage.check_at(next_base_check_index)? != *c
             {
                 return Ok(None);
             }
@@ -278,7 +263,7 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Returns
      * The storage.
      */
-    pub fn storage(&self) -> &dyn Storage<V> {
+    pub fn storage(&self) -> &dyn Storage<Value> {
         self.storage.as_ref()
     }
 
@@ -288,15 +273,15 @@ impl<V: Clone + 'static> DoubleArray<V> {
      * # Returns
      * The mutable storage.
      */
-    pub fn storage_mut(&mut self) -> &mut dyn Storage<V> {
+    pub fn storage_mut(&mut self) -> &mut dyn Storage<Value> {
         &mut *self.storage
     }
 }
 
-impl<V> Debug for DoubleArray<V> {
+impl<Value> Debug for DoubleArray<Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArray")
-            .field("storage", &"Box<dyn Storage<V>")
+            .field("storage", &"Box<dyn Storage<Value>")
             .field("root_base_check_index", &self.root_base_check_index)
             .finish()
     }
@@ -322,8 +307,8 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES0: [DoubleArrayElement<'_>; 2] = [
-        ("", 42),
-        (" ", 24),
+        (b"", 42),
+        (b" ", 24),
     ];
 
     #[rustfmt::skip]
@@ -379,9 +364,9 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
-        ("UTIGOSI", 24),
-        ("UTO", 2424),
-        ("SETA", 42),
+        (b"UTIGOSI", 24),
+        (b"UTO", 2424),
+        (b"SETA", 42),
     ];
 
     #[rustfmt::skip]
@@ -415,8 +400,8 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
-        ("赤瀬", 24), // "Akase" in Kanji
-        ("赤水", 42), // "Akamizu" in Kanji
+        ("赤瀬".as_bytes(), 24),
+        ("赤水".as_bytes(), 42),
     ];
 
     #[rustfmt::skip]
@@ -456,13 +441,13 @@ mod tests {
         #[test]
         fn adding() {
             let mut added = None;
-            let mut adding = |e: &DoubleArrayElement<'_>| added = Some((e.0.to_string(), e.1));
+            let mut adding = |&(k, v): &DoubleArrayElement<'_>| added = Some((k.to_vec(), v));
             let mut done = || {};
             let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
 
-            observer_set.adding(&("hoge", 42));
+            observer_set.adding(&(b"hoge", 42));
 
-            assert_eq!(added.unwrap(), (String::from("hoge"), 42));
+            assert_eq!(added.unwrap(), (b"hoge".to_vec(), 42));
         }
 
         #[test]
@@ -589,7 +574,7 @@ mod tests {
                 EXPECTED_BASE_CHECK_ARRAY3
             );
 
-            let found = double_array1.find("GOSI").unwrap().unwrap();
+            let found = double_array1.find(b"GOSI").unwrap().unwrap();
             assert_eq!(found, 24);
         }
 
@@ -599,7 +584,7 @@ mod tests {
                 let double_array = DoubleArray::<i32>::new().unwrap();
 
                 {
-                    let found = double_array.find("SETA").unwrap();
+                    let found = double_array.find(b"SETA").unwrap();
                     assert!(found.is_none());
                 }
             }
@@ -608,19 +593,19 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
                 {
-                    let found = double_array.find("SETA").unwrap().unwrap();
+                    let found = double_array.find(b"SETA").unwrap().unwrap();
                     assert_eq!(found, 42);
                 }
                 {
-                    let found = double_array.find("UTIGOSI").unwrap().unwrap();
+                    let found = double_array.find(b"UTIGOSI").unwrap().unwrap();
                     assert_eq!(found, 24);
                 }
                 {
-                    let found = double_array.find("UTO").unwrap().unwrap();
+                    let found = double_array.find(b"UTO").unwrap().unwrap();
                     assert_eq!(found, 2424);
                 }
                 {
-                    let found = double_array.find("SUIZENJI").unwrap();
+                    let found = double_array.find(b"SUIZENJI").unwrap();
                     assert!(found.is_none());
                 }
             }
@@ -629,15 +614,15 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
                 {
-                    let found = double_array.find("赤瀬").unwrap().unwrap(); // "Akase" in Kanji
+                    let found = double_array.find("赤瀬".as_bytes()).unwrap().unwrap(); // "Akase" in Kanji
                     assert_eq!(found, 24);
                 }
                 {
-                    let found = double_array.find("赤水").unwrap().unwrap(); // "Akamizu" in Kanji
+                    let found = double_array.find("赤水".as_bytes()).unwrap().unwrap(); // "Akamizu" in Kanji
                     assert_eq!(found, 42);
                 }
                 {
-                    let found = double_array.find("水前寺").unwrap(); // "Suizenji" in Kanji
+                    let found = double_array.find("水前寺".as_bytes()).unwrap(); // "Suizenji" in Kanji
                     assert!(found.is_none());
                 }
             }
@@ -671,25 +656,25 @@ mod tests {
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
 
                 {
-                    let subtrie = double_array.subtrie("U").unwrap();
+                    let subtrie = double_array.subtrie(b"U").unwrap().unwrap();
                     {
-                        let found = subtrie.find("TIGOSI").unwrap().unwrap();
+                        let found = subtrie.find(b"TIGOSI").unwrap().unwrap();
                         assert_eq!(found, 24);
                     }
                     {
-                        let found = subtrie.find("TO").unwrap().unwrap();
+                        let found = subtrie.find(b"TO").unwrap().unwrap();
                         assert_eq!(found, 2424);
                     }
                     {
-                        let found = subtrie.find("SETA").unwrap();
+                        let found = subtrie.find(b"SETA").unwrap();
                         assert!(found.is_none());
                     }
                     {
-                        let found = subtrie.find("UTIGOSI").unwrap();
+                        let found = subtrie.find(b"UTIGOSI").unwrap();
                         assert!(found.is_none());
                     }
                     {
-                        let found = subtrie.find("SETA").unwrap();
+                        let found = subtrie.find(b"SETA").unwrap();
                         assert!(found.is_none());
                     }
                     {
@@ -709,24 +694,24 @@ mod tests {
                         }
                     }
 
-                    let subtrie2 = subtrie.subtrie("TI").unwrap();
+                    let subtrie2 = subtrie.subtrie(b"TI").unwrap().unwrap();
                     {
-                        let found = subtrie2.find("GOSI").unwrap().unwrap();
+                        let found = subtrie2.find(b"GOSI").unwrap().unwrap();
                         assert_eq!(found, 24);
                     }
                 }
                 {
-                    let subtrie = double_array.subtrie("T");
-                    assert!(subtrie.is_err());
+                    let subtrie = double_array.subtrie(b"T").unwrap();
+                    assert!(subtrie.is_none());
                 }
             }
             {
                 let double_array =
                     DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
 
-                let subtrie = double_array.subtrie("赤").unwrap();
+                let subtrie = double_array.subtrie("赤".as_bytes()).unwrap().unwrap();
                 {
-                    let found = subtrie.find("水").unwrap().unwrap();
+                    let found = subtrie.find("水".as_bytes()).unwrap().unwrap();
                     assert_eq!(found, 42);
                 }
             }

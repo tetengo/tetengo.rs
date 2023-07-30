@@ -4,23 +4,22 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::fmt;
-
-use crate::serializer::Result;
 
 /**
  * A value serializer.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
 #[derive(Clone, Copy)]
-pub struct ValueSerializer<T: ?Sized> {
-    serialize: fn(value: &T) -> Vec<u8>,
+pub struct ValueSerializer<Value: ?Sized> {
+    serialize: fn(value: &Value) -> Vec<u8>,
     fixed_value_size: usize,
 }
 
-impl<T: ?Sized> ValueSerializer<T> {
+impl<Value: ?Sized> ValueSerializer<Value> {
     /**
      * Creates a value serializer.
      *
@@ -28,7 +27,7 @@ impl<T: ?Sized> ValueSerializer<T> {
      * * `serialize`        - A serializing function.
      * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
      */
-    pub fn new(serialize: fn(value: &T) -> Vec<u8>, fixed_value_size: usize) -> Self {
+    pub fn new(serialize: fn(value: &Value) -> Vec<u8>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
             fixed_value_size,
@@ -44,7 +43,7 @@ impl<T: ?Sized> ValueSerializer<T> {
      * # Returns
      * The serialized value.
      */
-    pub fn serialize(&self, value: &T) -> Vec<u8> {
+    pub fn serialize(&self, value: &Value) -> Vec<u8> {
         (self.serialize)(value)
     }
 
@@ -59,7 +58,7 @@ impl<T: ?Sized> ValueSerializer<T> {
     }
 }
 
-impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
+impl<Value: ?Sized> fmt::Debug for ValueSerializer<Value> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
             .field("serialize", &"<fn>")
@@ -72,21 +71,21 @@ impl<T: ?Sized> fmt::Debug for ValueSerializer<T> {
  * A value deserializer.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
 #[derive(Clone, Copy)]
-pub struct ValueDeserializer<T: Clone> {
-    deserialize: fn(serialized: &[u8]) -> Result<T>,
+pub struct ValueDeserializer<Value: Clone> {
+    deserialize: fn(serialized: &[u8]) -> Result<Value>,
 }
 
-impl<T: Clone> ValueDeserializer<T> {
+impl<Value: Clone> ValueDeserializer<Value> {
     /**
      * Creates a value deserializer.
      *
      * # Arguments
      * * `deserialize` - A deserializing function.
      */
-    pub fn new(deserialize: fn(serialized: &[u8]) -> Result<T>) -> Self {
+    pub fn new(deserialize: fn(serialized: &[u8]) -> Result<Value>) -> Self {
         Self { deserialize }
     }
 
@@ -102,12 +101,12 @@ impl<T: Clone> ValueDeserializer<T> {
      * # Errors
      * * When it fails to deserialize the value.
      */
-    pub fn deserialize(&self, serialized: &[u8]) -> Result<T> {
+    pub fn deserialize(&self, serialized: &[u8]) -> Result<Value> {
         (self.deserialize)(serialized)
     }
 }
 
-impl<T: Clone> fmt::Debug for ValueDeserializer<T> {
+impl<Value: Clone> fmt::Debug for ValueDeserializer<Value> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueDeserializer")
             .field("deserialize", &"<fn>")

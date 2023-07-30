@@ -11,6 +11,9 @@ use crate::storage::Storage;
 
 /**
  * A double array iterator.
+ *
+ * # Type Parameters
+ * * `T` - A type.
  */
 #[derive(Clone)]
 pub struct DoubleArrayIterator<'a, T> {
@@ -96,6 +99,10 @@ impl<T> Debug for DoubleArrayIterator<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("DoubleArrayIterator")
             .field("storage", &" &'a dyn Storage<T>")
+            .field(
+                "base_check_index_key_stack",
+                &self.base_check_index_key_stack,
+            )
             .finish()
     }
 }
@@ -108,15 +115,15 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
-        ("UTIGOSI", 24),
-        ("UTO", 2424),
-        ("SETA", 42),
+        (b"UTIGOSI", 24),
+        (b"UTO", 2424),
+        (b"SETA", 42),
     ];
 
     #[rustfmt::skip]
     const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
-        ("赤瀬", 24), // "Akase" in Kanji
-        ("赤水", 42), // "Akamizu" in Kanji
+        ("赤瀬".as_bytes(), 24), // "Akase" in Kanji
+        ("赤水".as_bytes(), 42), // "Akamizu" in Kanji
     ];
 
     #[test]

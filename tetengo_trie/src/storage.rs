@@ -4,19 +4,13 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use anyhow::Result;
 use std::any::Any;
 use std::error;
 use std::io::Write;
+use std::rc::Rc;
 
 use crate::value_serializer::ValueSerializer;
-
-/**
- * A result type.
- *
- * # Type Parameters
- * * `T` - A type.
- */
-pub type Result<T> = anyhow::Result<T>;
 
 /**
  * A storage error.
@@ -27,9 +21,9 @@ pub trait StorageError: error::Error {}
  * A storage.
  *
  * # Type Parameters
- * * `T` - A value type.
+ * * `Value` - A value type.
  */
-pub trait Storage<T> {
+pub trait Storage<Value> {
     /**
      * Returns the base-check size.
      *
@@ -105,38 +99,18 @@ pub trait Storage<T> {
     fn value_count(&self) -> Result<usize>;
 
     /**
-     * Applies an operation for the specified value object.
+     * Returns the value object.
      *
      * # Arguments
      * * `value_index` - A value index.
-     * * `operation`   - An operation.
+     *
+     * # Returns
+     * The value object. Or None when there is no corresponding value object.
      *
      * # Errors
      * * When it fails to read the value object.
-     * * When the operation fails.
      */
-    fn for_value_at(
-        &self,
-        value_index: usize,
-        operation: &dyn Fn(&Option<T>) -> Result<()>,
-    ) -> Result<()>;
-
-    /**
-     * Applies a mutable operation for the specified value object.
-     *
-     * # Arguments
-     * * `value_index` - A value index.
-     * * `operation`   - An operation.
-     *
-     * # Errors
-     * * When it fails to read the value object.
-     * * When the operation fails.
-     */
-    fn for_value_at_mut(
-        &self,
-        value_index: usize,
-        operation: &mut dyn FnMut(&Option<T>) -> Result<()>,
-    ) -> Result<()>;
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>>;
 
     /**
      * Adds a value object.
@@ -148,7 +122,7 @@ pub trait Storage<T> {
      * # Errors
      * * When it fails to write the value object.
      */
-    fn add_value_at(&mut self, value_index: usize, value: T) -> Result<()>;
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()>;
 
     /**
      * Returns the filling rate.
@@ -174,7 +148,7 @@ pub trait Storage<T> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<T>,
+        value_serializer: &ValueSerializer<Value>,
     ) -> Result<()>;
 
     /**
@@ -183,7 +157,7 @@ pub trait Storage<T> {
      * # Returns
      * A Box of a clone of this storage.
      */
-    fn clone_box(&self) -> Box<dyn Storage<T>>;
+    fn clone_box(&self) -> Box<dyn Storage<Value>>;
 
     /**
      * Returns this object as 'Any'.
