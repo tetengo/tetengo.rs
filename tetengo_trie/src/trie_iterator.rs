@@ -68,7 +68,7 @@ mod tests {
 
     const KUMAMOTO: &str = "熊本";
 
-    static TAMANA: &str = "玉名";
+    const TAMANA: &str = "玉名";
 
     #[test]
     fn new() {

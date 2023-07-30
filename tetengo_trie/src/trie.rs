@@ -352,6 +352,16 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
             key_serializer: self.key_serializer.clone(),
         }))
     }
+
+    /**
+     * Returns the storage.
+     *
+     * # Returns
+     * The storage.
+     */
+    pub fn storage(&self) -> &dyn Storage<Value> {
+        self.double_array.storage()
+    }
 }
 
 #[cfg(test)]
@@ -362,19 +372,19 @@ mod tests {
     use crate::memory_storage::MemoryStorage;
     use crate::serializer::Deserializer;
     use crate::string_serializer::{StringDeserializer, StringSerializer};
-    use crate::value_serializer::ValueDeserializer;
+    use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
     use super::*;
 
     const KUMAMOTO: &str = "熊本";
 
-    static TAMANA: &str = "玉名";
+    const TAMANA: &str = "玉名";
 
-    static TAMARAI: &str = "玉来";
+    const TAMARAI: &str = "玉来";
 
-    static TAMA: &str = "玉";
+    const TAMA: &str = "玉";
 
-    static UTO: &str = "宇土";
+    const UTO: &str = "宇土";
 
     #[rustfmt::skip]
     const SERIALIZED: [u8;76] = [
@@ -765,6 +775,50 @@ mod tests {
             let mut iterator = subtrie.iter();
             assert_eq!(*iterator.next().unwrap(), KUMAMOTO.to_string());
             assert!(iterator.next().is_none());
+        }
+    }
+
+    #[test]
+    fn storage() {
+        {
+            let trie = Trie::<&str, String>::new_with_elements(
+                [(KUMAMOTO, KUMAMOTO.to_string())].to_vec(),
+            )
+            .unwrap();
+
+            let _storage = trie.storage();
+        }
+        {
+            let trie = Trie::<&str, i32>::new_with_elements([("Kumamoto", 42)].to_vec()).unwrap();
+
+            let _storage = trie.storage();
+        }
+        {
+            let mut reader = create_input_stream();
+            let value_deserializer = ValueDeserializer::new(|serialized| {
+                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
+                    Lazy::new(|| StringDeserializer::new(false));
+                STRING_DESERIALIZER.deserialize(serialized)
+            });
+            let storage =
+                Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
+            let trie = Trie::<&str, String>::new_with_storage(storage);
+
+            let storage = trie.storage();
+
+            let mut writer = Cursor::new(Vec::<u8>::new());
+            let serializer = ValueSerializer::<String>::new(
+                |value| {
+                    static STRING_SERIALIZER: Lazy<StringSerializer> =
+                        Lazy::new(|| StringSerializer::new(false));
+                    STRING_SERIALIZER.serialize(&value.as_str())
+                },
+                0,
+            );
+            storage.serialize(&mut writer, &serializer).unwrap();
+            let storage_serialized = writer.get_ref();
+
+            assert_eq!(storage_serialized.as_slice(), SERIALIZED);
         }
     }
 }
