@@ -11,37 +11,20 @@ use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
 
-/**
- * A double array error.
- */
 #[derive(Clone, Copy, Debug, thiserror::Error)]
 pub(super) enum DoubleArrayError {
-    /**
-     * density_factor must be greater than 0.
-     */
     #[error("density_factor must be greater than 0.")]
     InvalidDensityFactor,
 }
 
-/// The double array element type.
 pub(super) type DoubleArrayElement<'a> = (&'a [u8], i32);
 
-/**
- * A building observer set.
- */
 pub(super) struct BuldingObserverSet<'a> {
     adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
     done: &'a mut dyn FnMut(),
 }
 
 impl<'a> BuldingObserverSet<'a> {
-    /**
-     * Creates a building observer set.
-     *
-     * # Parameters
-     * * `adding` - An adding observer.
-     * * `done` - A done observer.
-     */
     pub(super) fn new(
         adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
         done: &'a mut dyn FnMut(),
@@ -49,19 +32,10 @@ impl<'a> BuldingObserverSet<'a> {
         Self { adding, done }
     }
 
-    /**
-     * Calls `adding`.
-     *
-     * # Arguments
-     * * `element` - An element.
-     */
     pub(super) fn adding(&mut self, element: &DoubleArrayElement<'_>) {
         (self.adding)(element);
     }
 
-    /**
-     * Calls `done`.
-     */
     pub(super) fn done(&mut self) {
         (self.done)();
     }
@@ -76,46 +50,22 @@ impl Debug for BuldingObserverSet<'_> {
     }
 }
 
-/// The default density factor.
 pub(super) const DEFAULT_DENSITY_FACTOR: usize = 1000;
 
-/// The key terminator.
 pub(super) const KEY_TERMINATOR: u8 = 0;
 
-/// The check value for a vacant element.
 pub(super) const VACANT_CHECK_VALUE: u8 = 0xFF;
 
-/**
- * A double array.
- *
- * # Type Parameters
- * * `Value` - A value type.
- */
 pub(super) struct DoubleArray<Value> {
     storage: Box<dyn Storage<Value>>,
     root_base_check_index: usize,
 }
 
 impl<Value: Clone + 'static> DoubleArray<Value> {
-    /**
-     * Creates a double array.
-     *
-     * # Errors
-     * * When it fails to build a double array.
-     */
     pub(super) fn new() -> Result<Self> {
         Self::new_with_elements(vec![])
     }
 
-    /**
-     * Creates a double array.
-     *
-     * # Arguments
-     * * `elements` - Initial elements.
-     *
-     * # Errors
-     * * When it fails to build a double array.
-     */
     pub(super) fn new_with_elements(elements: Vec<DoubleArrayElement<'_>>) -> Result<Self> {
         Self::new_with_elements_buldingobserverset(
             elements,
@@ -123,16 +73,6 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         )
     }
 
-    /**
-     * Creates a double array.
-     *
-     * # Arguments
-     * * `elements`              - Initial elements.
-     * * `building_observer_set` - A building observer set.
-     *
-     * # Errors
-     * * When it fails to build a double array.
-     */
     pub(super) fn new_with_elements_buldingobserverset(
         elements: Vec<DoubleArrayElement<'_>>,
         building_observer_set: &mut BuldingObserverSet<'_>,
@@ -144,17 +84,6 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         )
     }
 
-    /**
-     * Creates a double array.
-     *
-     * # Arguments
-     * * `elements`              - Initial elements.
-     * * `building_observer_set` - A building observer set.
-     * * `density_factor`        - A density factor. Must be greater than 0.
-     *
-     * # Errors
-     * * When it fails to build a double array.
-     */
     pub(super) fn new_with_elements_buldingobserverset_densityfactor(
         elements: Vec<DoubleArrayElement<'_>>,
         building_observer_set: &mut BuldingObserverSet<'_>,
@@ -166,13 +95,6 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         ))
     }
 
-    /**
-     * Creates a double array.
-     *
-     * # Arguments
-     * * `storage`               - A storage.
-     * * `root_base_check_index` - A root base-check index.
-     */
     pub(super) fn new_with_storage(
         storage: Box<dyn Storage<Value>>,
         root_base_check_index: usize,
@@ -183,18 +105,6 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         }
     }
 
-    /**
-     * Finds the value correspoinding the given key.
-     *
-     * # Arguments
-     * * `key` - A key.
-     *
-     * # Returns
-     * The value. Or None when the double array does not have the given key.
-     *
-     * # Errors
-     * * When it fails to access the storage.
-     */
     pub(super) fn find(&self, key: &[u8]) -> Result<Option<i32>> {
         let mut terminated_key: Vec<u8>;
         let index = self.traverse({
@@ -208,28 +118,10 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         }
     }
 
-    /**
-     * Returns an iterator.
-     *
-     * # Returns
-     * A double array iterator.
-     */
     pub(super) fn iter(&self) -> DoubleArrayIterator<'_, Value> {
         DoubleArrayIterator::new(self.storage.as_ref(), self.root_base_check_index)
     }
 
-    /**
-     * Returns a subtrie.
-     *
-     * # Arguments
-     * * `key_prefix` - A key prefix.
-     *
-     * # Returns
-     * A double array of the subtrie. Or None when the double array does not have the given key prefix.
-     *
-     * # Errors
-     * * When it fails to access the storage.
-     */
     pub(super) fn subtrie(&self, key_prefix: &[u8]) -> Result<Option<Self>> {
         let index = self.traverse(key_prefix)?;
         let Some(index) = index else {
@@ -257,22 +149,10 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         Ok(Some(base_check_index))
     }
 
-    /**
-     * Returns the storage.
-     *
-     * # Returns
-     * The storage.
-     */
     pub(super) fn storage(&self) -> &dyn Storage<Value> {
         self.storage.as_ref()
     }
 
-    /**
-     * Returns the mutable storage.
-     *
-     * # Returns
-     * The mutable storage.
-     */
     pub(super) fn storage_mut(&mut self) -> &mut dyn Storage<Value> {
         &mut *self.storage
     }
