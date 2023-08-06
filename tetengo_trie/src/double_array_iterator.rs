@@ -9,27 +9,14 @@ use std::fmt::{self, Debug, Formatter};
 use crate::double_array;
 use crate::storage::Storage;
 
-/**
- * A double array iterator.
- *
- * # Type Parameters
- * * `T` - A type.
- */
 #[derive(Clone)]
-pub struct DoubleArrayIterator<'a, T> {
+pub(super) struct DoubleArrayIterator<'a, T> {
     storage: &'a dyn Storage<T>,
     base_check_index_key_stack: Vec<(usize, Vec<u8>)>,
 }
 
 impl<'a, T> DoubleArrayIterator<'a, T> {
-    /**
-     * Creates a double array iterator.
-     *
-     * # Arguments
-     * * `storage`               - A storage.
-     * * `root_base_check_index` - A root base-check index.
-     */
-    pub fn new(storage: &'a dyn Storage<T>, root_base_check_index: usize) -> Self {
+    pub(super) fn new(storage: &'a dyn Storage<T>, root_base_check_index: usize) -> Self {
         Self {
             storage,
             base_check_index_key_stack: vec![(root_base_check_index, Vec::new())],
@@ -111,8 +98,6 @@ impl<T> Debug for DoubleArrayIterator<'_, T> {
 mod tests {
     use crate::double_array::{DoubleArray, DoubleArrayElement};
 
-    // use super::*;
-
     #[rustfmt::skip]
     const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
         (b"UTIGOSI", 24),
@@ -122,8 +107,8 @@ mod tests {
 
     #[rustfmt::skip]
     const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
-        ("赤瀬".as_bytes(), 24), // "Akase" in Kanji
-        ("赤水".as_bytes(), 42), // "Akamizu" in Kanji
+        ("赤瀬".as_bytes(), 24),
+        ("赤水".as_bytes(), 42),
     ];
 
     #[test]

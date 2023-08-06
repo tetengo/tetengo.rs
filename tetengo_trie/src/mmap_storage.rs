@@ -39,7 +39,7 @@ impl FileMapping {
      * * `file` - A file.
      *
      * # Errors
-     * When it fails to memory-map the file.
+     * * When it fails to memory-map the file.
      */
     pub fn new(file: File) -> Result<Self> {
         let mmap = unsafe { Mmap::map(&file)? };
