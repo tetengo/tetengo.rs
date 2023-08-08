@@ -1,11 +1,4 @@
 mod usage {
-    use anyhow as _;
-    use hashlink as _;
-    use memmap2 as _;
-    use once_cell as _;
-    use tempfile as _;
-    use thiserror as _;
-
     use std::cell::RefCell;
     use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie};
 
