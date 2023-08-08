@@ -65,23 +65,25 @@ fn build_iter<T>(
     )?;
     storage.set_base_at(base_check_index, base)?;
 
-    for i in &children_firsts[0..children_firsts.len() - 1] {
-        let (element_key, _) = elements[*i];
+    for children_first in children_firsts.iter().take(children_firsts.len() - 1) {
+        let (element_key, _) = elements[*children_first];
         let char_code = char_code_at(element_key, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
         storage.set_check_at(next_base_check_index, char_code)?;
     }
-    for i in &children_firsts[0..children_firsts.len() - 1] {
-        let (element_key, _) = elements[*i];
+    for i in 0..children_firsts.len() - 1 {
+        let children_first = children_firsts[i];
+        let children_last = children_firsts[i + 1];
+        let (element_key, value) = elements[children_first];
         let char_code = char_code_at(element_key, key_offset);
         let next_base_check_index = (base + char_code as i32) as usize;
         if char_code == KEY_TERMINATOR {
-            observer.adding(&elements[*i]);
-            storage.set_base_at(next_base_check_index, elements[*i].1)?;
+            observer.adding(&elements[children_first]);
+            storage.set_base_at(next_base_check_index, value)?;
             continue;
         }
         build_iter(
-            &elements[children_firsts[*i]..children_firsts[*i + 1]],
+            &elements[children_first..children_last],
             key_offset + 1,
             storage,
             next_base_check_index,
@@ -144,8 +146,10 @@ fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Ve
             .position(|&(key, _)| {
                 char_code_at(key, key_offset) != char_code_at(child_first_element_key, key_offset)
             })
-            .unwrap_or(elements.len());
+            .unwrap_or(elements.len() - child_first)
+            + child_first;
 
+        debug_assert!(firsts.last().unwrap() < &child_last);
         firsts.push(child_last);
 
         child_first = child_last;
