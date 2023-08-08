@@ -27,7 +27,7 @@ mod usage {
         let mut building_observer_set = BuldingObserverSet::new(&mut adding, &mut done);
 
         // Builds a trie with initial elements.
-        let _trie = Trie::<&str, i32>::new_with_elements_keyserializer_buildingobserverset(
+        let trie = Trie::<&str, i32>::new_with_elements_keyserializer_buildingobserverset(
             [
                 ("tasakibashi", -5),
                 ("nihongiguchi", -3),
@@ -57,29 +57,28 @@ mod usage {
         ]
         .to_vec();
         assert_eq!(stored_keys, &expected);
+
+        // Searches the trie.
+        // If a perfect-matching key is found, its value is returned.
+        let found_for_gionbashi = trie.find("gionbashi").unwrap().unwrap();
+        assert_eq!(*found_for_gionbashi, 5);
+
+        // If not found, None is returned.
+        let found_for_hanabatachou = trie.find("hanabatachou").unwrap();
+        assert!(found_for_hanabatachou.is_none());
+
+        // Creates a subtrie consisting of the elements with the common key prefix.
+        let subtrie = trie.subtrie("ka").unwrap().unwrap();
+
+        // Enumerates the values in the subtrie.
+        let subtrie_values = subtrie.iter().map(|v| *v).collect::<Vec<_>>();
+        assert_eq!(
+            subtrie_values,
+            [
+                22, // karashimachou
+                14, // kawaramachi
+            ]
+            .to_vec()
+        );
     }
-    // void search()
-    // {
-    //     // Searches the trie.
-    //     // If a perfect-matching key is found, its value is returned.
-    //     [[maybe_unused]] const int* const p_found_for_gionbashi = trie_.find("gionbashi");
-    //     assert(p_found_for_gionbashi);
-    //     assert(*p_found_for_gionbashi == 5);
-
-    //     // If not found, nullptr is returned.
-    //     [[maybe_unused]] const int* const p_found_for_hanabatachou = trie_.find("hanabatachou");
-    //     assert(!p_found_for_hanabatachou);
-
-    //     // Creates a subtrie consisting of the elements with the common key prefix.
-    //     const auto p_subtrie = trie_.subtrie("ka");
-
-    //     // Enumerates the values in the subtrie.
-    //     std::vector<int> subtrie_values{};
-    //     std::copy(std::begin(*p_subtrie), std::end(*p_subtrie), std::back_inserter(subtrie_values));
-    //     assert(
-    //         (subtrie_values == std::vector<int>{
-    //                                22, // karashimachou
-    //                                14, // kawaramachi
-    //                            }));
-    // }
 }
