@@ -112,6 +112,66 @@ pub enum MmapStorageError {
 impl StorageError for MmapStorageError {}
 
 /**
+ * An mmap storage builder.
+ *
+ * # Type Parameters
+ * * `Value` - A value type.
+*/
+#[derive(Debug)]
+pub struct MmapStorageBuilder<Value: Clone> {
+    file_mapping: Rc<FileMapping>,
+    content_offset: usize,
+    file_size: usize,
+    value_deserializer: ValueDeserializer<Value>,
+    value_cache_capacity: usize,
+}
+
+impl<Value: Clone + 'static> MmapStorageBuilder<Value> {
+    /**
+     * Sets a value cache capacity.
+     *
+     * # Arguments
+     * * `value` - A value cache capacity.
+     */
+    pub fn value_cache_capacity(mut self, value: usize) -> Self {
+        self.value_cache_capacity = value;
+        self
+    }
+
+    /**
+     * Builds a mmap storage.
+     *
+     * # Returns
+     * An mmap storage.
+     *
+     * # Errors
+     * * When the argument(s) is/are invalid.
+     * * When it fails to read the file.
+     */
+    pub fn build(self) -> Result<MmapStorage<Value>> {
+        let self_ = MmapStorage::<Value> {
+            file_mapping: self.file_mapping,
+            content_offset: self.content_offset,
+            file_size: self.file_size,
+            value_deserializer: self.value_deserializer,
+            value_cache: RefCell::new(ValueCache::new(self.value_cache_capacity)),
+        };
+
+        if self_.content_offset > self_.file_size {
+            return Err(MmapStorageError::InvalidContentSize.into());
+        }
+
+        let base_check_count = self_.base_check_size()?;
+        let fixed_value_size = self_.read_u32(size_of::<u32>() * (1 + base_check_count + 1))?;
+        if fixed_value_size == 0 {
+            return Err(MmapStorageError::ValueSizeNotFixed.into());
+        }
+
+        Ok(self_)
+    }
+}
+
+/**
  * An mmap storage.
  *
  * # Type Parameters
@@ -131,9 +191,7 @@ impl<Value: Clone + 'static> MmapStorage<Value> {
     pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
 
     /**
-     * Creates an mmap storage with a value cache capacity.
-     *
-     * `DEFAULT_VALUE_CACHE_CAPACITY` is used as the value cache capacity.
+     * Returns an mmap storage builder.
      *
      * # Arguments
      * * `file_mapping`         - A file mapping.
@@ -142,70 +200,21 @@ impl<Value: Clone + 'static> MmapStorage<Value> {
      * * `value_deserializer`   - A deserializer for value objects.
      *
      * # Returns
-     * An mmap storage.
-     *
-     * # Errors
-     * * When the argument(s) is/are invalid.
-     * * When it fails to read the file.
+     * An mmap storage builder.
      */
-    pub fn new(
+    pub fn builder(
         file_mapping: Rc<FileMapping>,
         content_offset: usize,
         file_size: usize,
         value_deserializer: ValueDeserializer<Value>,
-    ) -> Result<Self> {
-        Self::new_with_value_cache_capacity(
+    ) -> MmapStorageBuilder<Value> {
+        MmapStorageBuilder::<Value> {
             file_mapping,
             content_offset,
             file_size,
             value_deserializer,
-            Self::DEFAULT_VALUE_CACHE_CAPACITY,
-        )
-    }
-
-    /**
-     * Creates an mmap storage with a value cache capacity.
-     *
-     * # Arguments
-     * * `file_mapping`         - A file mapping.
-     * * `content_offset`       - A content offset in the file.
-     * * `file_size`            - The file size.
-     * * `value_deserializer`   - A deserializer for value objects.
-     * * `value_cache_capacity` - A value cache capacity.
-     *
-     * # Returns
-     * An mmap storage.
-     *
-     * # Errors
-     * * When the argument(s) is/are invalid.
-     * * When it fails to read the file.
-     */
-    pub fn new_with_value_cache_capacity(
-        file_mapping: Rc<FileMapping>,
-        content_offset: usize,
-        file_size: usize,
-        value_deserializer: ValueDeserializer<Value>,
-        value_cache_capacity: usize,
-    ) -> Result<Self> {
-        let self_ = Self {
-            file_mapping,
-            content_offset,
-            file_size,
-            value_deserializer,
-            value_cache: RefCell::new(ValueCache::new(value_cache_capacity)),
-        };
-
-        if self_.content_offset > self_.file_size {
-            return Err(MmapStorageError::InvalidContentSize.into());
+            value_cache_capacity: Self::DEFAULT_VALUE_CACHE_CAPACITY,
         }
-
-        let base_check_count = self_.base_check_size()?;
-        let fixed_value_size = self_.read_u32(size_of::<u32>() * (1 + base_check_count + 1))?;
-        if fixed_value_size == 0 {
-            return Err(MmapStorageError::ValueSizeNotFixed.into());
-        }
-
-        Ok(self_)
     }
 
     fn ensure_value_cached(&self, value_index: usize) -> Result<()> {
@@ -454,7 +463,7 @@ mod tests {
         }
 
         #[test]
-        fn new() {
+        fn builder() {
             {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
@@ -465,7 +474,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer);
+                let storage =
+                    MmapStorage::builder(file_mapping, 0, file_size, deserializer).build();
                 assert!(storage.is_ok());
             }
             {
@@ -478,7 +488,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer);
+                let storage =
+                    MmapStorage::builder(file_mapping, 5, file_size, deserializer).build();
                 assert!(storage.is_ok());
             }
             {
@@ -491,7 +502,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer);
+                let storage =
+                    MmapStorage::builder(file_mapping, 0, file_size, deserializer).build();
                 assert!(storage.is_err());
             }
             {
@@ -504,7 +516,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer);
+                let storage =
+                    MmapStorage::builder(file_mapping, 0, file_size, deserializer).build();
                 assert!(storage.is_err());
             }
             {
@@ -518,30 +531,25 @@ mod tests {
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
                 let storage =
-                    MmapStorage::new(file_mapping, file_size + 1, file_size, deserializer);
+                    MmapStorage::builder(file_mapping, file_size + 1, file_size, deserializer)
+                        .build();
                 assert!(storage.is_err());
             }
-        }
-
-        #[test]
-        fn new_with_value_cache_capacity() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-            let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
-            let deserializer = ValueDeserializer::<u32>::new(|serialized| {
-                static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
-                    Lazy::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = MmapStorage::new_with_value_cache_capacity(
-                file_mapping,
-                0,
-                file_size,
-                deserializer,
-                10000,
-            );
-            assert!(storage.is_ok());
+            {
+                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file_size = file_size_of(&file);
+                let file_mapping =
+                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let deserializer = ValueDeserializer::<u32>::new(|serialized| {
+                    static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
+                        Lazy::new(|| IntegerDeserializer::new(false));
+                    INTEGER_DESERIALIZER.deserialize(serialized)
+                });
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .value_cache_capacity(10000)
+                    .build();
+                assert!(storage.is_ok());
+            }
         }
 
         #[test]
@@ -556,7 +564,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.base_check_size().unwrap(), 2);
@@ -571,7 +580,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.base_check_size().unwrap(), 2);
@@ -590,7 +600,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.base_at(0).unwrap(), 42);
@@ -606,7 +617,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.base_at(0).unwrap(), 42);
@@ -626,7 +638,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let mut storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             let _result = storage.set_base_at(42, 4242);
@@ -644,7 +657,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.check_at(0).unwrap(), VACANT_CHECK_VALUE);
@@ -660,7 +674,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.check_at(0).unwrap(), VACANT_CHECK_VALUE);
@@ -680,7 +695,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let mut storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             let _result = storage.set_check_at(24, 124);
@@ -698,7 +714,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.value_count().unwrap(), 5);
@@ -713,7 +730,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert_eq!(storage.value_count().unwrap(), 5);
@@ -732,7 +750,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert!(storage.value_at(0).unwrap().is_none());
@@ -751,7 +770,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 assert!(storage.value_at(0).unwrap().is_none());
@@ -774,7 +794,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let mut storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             let _result = storage.add_value_at(24, 124);
@@ -792,7 +813,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             assert!((storage.filling_rate().unwrap() - 1.0 / 2.0).abs() < 0.1);
@@ -810,7 +832,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             let mut writer = Cursor::new(Vec::new());
@@ -838,7 +861,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 let clone = storage.clone_box();
@@ -858,7 +882,8 @@ mod tests {
                         Lazy::new(|| IntegerDeserializer::new(false));
                     INTEGER_DESERIALIZER.deserialize(serialized)
                 });
-                let storage = MmapStorage::new(file_mapping, 5, file_size, deserializer)
+                let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
+                    .build()
                     .expect("Can't create a storage.");
 
                 let clone = storage.clone_box();
@@ -882,7 +907,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             let _ = storage.as_any();
@@ -900,7 +926,8 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::new(false));
                 INTEGER_DESERIALIZER.deserialize(serialized)
             });
-            let mut storage = MmapStorage::new(file_mapping, 0, file_size, deserializer)
+            let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
+                .build()
                 .expect("Can't create a storage.");
 
             let _ = storage.as_any_mut();
