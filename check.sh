@@ -6,7 +6,7 @@ set -e
 
 cargo verify-project
 cargo fmt --check
-cargo clippy --tests
+cargo clippy --all-targets
 cargo doc
 cargo build --all-targets
 cargo test --all-targets --quiet
