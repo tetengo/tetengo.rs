@@ -6,6 +6,7 @@
 
 use anyhow::Result;
 use std::fmt::{self, Debug, Formatter};
+use std::marker::PhantomData;
 
 use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
@@ -19,12 +20,12 @@ pub(super) enum DoubleArrayError {
 
 pub(super) type DoubleArrayElement<'a> = (&'a [u8], i32);
 
-pub(super) struct BuldingObserverSet<'a> {
+pub(super) struct BuildingObserverSet<'a> {
     adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
     done: &'a mut dyn FnMut(),
 }
 
-impl<'a> BuldingObserverSet<'a> {
+impl<'a> BuildingObserverSet<'a> {
     pub(super) fn new(
         adding: &'a mut dyn FnMut(&DoubleArrayElement<'_>),
         done: &'a mut dyn FnMut(),
@@ -41,7 +42,7 @@ impl<'a> BuldingObserverSet<'a> {
     }
 }
 
-impl Debug for BuldingObserverSet<'_> {
+impl Debug for BuildingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
             .field("adding", &"Box<dyn FnOnce(&DoubleArrayElement<'_>)>")
@@ -56,49 +57,58 @@ pub(super) const KEY_TERMINATOR: u8 = 0;
 
 pub(super) const VACANT_CHECK_VALUE: u8 = 0xFF;
 
+#[derive(Debug)]
+pub(super) struct DoubleArrayBuilder<'a, Value> {
+    elements: Vec<DoubleArrayElement<'a>>,
+    density_factor: usize,
+    phantom: PhantomData<Value>,
+}
+
+impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
+    pub(super) fn elements(mut self, elements: Vec<DoubleArrayElement<'a>>) -> Self {
+        self.elements = elements;
+        self
+    }
+
+    pub(super) fn density_factor(mut self, density_factor: usize) -> Self {
+        self.density_factor = density_factor;
+        self
+    }
+
+    pub(super) fn build(self) -> Result<DoubleArray<Value>> {
+        self.build_with_observer_set(&mut BuildingObserverSet::new(&mut |_| {}, &mut || {}))
+    }
+
+    pub(super) fn build_with_observer_set(
+        self,
+        building_observer_set: &mut BuildingObserverSet<'_>,
+    ) -> Result<DoubleArray<Value>> {
+        Ok(DoubleArray::new(
+            double_array_builder::build::<Value>(
+                self.elements,
+                building_observer_set,
+                self.density_factor,
+            )?,
+            0,
+        ))
+    }
+}
+
 pub(super) struct DoubleArray<Value> {
     storage: Box<dyn Storage<Value>>,
     root_base_check_index: usize,
 }
 
 impl<Value: Clone + 'static> DoubleArray<Value> {
-    pub(super) fn new() -> Result<Self> {
-        Self::new_with_elements(vec![])
+    pub(super) fn builder() -> DoubleArrayBuilder<'static, Value> {
+        DoubleArrayBuilder {
+            elements: vec![],
+            density_factor: DEFAULT_DENSITY_FACTOR,
+            phantom: PhantomData,
+        }
     }
 
-    pub(super) fn new_with_elements(elements: Vec<DoubleArrayElement<'_>>) -> Result<Self> {
-        Self::new_with_elements_buldingobserverset(
-            elements,
-            &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-        )
-    }
-
-    pub(super) fn new_with_elements_buldingobserverset(
-        elements: Vec<DoubleArrayElement<'_>>,
-        building_observer_set: &mut BuldingObserverSet<'_>,
-    ) -> Result<Self> {
-        Self::new_with_elements_buldingobserverset_densityfactor(
-            elements,
-            building_observer_set,
-            DEFAULT_DENSITY_FACTOR,
-        )
-    }
-
-    pub(super) fn new_with_elements_buldingobserverset_densityfactor(
-        elements: Vec<DoubleArrayElement<'_>>,
-        building_observer_set: &mut BuldingObserverSet<'_>,
-        density_factor: usize,
-    ) -> Result<Self> {
-        Ok(Self::new_with_storage(
-            double_array_builder::build::<Value>(elements, building_observer_set, density_factor)?,
-            0,
-        ))
-    }
-
-    pub(super) fn new_with_storage(
-        storage: Box<dyn Storage<Value>>,
-        root_base_check_index: usize,
-    ) -> Self {
+    pub(super) fn new(storage: Box<dyn Storage<Value>>, root_base_check_index: usize) -> Self {
         Self {
             storage,
             root_base_check_index,
@@ -127,10 +137,7 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         let Some(index) = index else {
             return Ok(None);
         };
-        Ok(Some(Self::new_with_storage(
-            self.storage().clone_box(),
-            index,
-        )))
+        Ok(Some(Self::new(self.storage().clone_box(), index)))
     }
 
     fn traverse(&self, key: &[u8]) -> Result<Option<usize>> {
@@ -315,7 +322,7 @@ mod tests {
 
         #[test]
         fn new() {
-            let _observer_set = BuldingObserverSet::new(&mut |_| {}, &mut || {});
+            let _observer_set = BuildingObserverSet::new(&mut |_| {}, &mut || {});
         }
 
         #[test]
@@ -323,7 +330,7 @@ mod tests {
             let mut added = None;
             let mut adding = |&(k, v): &DoubleArrayElement<'_>| added = Some((k.to_vec(), v));
             let mut done = || {};
-            let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
+            let mut observer_set = BuildingObserverSet::new(&mut adding, &mut done);
 
             observer_set.adding(&(b"hoge", 42));
 
@@ -335,7 +342,7 @@ mod tests {
             let mut adding = |_e: &DoubleArrayElement<'_>| {};
             let mut done_called = false;
             let mut done = || done_called = true;
-            let mut observer_set = BuldingObserverSet::new(&mut adding, &mut done);
+            let mut observer_set = BuildingObserverSet::new(&mut adding, &mut done);
 
             observer_set.done();
 
@@ -347,20 +354,21 @@ mod tests {
         use super::*;
 
         #[test]
-        fn new() {
-            let double_array = DoubleArray::<i32>::new().unwrap();
-
-            assert_eq!(
-                base_check_array_of(double_array.storage()).unwrap(),
-                EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY
-            );
-        }
-
-        #[test]
-        fn new_with_elements() {
+        fn builder() {
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES0.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder().build().unwrap();
+
+                assert_eq!(
+                    base_check_array_of(double_array.storage()).unwrap(),
+                    EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY
+                );
+            }
+
+            {
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES0.to_vec())
+                    .build()
+                    .unwrap();
 
                 assert_eq!(
                     base_check_array_of(double_array.storage()).unwrap(),
@@ -368,8 +376,10 @@ mod tests {
                 );
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .build()
+                    .unwrap();
 
                 assert_eq!(
                     base_check_array_of(double_array.storage()).unwrap(),
@@ -377,49 +387,46 @@ mod tests {
                 );
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES4.to_vec())
+                    .build()
+                    .unwrap();
 
                 assert_eq!(
                     base_check_array_of(double_array.storage()).unwrap(),
                     EXPECTED_BASE_CHECK_ARRAY4
                 );
             }
-        }
 
-        #[test]
-        fn new_with_elements_buldingobserverset() {
-            let mut adding_called = false;
-            let mut done_called = false;
-            let double_array = DoubleArray::<i32>::new_with_elements_buldingobserverset(
-                EXPECTED_VALUES3.to_vec(),
-                &mut BuldingObserverSet::new(&mut |_| adding_called = true, &mut || {
-                    done_called = true
-                }),
-            )
-            .unwrap();
-
-            assert_eq!(
-                base_check_array_of(double_array.storage()).unwrap(),
-                EXPECTED_BASE_CHECK_ARRAY3
-            );
-            assert!(adding_called);
-            assert!(done_called);
-        }
-
-        #[test]
-        fn new_with_elements_buldingobserverset_densityfactor() {
             {
                 let mut adding_called = false;
                 let mut done_called = false;
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements_buldingobserverset_densityfactor(
-                        EXPECTED_VALUES3.to_vec(),
-                        &mut BuldingObserverSet::new(&mut |_| adding_called = true, &mut || {
-                            done_called = true
-                        }),
-                        DEFAULT_DENSITY_FACTOR,
-                    )
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .build_with_observer_set(&mut BuildingObserverSet::new(
+                        &mut |_| adding_called = true,
+                        &mut || done_called = true,
+                    ))
+                    .unwrap();
+
+                assert_eq!(
+                    base_check_array_of(double_array.storage()).unwrap(),
+                    EXPECTED_BASE_CHECK_ARRAY3
+                );
+                assert!(adding_called);
+                assert!(done_called);
+            }
+
+            {
+                let mut adding_called = false;
+                let mut done_called = false;
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .density_factor(DEFAULT_DENSITY_FACTOR)
+                    .build_with_observer_set(&mut BuildingObserverSet::new(
+                        &mut |_| adding_called = true,
+                        &mut || done_called = true,
+                    ))
                     .unwrap();
 
                 assert_eq!(
@@ -430,12 +437,10 @@ mod tests {
                 assert!(done_called);
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements_buldingobserverset_densityfactor(
-                        EXPECTED_VALUES3.to_vec(),
-                        &mut BuldingObserverSet::new(&mut |_| {}, &mut || {}),
-                        0,
-                    );
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .density_factor(0)
+                    .build();
 
                 assert!(double_array.is_err());
             }
@@ -443,11 +448,13 @@ mod tests {
 
         #[test]
         fn new_with_storage() {
-            let double_array0 =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let double_array0 = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
             let storage = double_array0.storage();
 
-            let double_array1 = DoubleArray::<i32>::new_with_storage(storage.clone_box(), 8);
+            let double_array1 = DoubleArray::<i32>::new(storage.clone_box(), 8);
 
             assert_eq!(
                 base_check_array_of(double_array1.storage()).unwrap(),
@@ -461,7 +468,7 @@ mod tests {
         #[test]
         fn find() {
             {
-                let double_array = DoubleArray::<i32>::new().unwrap();
+                let double_array = DoubleArray::<i32>::builder().build().unwrap();
 
                 {
                     let found = double_array.find(b"SETA").unwrap();
@@ -469,8 +476,10 @@ mod tests {
                 }
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .build()
+                    .unwrap();
 
                 {
                     let found = double_array.find(b"SETA").unwrap().unwrap();
@@ -490,8 +499,10 @@ mod tests {
                 }
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES4.to_vec())
+                    .build()
+                    .unwrap();
 
                 {
                     let found = double_array.find("赤瀬".as_bytes()).unwrap().unwrap(); // "Akase" in Kanji
@@ -511,19 +522,23 @@ mod tests {
         #[test]
         fn iter() {
             {
-                let double_array = DoubleArray::<i32>::new().unwrap();
+                let double_array = DoubleArray::<i32>::builder().build().unwrap();
 
                 let _iterator = double_array.iter();
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .build()
+                    .unwrap();
 
                 let _iterator = double_array.iter();
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES4.to_vec())
+                    .build()
+                    .unwrap();
 
                 let _iterator = double_array.iter();
             }
@@ -532,8 +547,10 @@ mod tests {
         #[test]
         fn subtrie() {
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES3.to_vec())
+                    .build()
+                    .unwrap();
 
                 {
                     let subtrie = double_array.subtrie(b"U").unwrap().unwrap();
@@ -586,8 +603,10 @@ mod tests {
                 }
             }
             {
-                let double_array =
-                    DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+                let double_array = DoubleArray::<i32>::builder()
+                    .elements(EXPECTED_VALUES4.to_vec())
+                    .build()
+                    .unwrap();
 
                 let subtrie = double_array.subtrie("赤".as_bytes()).unwrap().unwrap();
                 {
@@ -599,8 +618,10 @@ mod tests {
 
         #[test]
         fn storage() {
-            let double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
 
             let base_check_array = base_check_array_of(double_array.storage()).unwrap();
 
@@ -609,8 +630,10 @@ mod tests {
 
         #[test]
         fn storage_mut() {
-            let mut double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let mut double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
 
             let base_check_array = base_check_array_of(double_array.storage_mut()).unwrap();
 

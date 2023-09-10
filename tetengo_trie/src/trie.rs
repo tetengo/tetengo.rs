@@ -75,7 +75,7 @@ const DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR: usize = DEFAULT_DENSITY_FACTOR;
  */
 #[derive(Debug)]
 pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
-    _phantom: PhantomData<Key>,
+    phantom: PhantomData<Key>,
     double_array: DoubleArray<Value>,
     key_serializer: KeySerializer,
 }
@@ -104,8 +104,8 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
      */
     pub fn new_with_keyserializer(key_serializer: KeySerializer) -> Result<Self> {
         Ok(Self {
-            _phantom: PhantomData,
-            double_array: DoubleArray::new()?,
+            phantom: PhantomData,
+            double_array: DoubleArray::builder().build()?,
             key_serializer,
         })
     }
@@ -204,14 +204,12 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
         let done = &mut || {
             building_observer_set_ref_cell.borrow_mut().done();
         };
-        let observer_set = &mut double_array::BuldingObserverSet::new(adding, done);
+        let observer_set = &mut double_array::BuildingObserverSet::new(adding, done);
 
-        let mut double_array =
-            DoubleArray::<Value>::new_with_elements_buldingobserverset_densityfactor(
-                double_array_contents,
-                observer_set,
-                double_array_density_factor,
-            )?;
+        let mut double_array = DoubleArray::<Value>::builder()
+            .elements(double_array_contents)
+            .density_factor(double_array_density_factor)
+            .build_with_observer_set(observer_set)?;
 
         for (i, element) in elements.into_iter().enumerate() {
             let (_, value) = element;
@@ -219,7 +217,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
         }
 
         Ok(Self {
-            _phantom: PhantomData,
+            phantom: PhantomData,
             double_array,
             key_serializer,
         })
@@ -247,8 +245,8 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
         key_serializer: KeySerializer,
     ) -> Self {
         Self {
-            _phantom: PhantomData,
-            double_array: DoubleArray::new_with_storage(storage, 0),
+            phantom: PhantomData,
+            double_array: DoubleArray::new(storage, 0),
             key_serializer,
         }
     }
@@ -347,7 +345,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
             return Ok(None);
         };
         Ok(Some(Self {
-            _phantom: PhantomData,
+            phantom: PhantomData,
             double_array: subdouble_array,
             key_serializer: self.key_serializer.clone(),
         }))
