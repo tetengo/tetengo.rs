@@ -447,7 +447,7 @@ mod tests {
         }
 
         #[test]
-        fn new_with_storage() {
+        fn new() {
             let double_array0 = DoubleArray::<i32>::builder()
                 .elements(EXPECTED_VALUES3.to_vec())
                 .build()
