@@ -75,6 +75,7 @@ impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
         self
     }
 
+    #[cfg(test)]
     pub(super) fn build(self) -> Result<DoubleArray<Value>> {
         self.build_with_observer_set(&mut BuildingObserverSet::new(&mut |_| {}, &mut || {}))
     }
