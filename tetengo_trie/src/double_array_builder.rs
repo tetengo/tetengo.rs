@@ -8,14 +8,14 @@ use anyhow::Result;
 use std::collections::HashSet;
 
 use crate::double_array::{
-    BuldingObserverSet, DoubleArrayElement, DoubleArrayError, KEY_TERMINATOR, VACANT_CHECK_VALUE,
+    BuildingObserverSet, DoubleArrayElement, DoubleArrayError, KEY_TERMINATOR, VACANT_CHECK_VALUE,
 };
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
 pub(super) fn build<T: Clone + 'static>(
     mut elements: Vec<DoubleArrayElement<'_>>,
-    observer: &mut BuldingObserverSet<'_>,
+    observer: &mut BuildingObserverSet<'_>,
     density_factor: usize,
 ) -> Result<Box<dyn Storage<T>>> {
     if density_factor == 0 {
@@ -49,7 +49,7 @@ fn build_iter<T>(
     storage: &mut dyn Storage<T>,
     base_check_index: usize,
     base_uniquer: &mut HashSet<i32>,
-    observer: &mut BuldingObserverSet<'_>,
+    observer: &mut BuildingObserverSet<'_>,
     density_factor: usize,
 ) -> Result<()> {
     let children_firsts = children_firsts(elements, key_offset);

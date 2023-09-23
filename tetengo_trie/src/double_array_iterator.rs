@@ -114,14 +114,18 @@ mod tests {
     #[test]
     fn new() {
         {
-            let double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
 
             let _iterator = double_array.iter();
         }
         {
-            let double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
             let mut iterator = double_array.iter();
 
             let _ = iterator.next();
@@ -137,7 +141,7 @@ mod tests {
     #[test]
     fn next() {
         {
-            let double_array = DoubleArray::<i32>::new().unwrap();
+            let double_array = DoubleArray::<i32>::builder().build().unwrap();
             let mut iterator = double_array.iter();
 
             {
@@ -146,8 +150,10 @@ mod tests {
             }
         }
         {
-            let double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
             let mut iterator = double_array.iter();
 
             {
@@ -168,8 +174,10 @@ mod tests {
             }
         }
         {
-            let double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES4.to_vec()).unwrap();
+            let double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES4.to_vec())
+                .build()
+                .unwrap();
             let mut iterator = double_array.iter();
 
             {
@@ -186,8 +194,10 @@ mod tests {
             }
         }
         {
-            let double_array =
-                DoubleArray::<i32>::new_with_elements(EXPECTED_VALUES3.to_vec()).unwrap();
+            let double_array = DoubleArray::<i32>::builder()
+                .elements(EXPECTED_VALUES3.to_vec())
+                .build()
+                .unwrap();
             let values = double_array
                 .iter()
                 .filter(|&e| e < 100)

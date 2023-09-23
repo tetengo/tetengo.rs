@@ -5,7 +5,7 @@
  */
 
 use anyhow::Result;
-use std::marker;
+use std::marker::PhantomData;
 use std::mem;
 use std::ops;
 
@@ -61,7 +61,7 @@ impl<T, U> Integer<U> for T where
 #[derive(Debug)]
 pub struct IntegerSerializer<Object: Integer<Object>> {
     fe_escape: bool,
-    _phantom: marker::PhantomData<Object>,
+    phantom: PhantomData<Object>,
 }
 
 impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
@@ -70,7 +70,7 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
     fn new(fe_escape: bool) -> Self {
         IntegerSerializer {
             fe_escape,
-            _phantom: marker::PhantomData,
+            phantom: PhantomData,
         }
     }
 
@@ -119,7 +119,7 @@ impl DeserializationError for IntegerDeserialationError {}
 #[derive(Debug)]
 pub struct IntegerDeserializer<Object: Integer<Object>> {
     fe_escape: bool,
-    _phantom: marker::PhantomData<Object>,
+    phantom: PhantomData<Object>,
 }
 
 impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
@@ -128,7 +128,7 @@ impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
     fn new(fe_escape: bool) -> Self {
         IntegerDeserializer {
             fe_escape,
-            _phantom: marker::PhantomData,
+            phantom: PhantomData,
         }
     }
     fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
