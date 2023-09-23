@@ -73,25 +73,29 @@ mod tests {
     #[test]
     fn new() {
         {
-            let trie = Trie::<&str, String>::new().unwrap();
+            let trie = Trie::<&str, String>::builder().build().unwrap();
 
             let _iterator = trie.iter();
         }
         {
-            let trie = Trie::<&str, String>::new_with_elements(vec![
-                (KUMAMOTO, KUMAMOTO.to_string()),
-                (TAMANA, TAMANA.to_string()),
-            ])
-            .unwrap();
+            let trie = Trie::<&str, String>::builder()
+                .elements(vec![
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ])
+                .build()
+                .unwrap();
 
             let _iterator = trie.iter();
         }
         {
-            let trie = Trie::<&str, String>::new_with_elements(vec![
-                (KUMAMOTO, KUMAMOTO.to_string()),
-                (TAMANA, TAMANA.to_string()),
-            ])
-            .unwrap();
+            let trie = Trie::<&str, String>::builder()
+                .elements(vec![
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ])
+                .build()
+                .unwrap();
 
             let mut iterator = trie.iter();
             let mut clone = iterator.clone();
@@ -104,17 +108,19 @@ mod tests {
     #[test]
     fn next() {
         {
-            let trie = Trie::<&str, String>::new().unwrap();
+            let trie = Trie::<&str, String>::builder().build().unwrap();
             let mut iterator = trie.iter();
 
             assert!(iterator.next().is_none());
         }
         {
-            let trie = Trie::<&str, String>::new_with_elements(vec![
-                (KUMAMOTO, KUMAMOTO.to_string()),
-                (TAMANA, TAMANA.to_string()),
-            ])
-            .unwrap();
+            let trie = Trie::<&str, String>::builder()
+                .elements(vec![
+                    (KUMAMOTO, KUMAMOTO.to_string()),
+                    (TAMANA, TAMANA.to_string()),
+                ])
+                .build()
+                .unwrap();
             let mut iterator = trie.iter();
 
             assert_eq!(*iterator.next().unwrap().as_ref(), KUMAMOTO.to_string());

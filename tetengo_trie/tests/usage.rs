@@ -27,22 +27,23 @@ mod usage {
         let mut building_observer_set = BuldingObserverSet::new(&mut adding, &mut done);
 
         // Builds a trie with initial elements.
-        let trie = Trie::<&str, i32>::new_with_elements_keyserializer_buildingobserverset(
-            [
-                ("tasakibashi", -5),
-                ("nihongiguchi", -3),
-                ("kumamotoekimae", 0),
-                ("gionbashi", 5),
-                ("gofukumachi", 10),
-                ("kawaramachi", 14),
-                ("keitokukoumae", 18),
-                ("karashimachou", 22),
-            ]
-            .to_vec(),
-            StringSerializer::new(true),
-            &mut building_observer_set,
-        )
-        .unwrap();
+        let trie = Trie::<&str, i32>::builder()
+            .elements(
+                [
+                    ("tasakibashi", -5),
+                    ("nihongiguchi", -3),
+                    ("kumamotoekimae", 0),
+                    ("gionbashi", 5),
+                    ("gofukumachi", 10),
+                    ("kawaramachi", 14),
+                    ("keitokukoumae", 18),
+                    ("karashimachou", 22),
+                ]
+                .to_vec(),
+            )
+            .key_serializer(StringSerializer::new(true))
+            .build_with_observer_set(&mut building_observer_set)
+            .unwrap();
         let stored_keys = &*building_observer_reports.borrow();
         let expected = [
             "gionbashi".to_string(),
