@@ -9,16 +9,16 @@ use anyhow::Result;
 use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
 /**
- * A string serializer.
+ * A string (&str) serializer.
  */
 #[derive(Debug, Default, Clone, Copy)]
-pub struct StringSerializer;
+pub struct StrSerializer;
 
-impl Serializer for StringSerializer {
+impl Serializer for StrSerializer {
     type Object<'a> = &'a str;
 
     fn new(_: bool) -> Self {
-        StringSerializer {}
+        StrSerializer {}
     }
 
     fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
@@ -27,7 +27,7 @@ impl Serializer for StringSerializer {
 }
 
 /**
- * A string deserializer.
+ * A string (String) deserializer.
  */
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringDeserializer;
@@ -45,7 +45,7 @@ impl Deserializer for StringDeserializer {
 }
 
 impl SerializerOf<&str> for () {
-    type Type = StringSerializer;
+    type Type = StrSerializer;
 }
 
 impl DeserializerOf<String> for () {

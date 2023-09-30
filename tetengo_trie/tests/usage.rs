@@ -1,6 +1,6 @@
 mod usage {
     use std::cell::RefCell;
-    use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie};
+    use tetengo_trie::{BuldingObserverSet, Serializer, StrSerializer, Trie};
 
     #[test]
     fn usage() {
@@ -34,7 +34,7 @@ mod usage {
                 ]
                 .to_vec(),
             )
-            .key_serializer(StringSerializer::new(true))
+            .key_serializer(StrSerializer::new(true))
             .build_with_observer_set(&mut building_observer_set)
             .unwrap();
         let stored_keys = &*building_observer_reports.borrow();

@@ -287,7 +287,7 @@ mod tests {
     use std::io::Cursor;
 
     use crate::serializer::{Deserializer, Serializer};
-    use crate::string_serializer::{StringDeserializer, StringSerializer};
+    use crate::string_serializer::{StrSerializer, StringDeserializer};
     use crate::value_serializer::ValueSerializer;
 
     use super::*;
@@ -526,9 +526,9 @@ mod tests {
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<String>::new(
                 |value| {
-                    static STRING_SERIALIZER: Lazy<StringSerializer> =
-                        Lazy::new(|| StringSerializer::new(false));
-                    STRING_SERIALIZER.serialize(&value.as_str())
+                    static STR_SERIALIZER: Lazy<StrSerializer> =
+                        Lazy::new(|| StrSerializer::new(false));
+                    STR_SERIALIZER.serialize(&value.as_str())
                 },
                 0,
             );
