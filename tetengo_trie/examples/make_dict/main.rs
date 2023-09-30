@@ -13,7 +13,7 @@ use std::process::exit;
 
 use anyhow::Result;
 
-use tetengo_trie::{Serializer, StringSerializer, Trie};
+use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie};
 
 fn main() {
     let args = env::args().collect::<Vec<_>>();
@@ -141,55 +141,26 @@ fn insert_word_offset_to_map(key: &str, offset: usize, length: usize, map: &mut 
     }
 }
 
-/*
-class trie_building_observer
-{
-public:
-    trie_building_observer() : m_index{ 0 } {}
-
-    void operator()(const std::string_view& key)
-    {
-        if (m_index % 10000 == 0)
-        {
-            std::cerr << boost::format{ "%8d: %s" } % m_index % encode_for_print(key) << "    \r" << std::flush;
-        }
-        ++m_index;
-    }
-
-private:
-    std::size_t m_index;
-};
-*/
-
 type DictTrie = Trie<String, Vec<(usize, usize)>>;
 
 fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie> {
     eprintln!("Building trie...");
     let word_offset_vector = word_offset_map.into_iter().collect::<Vec<_>>();
+    let index = 0usize;
     let trie = DictTrie::builder()
         .elements(word_offset_vector)
         .key_serializer(StringSerializer::new(true))
-        .build();
+        .build_with_observer_set(&mut BuldingObserverSet::new(
+            &mut |key| {
+                if index % 10000 == 0 {
+                    eprint!("{:8}: {}    \r", index, String::from_utf8_lossy(key));
+                }
+            },
+            &mut || {},
+        ));
     eprintln!("Done.        ");
     trie
 }
-
-/*
-std::unique_ptr<tetengo::trie::trie<std::string_view, std::vector<std::pair<std::size_t, std::size_t>>>>
-build_trie(const std::unordered_map<std::string, std::vector<std::pair<std::size_t, std::size_t>>>& word_offset_map)
-{
-    std::cerr << "Building trie..." << std::endl;
-    auto p_trie =
-        std::make_unique<tetengo::trie::trie<std::string_view, std::vector<std::pair<std::size_t, std::size_t>>>>(
-            std::make_move_iterator(std::begin(word_offset_map)),
-            std::make_move_iterator(std::end(word_offset_map)),
-            tetengo::trie::default_serializer<std::string_view>{ true },
-            tetengo::trie::trie<std::string_view, std::vector<std::pair<std::size_t, std::size_t>>>::
-                building_observer_set_type{ trie_building_observer{}, []() {} });
-    std::cerr << "Done.        " << std::endl;
-    return p_trie;
-}
-*/
 
 /*
 std::vector<char> serialize_size_t(const std::size_t s)
