@@ -34,6 +34,7 @@ pub use storage::Storage;
 pub use storage::StorageError;
 pub use string_serializer::StrSerializer;
 pub use string_serializer::StringDeserializer;
+pub use string_serializer::StringSerializer;
 pub use trie::BuldingObserverSet;
 pub use trie::Trie;
 pub use trie_iterator::TrieIterator;
