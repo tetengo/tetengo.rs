@@ -390,7 +390,7 @@ mod tests {
 
     use crate::memory_storage::MemoryStorage;
     use crate::serializer::Deserializer;
-    use crate::string_serializer::{StringDeserializer, StringSerializer};
+    use crate::string_serializer::{StrSerializer, StringDeserializer};
     use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
     use super::*;
@@ -441,7 +441,7 @@ mod tests {
         }
 
         {
-            let key_serializer = StringSerializer::new(true);
+            let key_serializer = StrSerializer::new(true);
             let _trie = Trie::<&str, i32>::builder()
                 .key_serializer(key_serializer)
                 .build()
@@ -475,7 +475,7 @@ mod tests {
             .to_vec();
             let _trie = Trie::<&str, String>::builder()
                 .elements(content)
-                .key_serializer(StringSerializer::new(true))
+                .key_serializer(StrSerializer::new(true))
                 .build()
                 .unwrap();
         }
@@ -485,7 +485,7 @@ mod tests {
             let mut done = false;
             let _trie = Trie::<&str, i32>::builder()
                 .elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
-                .key_serializer(StringSerializer::new(true))
+                .key_serializer(StrSerializer::new(true))
                 .build_with_observer_set(&mut BuldingObserverSet::new(
                     &mut |serialized_keys| {
                         added_serialized_keys.push(serialized_keys.to_vec());
@@ -518,7 +518,7 @@ mod tests {
             let mut done = false;
             let _trie = Trie::<&str, i32>::builder()
                 .elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
-                .key_serializer(StringSerializer::new(true))
+                .key_serializer(StrSerializer::new(true))
                 .double_array_density_factor(DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR)
                 .build_with_observer_set(&mut BuldingObserverSet::new(
                     &mut |serialized_keys| {
@@ -572,7 +572,7 @@ mod tests {
             let storage =
                 Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
             let _trie = Trie::<&str, String>::builder_with_storage(storage)
-                .key_serializer(StringSerializer::new(true))
+                .key_serializer(StrSerializer::new(true))
                 .build();
         }
     }
@@ -864,9 +864,9 @@ mod tests {
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<String>::new(
                 |value| {
-                    static STRING_SERIALIZER: Lazy<StringSerializer> =
-                        Lazy::new(|| StringSerializer::new(false));
-                    STRING_SERIALIZER.serialize(&value.as_str())
+                    static STR_SERIALIZER: Lazy<StrSerializer> =
+                        Lazy::new(|| StrSerializer::new(false));
+                    STR_SERIALIZER.serialize(&value.as_str())
                 },
                 0,
             );

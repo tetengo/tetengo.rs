@@ -32,6 +32,7 @@ pub use serializer::SerializerOf;
 pub use shared_storage::SharedStorage;
 pub use storage::Storage;
 pub use storage::StorageError;
+pub use string_serializer::StrSerializer;
 pub use string_serializer::StringDeserializer;
 pub use string_serializer::StringSerializer;
 pub use trie::BuldingObserverSet;

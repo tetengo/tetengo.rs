@@ -9,13 +9,31 @@ use anyhow::Result;
 use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
 /**
- * A string serializer.
+ * A string (&str) serializer.
+ */
+#[derive(Debug, Default, Clone, Copy)]
+pub struct StrSerializer;
+
+impl Serializer for StrSerializer {
+    type Object<'a> = &'a str;
+
+    fn new(_: bool) -> Self {
+        StrSerializer {}
+    }
+
+    fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
+        object.as_bytes().to_vec()
+    }
+}
+
+/**
+ * A string (String) serializer.
  */
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringSerializer;
 
 impl Serializer for StringSerializer {
-    type Object<'a> = &'a str;
+    type Object<'a> = String;
 
     fn new(_: bool) -> Self {
         StringSerializer {}
@@ -27,7 +45,7 @@ impl Serializer for StringSerializer {
 }
 
 /**
- * A string deserializer.
+ * A string (String) deserializer.
  */
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StringDeserializer;
@@ -45,6 +63,10 @@ impl Deserializer for StringDeserializer {
 }
 
 impl SerializerOf<&str> for () {
+    type Type = StrSerializer;
+}
+
+impl SerializerOf<String> for () {
     type Type = StringSerializer;
 }
 
@@ -60,16 +82,30 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let serializer = <() as SerializerOf<&str>>::Type::new(false);
+        {
+            let serializer = <() as SerializerOf<&str>>::Type::new(false);
 
-        let object = "Sakuramachi";
-        let expected_serialized = "Sakuramachi";
-        let serialized = serializer.serialize(&object);
-        assert_eq!(
-            std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
-            expected_serialized
-        );
-        assert!(!serialized.iter().any(|&b| b == 0x00u8));
+            let object = "Sakuramachi";
+            let expected_serialized = "Sakuramachi";
+            let serialized = serializer.serialize(&object);
+            assert_eq!(
+                std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
+                expected_serialized
+            );
+            assert!(!serialized.iter().any(|&b| b == 0x00u8));
+        }
+        {
+            let serializer = <() as SerializerOf<String>>::Type::new(false);
+
+            let object = String::from("Sakuramachi");
+            let expected_serialized = String::from("Sakuramachi");
+            let serialized = serializer.serialize(&object);
+            assert_eq!(
+                std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
+                expected_serialized
+            );
+            assert!(!serialized.iter().any(|&b| b == 0x00u8));
+        }
     }
 
     #[test]

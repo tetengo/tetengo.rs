@@ -31,7 +31,7 @@ rustflags = [
 #    "-D", "unsafe_code",
     "-D", "unsafe_op_in_unsafe_fn",
     "-D", "unstable_features",
-    "-D", "unused_crate_dependencies",
+#    "-D", "unused_crate_dependencies",
     "-D", "unused_extern_crates",
     "-D", "unused_import_braces",
     "-D", "unused_lifetimes",
