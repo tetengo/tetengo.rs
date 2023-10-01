@@ -7,13 +7,14 @@
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, BufWriter};
+use std::mem::size_of;
 use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
 
-use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie};
+use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie, ValueSerializer};
 
 fn main() {
     let args = env::args().collect::<Vec<_>>();
@@ -29,17 +30,17 @@ fn main() {
             exit(1);
         }
     };
-    let _trie = match build_trie(word_offset_map) {
+    let trie = match build_trie(word_offset_map) {
         Ok(trie) => trie,
         Err(e) => {
             eprintln!("Error: {}", e);
             exit(1);
         }
     };
-
-    // const auto word_offset_map = load_lex_csv(argv[1]);
-    // const auto p_trie = build_trie(word_offset_map);
-    // serialize_trie(*p_trie, argv[2]);
+    if let Err(e) = serialize_trie(&trie, Path::new(&args[2])) {
+        eprintln!("Error: {}", e);
+        exit(1);
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -129,12 +130,14 @@ fn split(string: &str, delimiter: char) -> Vec<&str> {
     elements
 }
 
+const VALUE_CAPACITY: usize = 4usize;
+
 fn insert_word_offset_to_map(key: &str, offset: usize, length: usize, map: &mut WordOffsetMap) {
     let i_value = map.entry(key.to_string()).or_insert_with(Vec::new);
     if i_value.iter().any(|&(o, l)| o == offset && l == length) {
         return;
     }
-    if i_value.len() < 100 {
+    if i_value.len() < VALUE_CAPACITY {
         i_value.push((offset, length));
     } else {
         i_value.push((0, 0));
@@ -162,83 +165,55 @@ fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie> {
     trie
 }
 
-/*
-std::vector<char> serialize_size_t(const std::size_t s)
-{
-    assert(s <= std::numeric_limits<std::uint32_t>::max());
+const SERIALIZED_VALUE_SIZE: usize = size_of::<u32>() * (1 + 4 * 2);
 
-    std::vector<char> serialized(sizeof(std::uint32_t), '\0');
-
-    for (auto i = static_cast<std::size_t>(0); i < sizeof(std::uint32_t); ++i)
-    {
-        serialized[i] = (s >> ((sizeof(std::uint32_t) - i - 1) * 8)) & 0xFF;
-    }
-
-    return serialized;
+fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<()> {
+    eprintln!("Serializing trie...");
+    let file = File::create(trie_bin_path)?;
+    let mut buf_writer = BufWriter::new(file);
+    let serializer = ValueSerializer::new(serialize_value, SERIALIZED_VALUE_SIZE);
+    trie.storage().serialize(&mut buf_writer, &serializer)?;
+    eprintln!("Done.        ");
+    Ok(())
 }
-*/
-/*
-std::vector<char> serialize_pair_of_size_t(const std::pair<std::size_t, std::size_t>& ps)
-{
-    std::vector<char> serialized{};
-    serialized.reserve(sizeof(std::uint32_t) * 2);
 
-    const auto serialized_offset = serialize_size_t(ps.first);
-    serialized.insert(std::end(serialized), std::begin(serialized_offset), std::end(serialized_offset));
-    const auto serialized_length = serialize_size_t(ps.second);
-    serialized.insert(std::end(serialized), std::begin(serialized_length), std::end(serialized_length));
+fn serialize_value(vpus: &Vec<(usize, usize)>) -> Vec<u8> {
+    let mut serialized = Vec::new();
+    serialized.reserve(SERIALIZED_VALUE_SIZE);
 
-    return serialized;
-}
-*/
-/*
-std::vector<char> serialize_vector_of_pair_of_size_t(const std::vector<std::pair<std::size_t, std::size_t>>& vps)
-{
-    std::vector<char> serialized{};
-    serialized.reserve(serialized_value_size);
+    let serialized_size = serialize_usize(vpus.len());
+    serialized.extend(serialized_size);
 
-    const auto serialized_size = serialize_size_t(std::size(vps));
-    serialized.insert(std::end(serialized), std::begin(serialized_size), std::end(serialized_size));
-    for (auto i = static_cast<std::size_t>(0); i < value_capacity; ++i)
-    {
-        if (i < std::size(vps))
-        {
-            const auto& ps = vps[i];
-            const auto  serialized_element = serialize_pair_of_size_t(ps);
-            serialized.insert(std::end(serialized), std::begin(serialized_element), std::end(serialized_element));
+    (0..VALUE_CAPACITY).for_each(|i| {
+        if i < vpus.len() {
+            let serialized_element = serialize_pair_of_usize(&vpus[i]);
+            serialized.extend(serialized_element);
+        } else {
+            let serialized_element = serialize_pair_of_usize(&(0, 0));
+            serialized.extend(serialized_element);
         }
-        else
-        {
-            const auto serialized_element =
-                serialize_pair_of_size_t(std::make_pair<std::size_t, std::size_t>(0, 0));
-            serialized.insert(std::end(serialized), std::begin(serialized_element), std::end(serialized_element));
-        }
-    }
+    });
 
-    return serialized;
+    serialized
 }
-*/
-/*
-std::vector<char> serialize_value(const std::any& value)
-{
-    const auto* const p_value = std::any_cast<std::vector<std::pair<std::size_t, std::size_t>>>(&value);
-    assert(p_value);
-    return serialize_vector_of_pair_of_size_t(*p_value);
+
+fn serialize_pair_of_usize(pus: &(usize, usize)) -> Vec<u8> {
+    let mut serialized = Vec::new();
+    serialized.reserve(size_of::<usize>() * 2);
+
+    let (offset, length) = pus;
+    serialized.extend(serialize_usize(*offset));
+    serialized.extend(serialize_usize(*length));
+
+    serialized
 }
-*/
-/*
-void serialize_trie(
-    const tetengo::trie::trie<std::string_view, std::vector<std::pair<std::size_t, std::size_t>>>& trie_,
-    const std::filesystem::path&                                                                   trie_bin_path)
-{
-    std::cerr << "Serializing trie..." << std::endl;
-    std::ofstream output_stream{ trie_bin_path, std::ios_base::binary };
-    if (!output_stream)
-    {
-        throw std::ios_base::failure{ "Can't open the output file." };
-    }
-    const tetengo::trie::value_serializer serializer{ serialize_value, serialized_value_size };
-    trie_.get_storage().serialize(output_stream, serializer);
-    std::cerr << "Done.        " << std::endl;
+
+fn serialize_usize(us: usize) -> Vec<u8> {
+    debug_assert!(us <= std::u32::MAX as usize);
+
+    let mut serialized = Vec::from([0u8; size_of::<u32>()]);
+    (0..size_of::<u32>()).for_each(|i| {
+        serialized[i] = ((us >> ((size_of::<u32>() - i - 1) * 8)) & 0xFF) as u8;
+    });
+    serialized
 }
-*/
