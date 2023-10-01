@@ -74,7 +74,7 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<WordOffsetMap> {
             return Err(DictMakingError::InvalidUnidicLexCsvFormat.into());
         }
 
-        if elements[16] == "記号" && elements[23] == "補助記号" {
+        if elements[16] == "記号" && elements[23] == "補助" {
             insert_word_offset_to_map(elements[0], line_head, line.len() + 1, &mut word_offset_map);
         } else {
             insert_word_offset_to_map(
@@ -150,7 +150,7 @@ fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie> {
     eprintln!("Building trie...");
     let mut word_offset_vector = word_offset_map.into_iter().collect::<Vec<_>>();
     word_offset_vector.sort();
-    let index = 0usize;
+    let mut index = 0usize;
     let trie = DictTrie::builder()
         .elements(word_offset_vector)
         .key_serializer(StringSerializer::new(true))
@@ -159,6 +159,7 @@ fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie> {
                 if index % 10000 == 0 {
                     eprint!("{:8}: {}    \r", index, String::from_utf8_lossy(key));
                 }
+                index += 1;
             },
             &mut || {},
         ));
