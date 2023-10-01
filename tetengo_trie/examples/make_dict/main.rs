@@ -148,7 +148,8 @@ type DictTrie = Trie<String, Vec<(usize, usize)>>;
 
 fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie> {
     eprintln!("Building trie...");
-    let word_offset_vector = word_offset_map.into_iter().collect::<Vec<_>>();
+    let mut word_offset_vector = word_offset_map.into_iter().collect::<Vec<_>>();
+    word_offset_vector.sort();
     let index = 0usize;
     let trie = DictTrie::builder()
         .elements(word_offset_vector)
