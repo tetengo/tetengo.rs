@@ -133,14 +133,14 @@ fn split(string: &str, delimiter: char) -> Vec<&str> {
 const VALUE_CAPACITY: usize = 4usize;
 
 fn insert_word_offset_to_map(key: &str, offset: usize, length: usize, map: &mut WordOffsetMap) {
-    let i_value = map.entry(key.to_string()).or_insert_with(Vec::new);
-    if i_value.iter().any(|&(o, l)| o == offset && l == length) {
+    let value = map.entry(key.to_string()).or_default();
+    if value.iter().any(|&(o, l)| o == offset && l == length) {
         return;
     }
-    if i_value.len() < VALUE_CAPACITY {
-        i_value.push((offset, length));
+    if value.len() < VALUE_CAPACITY {
+        value.push((offset, length));
     } else {
-        i_value.push((0, 0));
+        value.push((0, 0));
     }
 }
 
