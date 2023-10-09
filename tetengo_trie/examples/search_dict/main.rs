@@ -5,7 +5,9 @@
  */
 
 use std::env;
-use std::io::stdin;
+use std::fs::File;
+use std::io::{stdin, Read};
+use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
@@ -23,6 +25,8 @@ fn main_core() -> Result<()> {
         eprintln!("Usage: search_dict UniDic_lex.csv trie.bin");
         return Ok(());
     }
+
+    let _lex_csv = load_lex_csv(Path::new(&args[1]))?;
 
     loop {
         eprint!(">> ");
@@ -81,3 +85,22 @@ int main(const int argc, char** const argv)
     }
 }
 */
+
+#[derive(thiserror::Error, Debug)]
+enum DictSearchingError {
+    #[error("Can't read the whole of lex.csv file.")]
+    CantReadWholeOfLexCsvFile,
+}
+
+fn load_lex_csv(lex_csv_path: &Path) -> Result<String> {
+    let mut file = File::open(lex_csv_path)?;
+
+    let lex_csv_size = file.metadata()?.len();
+
+    let mut buffer = String::new();
+    let read_length = file.read_to_string(&mut buffer)?;
+    if read_length != lex_csv_size as usize {
+        return Err(DictSearchingError::CantReadWholeOfLexCsvFile.into());
+    }
+    Ok(buffer)
+}
