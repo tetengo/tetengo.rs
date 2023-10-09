@@ -44,4 +44,3 @@ Returns a non-zero value when some error is happened.
 ---
 
 Copyright (C) 2023 kaoru  https://www.tetengo.org/
-
