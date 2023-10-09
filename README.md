@@ -17,4 +17,4 @@ Copyright (C) 2023 kaoru  <https://www.tetengo.org/>
 
 This product is released under the MIT license.
 See [the LICENSE
-file](https://github.com/tetengo/tetengo_trie/blob/main/LICENSE) for details.
+file](https://github.com/tetengo/tetengo.rs/blob/main/LICENSE) for details.
