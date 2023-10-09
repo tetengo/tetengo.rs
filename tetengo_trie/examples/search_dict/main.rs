@@ -30,7 +30,7 @@ fn main_core() -> Result<()> {
     }
 
     let _lex_csv = load_lex_csv(Path::new(&args[1]))?;
-    let _trie = load_trie(Path::new(&args[2]))?;
+    let trie = load_trie(Path::new(&args[2]))?;
 
     loop {
         eprint!(">> ");
@@ -39,56 +39,26 @@ fn main_core() -> Result<()> {
         if read_length == 0 {
             break;
         }
+        if line.is_empty() {
+            continue;
+        }
+
+        line = line.trim_end().to_string();
+        let found = match trie.find(line)? {
+            Some(found) => found,
+            None => {
+                println!("ERROR: Not found.");
+                continue;
+            }
+        };
+
+        found.iter().for_each(|e| {
+            let (offset, length) = *e;
+            print!("{}", substring_view(&_lex_csv, offset, length));
+        });
     }
     Ok(())
 }
-
-/*
-int main(const int argc, char** const argv)
-{
-    try
-    {
-        const auto lex_csv = load_lex_csv(argv[1]);
-        const auto p_trie = load_trie(argv[2]);
-
-        while (std::cin)
-        {
-            std::cerr << ">> " << std::flush;
-            std::string key{};
-            std::getline(std::cin, key);
-            if (std::empty(key))
-            {
-                continue;
-            }
-
-            const auto* const p_found = p_trie->find(decode_from_input(key));
-            if (!p_found)
-            {
-                std::cout << encode_for_print("ERROR: Not found.") << std::endl;
-                continue;
-            }
-
-            for (const auto& e: *p_found)
-            {
-                std::cout << encode_for_print(substring_view(lex_csv, e.first, e.second));
-            }
-            std::cout << std::flush;
-        }
-
-        return 0;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
-    }
-    catch (...)
-    {
-        std::cerr << "Error: unknown error." << std::endl;
-        return 1;
-    }
-}
-*/
 
 #[derive(thiserror::Error, Debug)]
 enum DictSearchingError {
@@ -153,4 +123,11 @@ fn deserialize_usize(bytes: &[u8], byte_offset: &mut usize) -> Result<usize> {
     });
     *byte_offset += size_of::<u32>();
     Ok(value)
+}
+
+fn substring_view(sv: &str, offset: usize, length: usize) -> &str {
+    if offset == 0 && length == 0 {
+        return "(truncated)\n";
+    }
+    &sv[offset..offset + length]
 }
