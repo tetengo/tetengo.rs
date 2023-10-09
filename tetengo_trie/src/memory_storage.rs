@@ -65,7 +65,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     }
 
     fn serialize_base_check_array(writer: &mut dyn Write, base_check_array: &[u32]) -> Result<()> {
-        assert!(base_check_array.len() < u32::MAX as usize);
+        debug_assert!(base_check_array.len() < u32::MAX as usize);
         Self::write_u32(writer, base_check_array.len() as u32)?;
         for v in base_check_array {
             Self::write_u32(writer, *v)?;
@@ -78,10 +78,10 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         value_serializer: &ValueSerializer<Value>,
         value_array: &[ValueArrayElement<Value>],
     ) -> Result<()> {
-        assert!(value_array.len() < u32::MAX as usize);
+        debug_assert!(value_array.len() < u32::MAX as usize);
         Self::write_u32(writer, value_array.len() as u32)?;
 
-        assert!(value_serializer.fixed_value_size() < u32::MAX as usize);
+        debug_assert!(value_serializer.fixed_value_size() < u32::MAX as usize);
         let fixed_value_size = value_serializer.fixed_value_size() as u32;
         Self::write_u32(writer, fixed_value_size)?;
 
@@ -89,7 +89,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
             for v in value_array {
                 if let Some(v) = v {
                     let serialized = value_serializer.serialize(v);
-                    assert!(serialized.len() < u32::MAX as usize);
+                    debug_assert!(serialized.len() < u32::MAX as usize);
                     Self::write_u32(writer, serialized.len() as u32)?;
                     writer.write_all(&serialized)?;
                 } else {
@@ -100,7 +100,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
             for v in value_array {
                 if let Some(v) = v {
                     let serialized = value_serializer.serialize(v);
-                    assert!(serialized.len() == fixed_value_size as usize);
+                    debug_assert!(serialized.len() == fixed_value_size as usize);
                     writer.write_all(&serialized)?;
                 } else {
                     let uninitialized = vec![Self::UNINITIALIZED_BYTE; fixed_value_size as usize];

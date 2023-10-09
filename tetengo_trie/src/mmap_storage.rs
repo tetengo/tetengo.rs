@@ -191,7 +191,7 @@ impl<Value: Clone + 'static> MmapStorage<Value> {
     pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
 
     /**
-     * Returns an mmap storage builder.
+     * Creates an mmap storage builder.
      *
      * # Arguments
      * * `file_mapping`         - A file mapping.

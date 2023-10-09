@@ -27,7 +27,7 @@ impl<'a> BuldingObserverSet<'a> {
     /**
      * Creates a building observer set.
      *
-     * # Parameters
+     * # Arguments
      * * `adding` - An adding observer.
      * * `done` - A done observer.
      */
@@ -242,7 +242,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
     Trie<Key, Value, KeySerializer>
 {
     /**
-     * Returns a trie builder.
+     * Creates a trie builder.
      *
      * # Returns
      * A trie builder.
@@ -257,7 +257,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
     }
 
     /**
-     * Returns a trie builder with a storage.
+     * Creates a trie builder with a storage.
      *
      * # Returns
      * A trie builder with a storage.

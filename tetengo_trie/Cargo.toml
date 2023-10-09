@@ -3,13 +3,27 @@ name = "tetengo_trie"
 version = "0.1.3"
 authors = ["kaoru"]
 edition = "2021"
-description = "A trie library implemented double arrays"
+description = "A trie library implemented with a double array"
 readme = "README.md"
 homepage = "https://www.tetengo.org/"
 repository = "https://github.com/tetengo/tetengo.rs"
 license = "MIT"
-keywords = ["trie", "double_array", "common_prefix_search", "assoc_container"]
-categories = ["algorithms", "text-processing"]
+keywords = [
+    "assoc-container",
+    "associative-container",
+    "common-prefix-search",
+    "data-structure",
+    "data-structures",
+    "double-array",
+    "search",
+    "text",
+    "trie",
+]
+categories = [
+    "algorithms",
+    "data-structures",
+    "text-processing"
+]
 
 [dependencies]
 anyhow = "1.0.75"
