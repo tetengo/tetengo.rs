@@ -9,14 +9,10 @@ homepage = "https://www.tetengo.org/"
 repository = "https://github.com/tetengo/tetengo.rs"
 license = "MIT"
 keywords = [
-    "assoc-container",
-    "associative-container",
     "common-prefix-search",
     "data-structure",
-    "data-structures",
     "double-array",
     "search",
-    "text",
     "trie",
 ]
 categories = [
