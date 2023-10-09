@@ -4,13 +4,16 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::env;
 use std::io::stdin;
+use std::process::exit;
+
+use anyhow::Result;
 
 fn main() {
     if let Err(e) = main_core() {
         eprintln!("Error: {}", e);
+        exit(1);
     }
 }
 
