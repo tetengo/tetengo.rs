@@ -17,30 +17,24 @@ use anyhow::Result;
 use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie, ValueSerializer};
 
 fn main() {
-    let args = env::args().collect::<Vec<_>>();
-    if args.len() <= 2 {
-        eprintln!("Usage: make_dict UniDic_lex.csv trie.bin");
-        return;
-    }
-
-    let word_offset_map = match load_lex_csv(Path::new(&args[1])) {
-        Ok(word_offset_map) => word_offset_map,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            exit(1);
-        }
-    };
-    let trie = match build_trie(word_offset_map) {
-        Ok(trie) => trie,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            exit(1);
-        }
-    };
-    if let Err(e) = serialize_trie(&trie, Path::new(&args[2])) {
+    if let Err(e) = main_core() {
         eprintln!("Error: {}", e);
         exit(1);
     }
+}
+
+fn main_core() -> Result<()> {
+    let args = env::args().collect::<Vec<_>>();
+    if args.len() <= 2 {
+        eprintln!("Usage: make_dict UniDic_lex.csv trie.bin");
+        return Ok(());
+    }
+
+    let word_offset_map = load_lex_csv(Path::new(&args[1]))?;
+    let trie = build_trie(word_offset_map)?;
+    serialize_trie(&trie, Path::new(&args[2]))?;
+
+    Ok(())
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -133,14 +127,14 @@ fn split(string: &str, delimiter: char) -> Vec<&str> {
 const VALUE_CAPACITY: usize = 4usize;
 
 fn insert_word_offset_to_map(key: &str, offset: usize, length: usize, map: &mut WordOffsetMap) {
-    let i_value = map.entry(key.to_string()).or_insert_with(Vec::new);
-    if i_value.iter().any(|&(o, l)| o == offset && l == length) {
+    let value = map.entry(key.to_string()).or_default();
+    if value.iter().any(|&(o, l)| o == offset && l == length) {
         return;
     }
-    if i_value.len() < VALUE_CAPACITY {
-        i_value.push((offset, length));
+    if value.len() < VALUE_CAPACITY {
+        value.push((offset, length));
     } else {
-        i_value.push((0, 0));
+        value.push((0, 0));
     }
 }
 
