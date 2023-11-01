@@ -1,0 +1,23 @@
+[package]
+name = "tetengo_lattice"
+version = "1.1.0"
+authors = ["kaoru"]
+edition = "2021"
+description = "A library for Viterbi search and A* algorithm implementation"
+readme = "README.md"
+homepage = "https://www.tetengo.org/"
+repository = "https://github.com/tetengo/tetengo.rs"
+license = "MIT"
+keywords = [
+    "a-star",
+    "dynamic-programming",
+    "path",
+    "search",
+    "viterbi",
+]
+categories = [
+    "algorithms",
+    "text-processing",
+]
+
+[dependencies]
