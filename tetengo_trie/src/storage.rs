@@ -152,7 +152,7 @@ pub trait Storage<Value> {
     ) -> Result<()>;
 
     /**
-     * Clones this storage as Box.
+     * Clones this storage as `Box`.
      *
      * # Returns
      * A Box of a clone of this storage.

@@ -1,4 +1,4 @@
-tetengo Trie 1.0.0
+tetengo Trie 1.1.0
 ==================
 
 A trie library.
@@ -11,7 +11,7 @@ It has a method to enumerate the values with the same prefix.
 
 The trie of this library is implemented with double arrays.
 
-- [Detail description](https://docs.rs/tetengo_trie/1.0.0/tetengo_trie/)
+- [Detail description](https://docs.rs/tetengo_trie/1.1.0/tetengo_trie/)
 
 How to Use
 ----------

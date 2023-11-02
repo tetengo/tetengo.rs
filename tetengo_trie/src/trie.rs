@@ -273,7 +273,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
     }
 
     /**
-     * Returns true when the trie is empty.
+     * Returns `true` when the trie is empty.
      *
      * # Returns
      * True when the trie is empty.
@@ -299,7 +299,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
     }
 
     /**
-     * Returns true when the trie contains the given key.
+     * Returns `true` when the trie contains the given key.
      *
      * # Arguments
      * * `key` - A key.

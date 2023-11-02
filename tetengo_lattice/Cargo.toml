@@ -21,3 +21,5 @@ categories = [
 ]
 
 [dependencies]
+anyhow = "1.0.75"
+thiserror = "1.0.50"
