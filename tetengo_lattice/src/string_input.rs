@@ -15,9 +15,16 @@ pub struct StringInput {
 }
 
 impl StringInput {
-    /*
-    explicit impl(std::string value) : m_value{ std::move(value) } {}
-    */
+    /**
+     * Creates a string input key.
+     *
+     * # Arguments
+     * * `value` - A value.
+     */
+    pub fn new(value: String) -> Self {
+        Self { _value: value }
+    }
+
     /*
         const std::string& value() const
         {
@@ -113,16 +120,40 @@ impl Input for StringInput {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
-    fn value() {}
+    fn new() {
+        let _input = StringInput::new("hoge".to_string());
+    }
 
     /*
-       BOOST_AUTO_TEST_CASE(construction)
-       {
-           BOOST_TEST_PASSPOINT();
+    BOOST_AUTO_TEST_CASE(construction)
+    {
+        BOOST_TEST_PASSPOINT();
 
-           const concrete_input input_{};
-       }
+        {
+            const tetengo::lattice::string_input input{ "hoge" };
+        }
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(value)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        {
+            const tetengo::lattice::string_input input{ "hoge" };
+
+            BOOST_TEST(input.value() == "hoge");
+        }
+        {
+            tetengo::lattice::string_input input{ "hoge" };
+
+            input.value() = "fuga";
+            BOOST_TEST(input.value() == "fuga");
+        }
+    }
     */
     /*
     BOOST_AUTO_TEST_CASE(operator_equal)
@@ -130,22 +161,22 @@ mod tests {
         BOOST_TEST_PASSPOINT();
 
         {
-            const concrete_input input1{ 42 };
-            const concrete_input input2{ 42 };
+            const tetengo::lattice::string_input input1{ "hoge" };
+            const tetengo::lattice::string_input input2{ "hoge" };
 
             BOOST_CHECK(input1 == input2);
             BOOST_CHECK(input2 == input1);
         }
         {
-            const concrete_input input1{ 42 };
-            const concrete_input input2{ 24 };
+            const tetengo::lattice::string_input input1{ "hoge" };
+            const tetengo::lattice::string_input input2{ "fuga" };
 
             BOOST_CHECK(input1 != input2);
             BOOST_CHECK(input2 != input1);
         }
         {
-            const concrete_input  input1{ 42 };
-            const concrete_input2 input2{};
+            const tetengo::lattice::string_input input1{ "hoge" };
+            const another_input                  input2{};
 
             BOOST_CHECK(input1 != input2);
             BOOST_CHECK(input2 != input1);
@@ -157,9 +188,24 @@ mod tests {
     {
         BOOST_TEST_PASSPOINT();
 
-        const concrete_input input_{};
+        {
+            const tetengo::lattice::string_input input1{ "hoge" };
+            const tetengo::lattice::string_input input2{ "hoge" };
 
-        [[maybe_unused]] const auto hash_value_ = input_.hash_value();
+            BOOST_TEST(input1.hash_value() == input2.hash_value());
+        }
+        {
+            const tetengo::lattice::string_input input1{ "hoge" };
+            const tetengo::lattice::string_input input2{ "fuga" };
+
+            BOOST_TEST(input1.hash_value() != input2.hash_value());
+        }
+        {
+            const tetengo::lattice::string_input input1{ "hoge" };
+            const another_input                  input2{};
+
+            BOOST_TEST(input1.hash_value() != input2.hash_value());
+        }
     }
     */
     /*
@@ -167,9 +213,11 @@ mod tests {
     {
         BOOST_TEST_PASSPOINT();
 
-        const concrete_input input_{};
+        {
+            const tetengo::lattice::string_input input{ "hoge" };
 
-        BOOST_TEST(input_.length() == 42U);
+            BOOST_TEST(input.length() == 4U);
+        }
     }
     */
     /*
@@ -177,9 +225,14 @@ mod tests {
     {
         BOOST_TEST_PASSPOINT();
 
-        const concrete_input input_{};
+        {
+            const tetengo::lattice::string_input input{ "hoge" };
 
-        const auto p_clone = input_.clone();
+            const auto p_clone = input.clone();
+            BOOST_REQUIRE(p_clone);
+            BOOST_TEST_REQUIRE(p_clone->is<tetengo::lattice::string_input>());
+            BOOST_TEST(p_clone->as<tetengo::lattice::string_input>().value() == "hoge");
+        }
     }
     */
     /*
@@ -187,19 +240,39 @@ mod tests {
     {
         BOOST_TEST_PASSPOINT();
 
-        const concrete_input input_{};
+        {
+            const tetengo::lattice::string_input input{ "hoge" };
 
-        {
-            const auto p_subrange = input_.create_subrange(0, 42);
+            const auto p_subrange = input.create_subrange(0, 4);
+            BOOST_REQUIRE(p_subrange);
+            BOOST_TEST_REQUIRE(p_subrange->is<tetengo::lattice::string_input>());
+            BOOST_TEST(p_subrange->as<tetengo::lattice::string_input>().value() == "hoge");
         }
         {
-            const auto p_subrange = input_.create_subrange(42, 0);
+            const tetengo::lattice::string_input input{ "hoge" };
+
+            const auto p_subrange = input.create_subrange(1, 2);
+            BOOST_REQUIRE(p_subrange);
+            BOOST_TEST_REQUIRE(p_subrange->is<tetengo::lattice::string_input>());
+            BOOST_TEST(p_subrange->as<tetengo::lattice::string_input>().value() == "og");
         }
         {
-            BOOST_CHECK_THROW(const auto p_subrange = input_.create_subrange(0, 43), std::out_of_range);
+            const tetengo::lattice::string_input input{ "hoge" };
+
+            const auto p_subrange = input.create_subrange(4, 0);
+            BOOST_REQUIRE(p_subrange);
+            BOOST_TEST_REQUIRE(p_subrange->is<tetengo::lattice::string_input>());
+            BOOST_TEST(p_subrange->as<tetengo::lattice::string_input>().value() == "");
         }
         {
-            BOOST_CHECK_THROW(const auto p_subrange = input_.create_subrange(43, 0), std::out_of_range);
+            const tetengo::lattice::string_input input{ "hoge" };
+
+            BOOST_CHECK_THROW(const auto p_subrange = input.create_subrange(0, 5), std::out_of_range);
+        }
+        {
+            const tetengo::lattice::string_input input{ "hoge" };
+
+            BOOST_CHECK_THROW(const auto p_subrange = input.create_subrange(5, 0), std::out_of_range);
         }
     }
     */
@@ -208,41 +281,18 @@ mod tests {
     {
         BOOST_TEST_PASSPOINT();
 
-        concrete_input input_{};
-
-        input_.append(std::make_unique<concrete_input>());
-        BOOST_CHECK_THROW(input_.append(nullptr), std::invalid_argument);
-        BOOST_CHECK_THROW(input_.append(std::make_unique<concrete_input2>()), std::invalid_argument);
-    }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(is)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        const tetengo::lattice::input& input_ = concrete_input{};
-
-        BOOST_TEST(input_.is<concrete_input>());
-        BOOST_TEST(!input_.is<concrete_input2>());
-    }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(as)
-    {
-        BOOST_TEST_PASSPOINT();
-
         {
-            const tetengo::lattice::input& input_ = concrete_input{};
+            tetengo::lattice::string_input input{ "hoge" };
 
-            const auto& casted = input_.as<concrete_input>();
-            BOOST_TEST(&casted == &input_);
+            input.append(std::make_unique<tetengo::lattice::string_input>("fuga"));
+
+            BOOST_TEST(input.value() == "hogefuga");
         }
         {
-            concrete_input           input_{};
-            tetengo::lattice::input& input_ref = input_;
+            tetengo::lattice::string_input input{ "hoge" };
 
-            const auto& casted = input_ref.as<concrete_input>();
-            BOOST_TEST(&casted == &input_);
+            BOOST_CHECK_THROW(input.append(nullptr), std::invalid_argument);
+            BOOST_CHECK_THROW(input.append(std::make_unique<another_input>()), std::invalid_argument);
         }
     }
     */
