@@ -16,6 +16,9 @@ pub struct StringInput {
 
 impl StringInput {
     /*
+    explicit impl(std::string value) : m_value{ std::move(value) } {}
+    */
+    /*
         const std::string& value() const
         {
             return m_value;
@@ -112,4 +115,135 @@ impl Input for StringInput {
 mod tests {
     #[test]
     fn value() {}
+
+    /*
+       BOOST_AUTO_TEST_CASE(construction)
+       {
+           BOOST_TEST_PASSPOINT();
+
+           const concrete_input input_{};
+       }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(operator_equal)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        {
+            const concrete_input input1{ 42 };
+            const concrete_input input2{ 42 };
+
+            BOOST_CHECK(input1 == input2);
+            BOOST_CHECK(input2 == input1);
+        }
+        {
+            const concrete_input input1{ 42 };
+            const concrete_input input2{ 24 };
+
+            BOOST_CHECK(input1 != input2);
+            BOOST_CHECK(input2 != input1);
+        }
+        {
+            const concrete_input  input1{ 42 };
+            const concrete_input2 input2{};
+
+            BOOST_CHECK(input1 != input2);
+            BOOST_CHECK(input2 != input1);
+        }
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(hash_value)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        const concrete_input input_{};
+
+        [[maybe_unused]] const auto hash_value_ = input_.hash_value();
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(length)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        const concrete_input input_{};
+
+        BOOST_TEST(input_.length() == 42U);
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(clone)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        const concrete_input input_{};
+
+        const auto p_clone = input_.clone();
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(create_subrange)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        const concrete_input input_{};
+
+        {
+            const auto p_subrange = input_.create_subrange(0, 42);
+        }
+        {
+            const auto p_subrange = input_.create_subrange(42, 0);
+        }
+        {
+            BOOST_CHECK_THROW(const auto p_subrange = input_.create_subrange(0, 43), std::out_of_range);
+        }
+        {
+            BOOST_CHECK_THROW(const auto p_subrange = input_.create_subrange(43, 0), std::out_of_range);
+        }
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(append)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        concrete_input input_{};
+
+        input_.append(std::make_unique<concrete_input>());
+        BOOST_CHECK_THROW(input_.append(nullptr), std::invalid_argument);
+        BOOST_CHECK_THROW(input_.append(std::make_unique<concrete_input2>()), std::invalid_argument);
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(is)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        const tetengo::lattice::input& input_ = concrete_input{};
+
+        BOOST_TEST(input_.is<concrete_input>());
+        BOOST_TEST(!input_.is<concrete_input2>());
+    }
+    */
+    /*
+    BOOST_AUTO_TEST_CASE(as)
+    {
+        BOOST_TEST_PASSPOINT();
+
+        {
+            const tetengo::lattice::input& input_ = concrete_input{};
+
+            const auto& casted = input_.as<concrete_input>();
+            BOOST_TEST(&casted == &input_);
+        }
+        {
+            concrete_input           input_{};
+            tetengo::lattice::input& input_ref = input_;
+
+            const auto& casted = input_ref.as<concrete_input>();
+            BOOST_TEST(&casted == &input_);
+        }
+    }
+    */
 }
