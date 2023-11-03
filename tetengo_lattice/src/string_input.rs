@@ -4,12 +4,14 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::hash::{Hash, Hasher};
+
 use crate::input::Input;
 
 /**
  * A string input.
  */
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct StringInput {
     value: String,
 }
@@ -47,18 +49,6 @@ impl StringInput {
 }
 
 impl Input for StringInput {
-    fn eq(&self, _another: &dyn Input) -> bool {
-        todo!()
-    }
-    /*
-        bool equal_to_impl(const input& another) const
-        {
-            return another.as<string_input>().value() == m_value;
-        }
-    */
-    fn hash(&self) -> usize {
-        todo!()
-    }
     /*
         std::size_t hash_value_impl() const
         {
@@ -125,8 +115,16 @@ impl Input for StringInput {
     }
 }
 
+impl Hash for StringInput {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::collections::hash_map::DefaultHasher;
+
     use super::*;
 
     #[test]
@@ -149,59 +147,24 @@ mod tests {
         assert_eq!(input.value_mut(), "fuga");
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(operator_equal)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn eq() {
         {
-            const tetengo::lattice::string_input input1{ "hoge" };
-            const tetengo::lattice::string_input input2{ "hoge" };
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("hoge"));
 
-            BOOST_CHECK(input1 == input2);
-            BOOST_CHECK(input2 == input1);
+            assert_eq!(input1, input2);
+            assert_eq!(input2, input1);
         }
         {
-            const tetengo::lattice::string_input input1{ "hoge" };
-            const tetengo::lattice::string_input input2{ "fuga" };
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("fuga"));
 
-            BOOST_CHECK(input1 != input2);
-            BOOST_CHECK(input2 != input1);
-        }
-        {
-            const tetengo::lattice::string_input input1{ "hoge" };
-            const another_input                  input2{};
-
-            BOOST_CHECK(input1 != input2);
-            BOOST_CHECK(input2 != input1);
+            assert_ne!(input1, input2);
+            assert_ne!(input2, input1);
         }
     }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(hash_value)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input input1{ "hoge" };
-            const tetengo::lattice::string_input input2{ "hoge" };
-
-            BOOST_TEST(input1.hash_value() == input2.hash_value());
-        }
-        {
-            const tetengo::lattice::string_input input1{ "hoge" };
-            const tetengo::lattice::string_input input2{ "fuga" };
-
-            BOOST_TEST(input1.hash_value() != input2.hash_value());
-        }
-        {
-            const tetengo::lattice::string_input input1{ "hoge" };
-            const another_input                  input2{};
-
-            BOOST_TEST(input1.hash_value() != input2.hash_value());
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(length)
     {
@@ -290,4 +253,26 @@ mod tests {
         }
     }
     */
+
+    fn hash_value(input: &StringInput) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        input.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[test]
+    fn hash() {
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("hoge"));
+
+            assert_eq!(hash_value(&input1), hash_value(&input2));
+        }
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("fuga"));
+
+            assert_ne!(hash_value(&input1), hash_value(&input2));
+        }
+    }
 }
