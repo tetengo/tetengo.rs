@@ -11,7 +11,7 @@ use crate::input::Input;
  */
 #[derive(Debug)]
 pub struct StringInput {
-    _value: String,
+    value: String,
 }
 
 impl StringInput {
@@ -22,21 +22,28 @@ impl StringInput {
      * * `value` - A value.
      */
     pub fn new(value: String) -> Self {
-        Self { _value: value }
+        Self { value }
     }
 
-    /*
-        const std::string& value() const
-        {
-            return m_value;
-        }
-    */
-    /*
-        std::string& value()
-        {
-            return m_value;
-        }
-    */
+    /**
+     * Returns the value.
+     *
+     * # Returns
+     * The value.
+     */
+    pub fn value(&self) -> &str {
+        self.value.as_str()
+    }
+
+    /**
+     * Returns the value.
+     *
+     * # Returns
+     * The value.
+     */
+    pub fn value_mut(&mut self) -> &mut String {
+        &mut self.value
+    }
 }
 
 impl Input for StringInput {
@@ -124,37 +131,24 @@ mod tests {
 
     #[test]
     fn new() {
-        let _input = StringInput::new("hoge".to_string());
+        let _input = StringInput::new(String::from("hoge"));
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
+    #[test]
+    fn value() {
+        let input = StringInput::new(String::from("hoge"));
 
-        {
-            const tetengo::lattice::string_input input{ "hoge" };
-        }
+        assert_eq!(input.value(), "hoge");
     }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(value)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input input{ "hoge" };
+    #[test]
+    fn value_mut() {
+        let mut input = StringInput::new(String::from("hoge"));
 
-            BOOST_TEST(input.value() == "hoge");
-        }
-        {
-            tetengo::lattice::string_input input{ "hoge" };
-
-            input.value() = "fuga";
-            BOOST_TEST(input.value() == "fuga");
-        }
+        *input.value_mut() = String::from("fuga");
+        assert_eq!(input.value_mut(), "fuga");
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(operator_equal)
     {
