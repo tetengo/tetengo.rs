@@ -49,21 +49,10 @@ impl StringInput {
 }
 
 impl Input for StringInput {
-    /*
-        std::size_t hash_value_impl() const
-        {
-            return boost::hash_value(m_value);
-        }
-    */
     fn length(&self) -> usize {
-        todo!()
+        self.value.len()
     }
-    /*
-        std::size_t length_impl() const
-        {
-            return m_value.length();
-        }
-    */
+
     fn clone_box(&self) -> Box<dyn Input> {
         todo!()
     }
@@ -163,6 +152,13 @@ mod tests {
             assert_ne!(input1, input2);
             assert_ne!(input2, input1);
         }
+    }
+
+    #[test]
+    fn length() {
+        let input = StringInput::new(String::from("hoge"));
+
+        assert_eq!(input.length(), 4);
     }
 
     /*
