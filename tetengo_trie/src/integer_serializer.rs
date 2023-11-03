@@ -4,10 +4,11 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::marker::PhantomData;
 use std::mem;
 use std::ops;
+
+use anyhow::Result;
 
 use crate::serializer::{
     DeserializationError, Deserializer, DeserializerOf, Serializer, SerializerOf,
