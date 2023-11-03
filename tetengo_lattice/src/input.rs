@@ -16,12 +16,12 @@ pub trait Input {
      * Returns `true` if one input is equal to another.
      *
      * # Arguments
-     * * `other` - Another input.
+     * * `another` - Another input.
      *
      * # Returns
      * True if one input is equal to another.
      */
-    fn eq(&self, other: &dyn Input) -> bool;
+    fn eq(&self, another: &dyn Input) -> bool;
 
     /**
      * Returns the hash value.
