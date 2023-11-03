@@ -4,14 +4,15 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
-use std::hash::{Hash, Hasher};
+use std::any::Any;
+use std::hash::Hash;
 
 use crate::input::Input;
 
 /**
  * A string input.
  */
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct StringInput {
     value: String,
 }
@@ -54,7 +55,7 @@ impl Input for StringInput {
     }
 
     fn clone_box(&self) -> Box<dyn Input> {
-        todo!()
+        Box::new(self.clone())
     }
 
     /*
@@ -95,24 +96,19 @@ impl Input for StringInput {
         m_value += std::move(p_another->as<string_input>().value());
     }
     */
-    fn as_any(&self) -> &dyn std::any::Any {
-        todo!()
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        todo!()
-    }
-}
-
-impl Hash for StringInput {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.value.hash(state);
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::collections::hash_map::DefaultHasher;
+    use std::hash::Hasher;
 
     use super::*;
 
@@ -154,6 +150,28 @@ mod tests {
         }
     }
 
+    fn hash_value(input: &StringInput) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        input.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[test]
+    fn hash() {
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("hoge"));
+
+            assert_eq!(hash_value(&input1), hash_value(&input2));
+        }
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("fuga"));
+
+            assert_ne!(hash_value(&input1), hash_value(&input2));
+        }
+    }
+
     #[test]
     fn length() {
         let input = StringInput::new(String::from("hoge"));
@@ -161,33 +179,22 @@ mod tests {
         assert_eq!(input.length(), 4);
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(length)
-    {
-        BOOST_TEST_PASSPOINT();
+    #[test]
+    fn clone_box() {
+        let input = StringInput::new(String::from("hoge"));
 
-        {
-            const tetengo::lattice::string_input input{ "hoge" };
-
-            BOOST_TEST(input.length() == 4U);
-        }
+        let clone = input.clone_box();
+        assert!(clone.as_any().is::<StringInput>());
+        assert_eq!(
+            clone
+                .as_any()
+                .downcast_ref::<StringInput>()
+                .unwrap()
+                .value(),
+            "hoge"
+        );
     }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(clone)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input input{ "hoge" };
-
-            const auto p_clone = input.clone();
-            BOOST_REQUIRE(p_clone);
-            BOOST_TEST_REQUIRE(p_clone->is<tetengo::lattice::string_input>());
-            BOOST_TEST(p_clone->as<tetengo::lattice::string_input>().value() == "hoge");
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(create_subrange)
     {
@@ -249,26 +256,4 @@ mod tests {
         }
     }
     */
-
-    fn hash_value(input: &StringInput) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        input.hash(&mut hasher);
-        hasher.finish()
-    }
-
-    #[test]
-    fn hash() {
-        {
-            let input1 = StringInput::new(String::from("hoge"));
-            let input2 = StringInput::new(String::from("hoge"));
-
-            assert_eq!(hash_value(&input1), hash_value(&input2));
-        }
-        {
-            let input1 = StringInput::new(String::from("hoge"));
-            let input2 = StringInput::new(String::from("fuga"));
-
-            assert_ne!(hash_value(&input1), hash_value(&input2));
-        }
-    }
 }
