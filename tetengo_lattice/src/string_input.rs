@@ -283,4 +283,18 @@ mod tests {
             assert!(result.is_err());
         }
     }
+
+    #[test]
+    fn as_any() {
+        let input = StringInput::new(String::from("hoge"));
+
+        let _ = input.as_any();
+    }
+
+    #[test]
+    fn as_any_mut() {
+        let mut input = StringInput::new(String::from("hoge"));
+
+        let _ = input.as_any_mut();
+    }
 }
