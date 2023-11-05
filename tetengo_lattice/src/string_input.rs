@@ -70,24 +70,16 @@ impl Input for StringInput {
         )))
     }
 
-    fn append(&mut self, _another: Box<dyn Input>) -> Result<()> {
-        todo!()
-    }
-    /*
-    void append_impl(std::unique_ptr<input>&& p_another)
-    {
-        if (!p_another)
-        {
-            throw std::invalid_argument{ "p_another is nullptr." };
-        }
-        if (!p_another->is<string_input>())
-        {
-            throw std::invalid_argument{ "Mismatch type of p_another." };
-        }
+    fn append(&mut self, another: Box<dyn Input>) -> Result<()> {
+        let Some(another) = another.as_any().downcast_ref::<StringInput>() else {
+            return Err(InputError::MismatchConcreteType.into());
+        };
 
-        m_value += std::move(p_another->as<string_input>().value());
+        self.value += another.value();
+
+        Ok(())
     }
-    */
+
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -103,6 +95,34 @@ mod tests {
     use std::hash::Hasher;
 
     use super::*;
+
+    struct AnotherInput {}
+
+    impl Input for AnotherInput {
+        fn length(&self) -> usize {
+            unimplemented!()
+        }
+
+        fn clone_box(&self) -> Box<dyn Input> {
+            unimplemented!()
+        }
+
+        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>> {
+            unimplemented!()
+        }
+
+        fn append(&mut self, _: Box<dyn Input>) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
+        }
+    }
 
     #[test]
     fn new() {
@@ -245,24 +265,22 @@ mod tests {
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(append)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn appand() {
         {
-            tetengo::lattice::string_input input{ "hoge" };
+            let mut input = StringInput::new(String::from("hoge"));
 
-            input.append(std::make_unique<tetengo::lattice::string_input>("fuga"));
+            input
+                .append(Box::new(StringInput::new(String::from("fuga"))))
+                .unwrap();
 
-            BOOST_TEST(input.value() == "hogefuga");
+            assert_eq!(input.value(), "hogefuga");
         }
         {
-            tetengo::lattice::string_input input{ "hoge" };
+            let mut input = StringInput::new(String::from("hoge"));
 
-            BOOST_CHECK_THROW(input.append(nullptr), std::invalid_argument);
-            BOOST_CHECK_THROW(input.append(std::make_unique<another_input>()), std::invalid_argument);
+            let result = input.append(Box::new(AnotherInput {}));
+            assert!(result.is_err());
         }
     }
-    */
 }

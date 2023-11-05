@@ -18,6 +18,12 @@ pub enum InputError {
      */
     #[error("range out of bounds")]
     RangeOutOfBounds,
+
+    /**
+     * Mismatch concrete type.
+     */
+    #[error("mismatch concrete type")]
+    MismatchConcreteType,
 }
 
 /**
