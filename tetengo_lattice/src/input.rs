@@ -9,28 +9,27 @@ use std::any::Any;
 use anyhow::Result;
 
 /**
+ * An input error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum InputError {
+    /**
+     * The range is out of the bounds.
+     */
+    #[error("range out of bounds")]
+    RangeOutOfBounds,
+
+    /**
+     * Mismatch concrete type.
+     */
+    #[error("mismatch concrete type")]
+    MismatchConcreteType,
+}
+
+/**
  * An input.
  */
 pub trait Input {
-    /**
-     * Returns `true` if one input is equal to another.
-     *
-     * # Arguments
-     * * `another` - Another input.
-     *
-     * # Returns
-     * True if one input is equal to another.
-     */
-    fn eq(&self, another: &dyn Input) -> bool;
-
-    /**
-     * Returns the hash value.
-     *
-     * # Returns
-     * * The hash value.
-     */
-    fn hash(&self) -> usize;
-
     /**
      * Returns the length.
      *
