@@ -7,7 +7,9 @@
 use std::any::Any;
 use std::hash::Hash;
 
-use crate::input::Input;
+use anyhow::Result;
+
+use crate::input::{Input, InputError};
 
 /**
  * A string input.
@@ -58,27 +60,17 @@ impl Input for StringInput {
         Box::new(self.clone())
     }
 
-    /*
-        std::unique_ptr<input> clone_impl() const
-        {
-            return std::make_unique<string_input>(m_value);
+    fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>> {
+        if offset + length > self.value.len() {
+            return Err(InputError::RangeOutOfBounds.into());
         }
-    */
-    fn create_subrange(&self, _offset: usize, _lengthh: usize) -> anyhow::Result<Box<dyn Input>> {
-        todo!()
-    }
-    /*
-        std::unique_ptr<input> create_subrange_impl(const std::size_t offset, const std::size_t length) const
-        {
-            if (offset + length > m_value.length())
-            {
-                throw std::out_of_range{ "offset and/or length are out of the range." };
-            }
 
-            return std::make_unique<string_input>(m_value.substr(offset, length));
-        }
-    */
-    fn append(&mut self, _another: Box<dyn Input>) -> anyhow::Result<()> {
+        Ok(Box::new(StringInput::new(
+            self.value[offset..offset + length].to_string(),
+        )))
+    }
+
+    fn append(&mut self, _another: Box<dyn Input>) -> Result<()> {
         todo!()
     }
     /*
@@ -195,47 +187,64 @@ mod tests {
         );
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(create_subrange)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn create_subrange() {
         {
-            const tetengo::lattice::string_input input{ "hoge" };
+            let input = StringInput::new(String::from("hoge"));
 
-            const auto p_subrange = input.create_subrange(0, 4);
-            BOOST_REQUIRE(p_subrange);
-            BOOST_TEST_REQUIRE(p_subrange->is<tetengo::lattice::string_input>());
-            BOOST_TEST(p_subrange->as<tetengo::lattice::string_input>().value() == "hoge");
+            let subrange = input.create_subrange(0, 4).unwrap();
+            assert!(subrange.as_any().is::<StringInput>());
+            assert_eq!(
+                subrange
+                    .as_any()
+                    .downcast_ref::<StringInput>()
+                    .unwrap()
+                    .value(),
+                "hoge"
+            );
         }
         {
-            const tetengo::lattice::string_input input{ "hoge" };
+            let input = StringInput::new(String::from("hoge"));
 
-            const auto p_subrange = input.create_subrange(1, 2);
-            BOOST_REQUIRE(p_subrange);
-            BOOST_TEST_REQUIRE(p_subrange->is<tetengo::lattice::string_input>());
-            BOOST_TEST(p_subrange->as<tetengo::lattice::string_input>().value() == "og");
+            let subrange = input.create_subrange(1, 2).unwrap();
+            assert!(subrange.as_any().is::<StringInput>());
+            assert_eq!(
+                subrange
+                    .as_any()
+                    .downcast_ref::<StringInput>()
+                    .unwrap()
+                    .value(),
+                "og"
+            );
         }
         {
-            const tetengo::lattice::string_input input{ "hoge" };
+            let input = StringInput::new(String::from("hoge"));
 
-            const auto p_subrange = input.create_subrange(4, 0);
-            BOOST_REQUIRE(p_subrange);
-            BOOST_TEST_REQUIRE(p_subrange->is<tetengo::lattice::string_input>());
-            BOOST_TEST(p_subrange->as<tetengo::lattice::string_input>().value() == "");
+            let subrange = input.create_subrange(4, 0).unwrap();
+            assert!(subrange.as_any().is::<StringInput>());
+            assert_eq!(
+                subrange
+                    .as_any()
+                    .downcast_ref::<StringInput>()
+                    .unwrap()
+                    .value(),
+                ""
+            );
         }
         {
-            const tetengo::lattice::string_input input{ "hoge" };
+            let input = StringInput::new(String::from("hoge"));
 
-            BOOST_CHECK_THROW(const auto p_subrange = input.create_subrange(0, 5), std::out_of_range);
+            let subrange = input.create_subrange(0, 5);
+            assert!(subrange.is_err());
         }
         {
-            const tetengo::lattice::string_input input{ "hoge" };
+            let input = StringInput::new(String::from("hoge"));
 
-            BOOST_CHECK_THROW(const auto p_subrange = input.create_subrange(5, 0), std::out_of_range);
+            let subrange = input.create_subrange(5, 0);
+            assert!(subrange.is_err());
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(append)
     {

@@ -9,6 +9,18 @@ use std::any::Any;
 use anyhow::Result;
 
 /**
+ * An input error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum InputError {
+    /**
+     * The range is out of the bounds.
+     */
+    #[error("range out of bounds")]
+    RangeOutOfBounds,
+}
+
+/**
  * An input.
  */
 pub trait Input {
