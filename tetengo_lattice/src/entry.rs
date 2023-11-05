@@ -4,20 +4,43 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::Any;
+use std::fmt::Debug;
+
+use crate::input::Input;
+
+/**
+ * A middle entry.
+ */
+pub struct MiddleEntry {
+    _key: Box<dyn Input>,
+    value: Box<dyn Any>,
+    cost: i32,
+}
+
+impl Debug for MiddleEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MiddleEntry")
+            .field("key", &"Box<dyn Input>")
+            .field("value", &self.value)
+            .field("cost", &self.cost)
+            .finish()
+    }
+}
+
 /**
  * An entry.
  */
-#[derive(Debug, Clone, Copy)]
-pub struct Entry {}
+#[derive(Debug)]
+pub enum Entry {
+    /// The BOS/EOS (Beginning/End of Sequence) entry.
+    BosEos,
+
+    /// The middle entry.
+    Middle(MiddleEntry),
+}
 
 impl Entry {
-    /*
-        const entry& entry::bos_eos()
-        {
-            static const entry singleton{ nullptr, std::any{}, 0 };
-            return singleton;
-        }
-    */
     /*
         entry::entry(std::unique_ptr<input>&& p_key, std::any value, const int cost) :
         m_p_key{ std::move(p_key) },
@@ -46,18 +69,42 @@ impl Entry {
         m_cost{ another.m_cost }
         {}
     */
+
+    /** TODO: doc */
+    pub fn key(&self) -> Option<&dyn Input> {
+        match self {
+            Entry::BosEos => None,
+            Entry::Middle(entry) => Some(entry._key.as_ref()),
+        }
+    }
     /*
         const input* entry::p_key() const
         {
             return std::to_address(m_p_key);
         }
     */
+
+    /** TODO: doc */
+    pub fn value(&self) -> Option<&dyn Any> {
+        match self {
+            Entry::BosEos => None,
+            Entry::Middle(entry) => Some(entry.value.as_ref()),
+        }
+    }
     /*
         const std::any& entry::value() const
         {
             return m_value;
         }
     */
+
+    /** TODO: doc */
+    pub fn cost(&self) -> i32 {
+        match self {
+            Entry::BosEos => 0,
+            Entry::Middle(entry) => entry.cost,
+        }
+    }
     /*
         int entry::cost() const
         {
@@ -68,6 +115,17 @@ impl Entry {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    #[test]
+    fn bos_eos() {
+        let bos_eos = Entry::BosEos;
+
+        assert!(bos_eos.key().is_none());
+        assert!(bos_eos.value().is_none());
+        assert_eq!(bos_eos.cost(), 0);
+    }
+
     /*
     BOOST_AUTO_TEST_CASE(bos_eos)
     {
