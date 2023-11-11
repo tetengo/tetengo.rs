@@ -20,11 +20,23 @@ pub trait CloneableAny: Any {
      * A box of a clone of this object.
      */
     fn clone_box(&self) -> Box<dyn CloneableAny>;
+
+    /**
+     * Returns this object as 'Any'.
+     *
+     * # Returns
+     * This object as 'Any'.
+     */
+    fn as_any(&self) -> &dyn Any;
 }
 
 impl<T: Clone + 'static> CloneableAny for T {
     fn clone_box(&self) -> Box<dyn CloneableAny> {
         Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -82,27 +94,23 @@ impl Entry {
         Entry::Middle(Middle { key, value, cost })
     }
 
-    /*
-        /*!
-            \brief Creates an entry.
+    /**
+     * Creates an entry.
+     *
+     * # Arguments
+     * * `view` - An entry view.
+     */
+    pub fn from_view(view: &EntryView<'_>) -> Self {
+        match view {
+            EntryView::BosEos => Entry::BosEos,
+            EntryView::Middle(middle_view) => Entry::new(
+                middle_view.key.clone_box(),
+                middle_view.value.clone_box(),
+                middle_view.cost,
+            ),
+        }
+    }
 
-            \param p_key A unique pointer to a key.
-            \param value A value.
-            \param cost  A cost.
-        */
-        entry::entry(std::unique_ptr<input>&& p_key, std::any value, const int cost) :
-        m_p_key{ std::move(p_key) },
-        m_value{ std::move(value) },
-        m_cost{ cost }
-        {}
-    */
-    /*
-        entry::entry(const entry_view& view) :
-        m_p_key{ view.p_key() ? view.p_key()->clone() : nullptr },
-        m_value{ *view.value() },
-        m_cost{ view.cost() }
-        {}
-    */
     /*
         entry::entry(const entry& another) :
         m_p_key{ another.m_p_key ? another.m_p_key->clone() : nullptr },
@@ -166,8 +174,8 @@ impl Entry {
  */
 #[derive(Clone)]
 pub struct MiddleView<'a> {
-    _key: Option<&'a dyn Input>,
-    _value: Option<&'a dyn CloneableAny>,
+    key: &'a dyn Input,
+    value: &'a dyn CloneableAny,
     cost: i32,
 }
 
@@ -203,39 +211,30 @@ impl<'a> EntryView<'a> {
      * * `cost`  - A cost.
      */
     pub const fn new(key: &'a dyn Input, value: &'a dyn CloneableAny, cost: i32) -> Self {
-        EntryView::Middle(MiddleView {
-            _key: Some(key),
-            _value: Some(value),
-            cost,
-        })
+        EntryView::Middle(MiddleView { key, value, cost })
     }
 
-    /*
-        /*!
-            \brief Creates an entry view.
-
-            \param p_key A pointer to a key.
-            \param value A value.
-            \param cost  A cost.
-        */
-        constexpr entry_view(const input* p_key, const std::any* value, int cost) :
-        m_p_key{ p_key },
-        m_value{ std::move(value) },
-        m_cost{ cost }
-        {}
-    */
-    /*
-        /*!
-            \brief Creates an entry view.
-
-            \param entry An entry.
-        */
-        entry_view(const entry& entry);
-    */
+    /**
+     * Creates an entry view.
+     *
+     * # Arguments
+     * * `entry` - An entry.
+     */
+    pub fn from_entry(entry: &'a Entry) -> Self {
+        match entry {
+            Entry::BosEos => EntryView::BosEos,
+            Entry::Middle(middle) => {
+                EntryView::new(middle.key.as_ref(), middle.value.as_ref(), middle.cost)
+            }
+        }
+    }
 
     /** TODO: doc */
     pub fn key(&self) -> Option<&'a dyn Input> {
-        None
+        match self {
+            EntryView::BosEos => None,
+            EntryView::Middle(middle_view) => Some(middle_view.key),
+        }
     }
     /*
         /*!
@@ -251,7 +250,10 @@ impl<'a> EntryView<'a> {
 
     /** TODO: doc */
     pub fn value(&self) -> Option<&'a dyn CloneableAny> {
-        None
+        match self {
+            EntryView::BosEos => None,
+            EntryView::Middle(middle_view) => Some(middle_view.value),
+        }
     }
     /*
         /*!
@@ -267,7 +269,10 @@ impl<'a> EntryView<'a> {
 
     /** TODO: doc */
     pub fn cost(&self) -> i32 {
-        0
+        match self {
+            EntryView::BosEos => 0,
+            EntryView::Middle(middle_view) => middle_view.cost,
+        }
     }
     /*
         /*!
@@ -308,11 +313,50 @@ mod tests {
 
     #[test]
     fn new() {
-        let _entry1 = Entry::new(
+        {
+            let _entry = Entry::new(
+                Box::new(StringInput::new(String::from("みずほ"))),
+                Box::new(String::from("瑞穂")),
+                42,
+            );
+        }
+        {
+            let _view = EntryView::new(
+                &StringInput::new(String::from("みずほ")),
+                &String::from("瑞穂"),
+                42,
+            );
+        }
+    }
+
+    #[test]
+    fn from_view_and_from_entry() {
+        let entry1 = Entry::new(
             Box::new(StringInput::new(String::from("みずほ"))),
             Box::new(String::from("瑞穂")),
             42,
         );
+        let view = EntryView::from_entry(&entry1);
+        let entry2 = Entry::from_view(&view);
+
+        assert_eq!(
+            entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
+            view.key().unwrap().as_any().downcast_ref::<StringInput>()
+        );
+        assert_eq!(
+            entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
+            entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
+        );
+        assert_eq!(
+            entry1.value().unwrap().as_any().downcast_ref::<String>(),
+            view.value().unwrap().as_any().downcast_ref::<String>()
+        );
+        assert_eq!(
+            entry1.value().unwrap().as_any().downcast_ref::<String>(),
+            entry2.value().unwrap().as_any().downcast_ref::<String>()
+        );
+        assert_eq!(entry1.cost(), view.cost());
+        assert_eq!(entry1.cost(), entry2.cost());
     }
 
     #[test]
@@ -322,25 +366,19 @@ mod tests {
             Box::new(String::from("瑞穂")),
             42,
         );
-        let _entry2 = entry1.clone();
+        let entry2 = entry1.clone();
+
+        assert_eq!(
+            entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
+            entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
+        );
+        assert_eq!(
+            entry1.value().unwrap().as_any().downcast_ref::<String>(),
+            entry2.value().unwrap().as_any().downcast_ref::<String>()
+        );
+        assert_eq!(entry1.cost(), entry2.cost());
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const tetengo::lattice::entry      entry1{ std::make_unique<tetengo::lattice::string_input>(key_mizuho),
-                                                  surface_mizuho,
-                                                  42 };
-            const tetengo::lattice::entry_view view{ entry1 };
-            const tetengo::lattice::entry      entry2{ view };
-            tetengo::lattice::entry            entry3{ entry2 };
-            const tetengo::lattice::entry      entry4{ std::move(entry3) };
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(key)
     {
