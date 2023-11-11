@@ -12,13 +12,13 @@ use crate::input::Input;
 /**
  * A middle entry.
  */
-pub struct MiddleEntry {
-    _key: Box<dyn Input>,
+pub struct Middle {
+    key: Box<dyn Input>,
     value: Box<dyn Any>,
     cost: i32,
 }
 
-impl Debug for MiddleEntry {
+impl Debug for Middle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MiddleEntry")
             .field("key", &"Box<dyn Input>")
@@ -37,7 +37,7 @@ pub enum Entry {
     BosEos,
 
     /// The middle entry.
-    Middle(MiddleEntry),
+    Middle(Middle),
 }
 
 impl Entry {
@@ -74,7 +74,7 @@ impl Entry {
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
             Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry._key.as_ref()),
+            Entry::Middle(entry) => Some(entry.key.as_ref()),
         }
     }
     /*
@@ -126,20 +126,6 @@ mod tests {
         assert_eq!(bos_eos.cost(), 0);
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(bos_eos)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            static auto& bos_eos_ = tetengo::lattice::entry::bos_eos();
-
-            BOOST_TEST(!bos_eos_.p_key());
-            BOOST_TEST(!bos_eos_.value().has_value());
-            BOOST_TEST(bos_eos_.cost() == 0);
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(construction)
     {
