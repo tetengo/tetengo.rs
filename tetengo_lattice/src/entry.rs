@@ -113,19 +113,134 @@ impl Entry {
     */
 }
 
+/**
+ * An middle entry view.
+ */
+pub struct MiddleView<'a> {
+    _key: Option<&'a dyn Input>,
+    value: Option<&'a dyn Any>,
+    cost: i32,
+}
+
+impl Debug for MiddleView<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MiddleEntryView")
+            .field("key", &"&dyn Input")
+            .field("value", &self.value)
+            .field("cost", &self.cost)
+            .finish()
+    }
+}
+
+/**
+ * An entry view.
+ */
+#[derive(Debug)]
+pub enum EntryView<'a> {
+    /// The BOS/EOS (Beginning/End of Sequence) entry.
+    BosEos,
+
+    /// The middle entry.
+    Middle(MiddleView<'a>),
+}
+
+impl<'a> EntryView<'a> {
+    /*
+        /*!
+            \brief Creates an entry view.
+
+            \param p_key A pointer to a key.
+            \param value A value.
+            \param cost  A cost.
+        */
+        constexpr entry_view(const input* p_key, const std::any* value, int cost) :
+        m_p_key{ p_key },
+        m_value{ std::move(value) },
+        m_cost{ cost }
+        {}
+    */
+    /*
+        /*!
+            \brief Creates an entry view.
+
+            \param entry An entry.
+        */
+        entry_view(const entry& entry);
+    */
+
+    /** TODO: doc */
+    pub fn key(&self) -> Option<&'a dyn Input> {
+        None
+    }
+    /*
+        /*!
+            \brief Returns the pointer to the key.
+
+            \return The pointer to the key.
+        */
+        [[nodiscard]] constexpr const input* p_key() const
+        {
+            return m_p_key;
+        }
+    */
+
+    /** TODO: doc */
+    pub fn value(&self) -> Option<&'a dyn Any> {
+        None
+    }
+    /*
+        /*!
+            \brief Returns the value.
+
+            \return The value.
+        */
+        [[nodiscard]] constexpr const std::any* value() const
+        {
+            return m_value;
+        }
+    */
+
+    /** TODO: doc */
+    pub fn cost(&self) -> i32 {
+        0
+    }
+    /*
+        /*!
+            \brief Returns the cost.
+
+            \return The cost.
+        */
+        [[nodiscard]] constexpr int cost() const
+        {
+            return m_cost;
+        }
+    */
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn bos_eos() {
-        let bos_eos = Entry::BosEos;
+        {
+            let bos_eos = Entry::BosEos;
 
-        assert!(bos_eos.key().is_none());
-        assert!(bos_eos.value().is_none());
-        assert_eq!(bos_eos.cost(), 0);
+            assert!(bos_eos.key().is_none());
+            assert!(bos_eos.value().is_none());
+            assert_eq!(bos_eos.cost(), 0);
+        }
+        {
+            let bos_eos = EntryView::BosEos;
+
+            assert!(bos_eos.key().is_none());
+            assert!(bos_eos.value().is_none());
+            assert_eq!(bos_eos.cost(), 0);
+        }
     }
 
+    #[test]
+    fn new() {}
     /*
     BOOST_AUTO_TEST_CASE(construction)
     {
