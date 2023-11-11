@@ -111,21 +111,6 @@ impl Entry {
         }
     }
 
-    /*
-        entry::entry(const entry& another) :
-        m_p_key{ another.m_p_key ? another.m_p_key->clone() : nullptr },
-        m_value{ another.m_value },
-        m_cost{ another.m_cost }
-        {}
-    */
-    /*
-        entry::entry(entry&& another) :
-        m_p_key{ std::move(another.m_p_key) },
-        m_value{ std::move(another.m_value) },
-        m_cost{ another.m_cost }
-        {}
-    */
-
     /** TODO: doc */
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
@@ -361,22 +346,40 @@ mod tests {
 
     #[test]
     fn clone() {
-        let entry1 = Entry::new(
-            Box::new(StringInput::new(String::from("みずほ"))),
-            Box::new(String::from("瑞穂")),
-            42,
-        );
-        let entry2 = entry1.clone();
+        {
+            let entry1 = Entry::new(
+                Box::new(StringInput::new(String::from("みずほ"))),
+                Box::new(String::from("瑞穂")),
+                42,
+            );
+            let entry2 = entry1.clone();
 
-        assert_eq!(
-            entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
-            entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
-        );
-        assert_eq!(
-            entry1.value().unwrap().as_any().downcast_ref::<String>(),
-            entry2.value().unwrap().as_any().downcast_ref::<String>()
-        );
-        assert_eq!(entry1.cost(), entry2.cost());
+            assert_eq!(
+                entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
+                entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
+            );
+            assert_eq!(
+                entry1.value().unwrap().as_any().downcast_ref::<String>(),
+                entry2.value().unwrap().as_any().downcast_ref::<String>()
+            );
+            assert_eq!(entry1.cost(), entry2.cost());
+        }
+        {
+            let key = StringInput::new(String::from("みずほ"));
+            let value = String::from("瑞穂");
+            let view1 = EntryView::new(&key, &value, 42);
+            let view2 = view1.clone();
+
+            assert_eq!(
+                view1.key().unwrap().as_any().downcast_ref::<StringInput>(),
+                view2.key().unwrap().as_any().downcast_ref::<StringInput>()
+            );
+            assert_eq!(
+                view1.value().unwrap().as_any().downcast_ref::<String>(),
+                view2.value().unwrap().as_any().downcast_ref::<String>()
+            );
+            assert_eq!(view1.cost(), view2.cost());
+        }
     }
 
     /*
