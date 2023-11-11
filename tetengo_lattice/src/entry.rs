@@ -10,11 +10,30 @@ use std::fmt::Debug;
 use crate::input::Input;
 
 /**
+ * A cloneable any.
+ */
+pub trait CloneableAny: Any {
+    /**
+     * Clones this object.
+     *
+     * # Returns
+     * A box of a clone of this object.
+     */
+    fn clone_box(&self) -> Box<dyn CloneableAny>;
+}
+
+impl<T: Clone + 'static> CloneableAny for T {
+    fn clone_box(&self) -> Box<dyn CloneableAny> {
+        Box::new(self.clone())
+    }
+}
+
+/**
  * A middle entry.
  */
 pub struct Middle {
     key: Box<dyn Input>,
-    value: Box<dyn Any>,
+    value: Box<dyn CloneableAny>,
     cost: i32,
 }
 
@@ -22,16 +41,26 @@ impl Debug for Middle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MiddleEntry")
             .field("key", &"Box<dyn Input>")
-            .field("value", &self.value)
+            .field("value", &"Box<dyn CloneableAny>")
             .field("cost", &self.cost)
             .finish()
+    }
+}
+
+impl Clone for Middle {
+    fn clone(&self) -> Self {
+        Self {
+            key: self.key.clone_box(),
+            value: self.value.clone_box(),
+            cost: self.cost,
+        }
     }
 }
 
 /**
  * An entry.
  */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Entry {
     /// The BOS/EOS (Beginning/End of Sequence) entry.
     BosEos,
@@ -41,7 +70,26 @@ pub enum Entry {
 }
 
 impl Entry {
+    /**
+     * Creates an entry.
+     *
+     * # Arguments
+     * * `key`   - A box of a key.
+     * * `value` - A box of a value.
+     * * `cost`  - A cost.
+     */
+    pub fn new(key: Box<dyn Input>, value: Box<dyn CloneableAny>, cost: i32) -> Self {
+        Entry::Middle(Middle { key, value, cost })
+    }
+
     /*
+        /*!
+            \brief Creates an entry.
+
+            \param p_key A unique pointer to a key.
+            \param value A value.
+            \param cost  A cost.
+        */
         entry::entry(std::unique_ptr<input>&& p_key, std::any value, const int cost) :
         m_p_key{ std::move(p_key) },
         m_value{ std::move(value) },
@@ -85,7 +133,7 @@ impl Entry {
     */
 
     /** TODO: doc */
-    pub fn value(&self) -> Option<&dyn Any> {
+    pub fn value(&self) -> Option<&dyn CloneableAny> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
@@ -116,17 +164,18 @@ impl Entry {
 /**
  * An middle entry view.
  */
+#[derive(Clone)]
 pub struct MiddleView<'a> {
     _key: Option<&'a dyn Input>,
-    value: Option<&'a dyn Any>,
+    _value: Option<&'a dyn CloneableAny>,
     cost: i32,
 }
 
 impl Debug for MiddleView<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MiddleEntryView")
-            .field("key", &"&dyn Input")
-            .field("value", &self.value)
+            .field("key", &"Option<&dyn Input>")
+            .field("value", &"Option<&'a dyn CloneableAny>")
             .field("cost", &self.cost)
             .finish()
     }
@@ -135,7 +184,7 @@ impl Debug for MiddleView<'_> {
 /**
  * An entry view.
  */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum EntryView<'a> {
     /// The BOS/EOS (Beginning/End of Sequence) entry.
     BosEos,
@@ -145,6 +194,22 @@ pub enum EntryView<'a> {
 }
 
 impl<'a> EntryView<'a> {
+    /**
+     * Creates an entry view.
+     *
+     * # Arguments
+     * * `key`   - A key.
+     * * `value` - A value.
+     * * `cost`  - A cost.
+     */
+    pub const fn new(key: &'a dyn Input, value: &'a dyn CloneableAny, cost: i32) -> Self {
+        EntryView::Middle(MiddleView {
+            _key: Some(key),
+            _value: Some(value),
+            cost,
+        })
+    }
+
     /*
         /*!
             \brief Creates an entry view.
@@ -185,7 +250,7 @@ impl<'a> EntryView<'a> {
     */
 
     /** TODO: doc */
-    pub fn value(&self) -> Option<&'a dyn Any> {
+    pub fn value(&self) -> Option<&'a dyn CloneableAny> {
         None
     }
     /*
@@ -219,6 +284,8 @@ impl<'a> EntryView<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::StringInput;
+
     use super::*;
 
     #[test]
@@ -240,7 +307,24 @@ mod tests {
     }
 
     #[test]
-    fn new() {}
+    fn new() {
+        let _entry1 = Entry::new(
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
+            42,
+        );
+    }
+
+    #[test]
+    fn clone() {
+        let entry1 = Entry::new(
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
+            42,
+        );
+        let _entry2 = entry1.clone();
+    }
+
     /*
     BOOST_AUTO_TEST_CASE(construction)
     {
