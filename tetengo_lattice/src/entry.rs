@@ -230,7 +230,7 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&'a dyn AnyValue> {
+    pub const fn value(&self) -> Option<&'a dyn AnyValue> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(middle_view) => Some(middle_view.value),
@@ -243,7 +243,7 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The cost.
      */
-    pub fn cost(&self) -> i32 {
+    pub const fn cost(&self) -> i32 {
         match self {
             EntryView::BosEos => 0,
             EntryView::Middle(middle_view) => middle_view.cost,
