@@ -111,47 +111,44 @@ impl Entry {
         }
     }
 
-    /** TODO: doc */
+    /**
+     * Returns the key.
+     *
+     * # Returns
+     * The key.
+     */
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.key.as_ref()),
         }
     }
-    /*
-        const input* entry::p_key() const
-        {
-            return std::to_address(m_p_key);
-        }
-    */
 
-    /** TODO: doc */
+    /**
+     * Returns the value.
+     *
+     * # Returns
+     * The value.
+     */
     pub fn value(&self) -> Option<&dyn CloneableAny> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
         }
     }
-    /*
-        const std::any& entry::value() const
-        {
-            return m_value;
-        }
-    */
 
-    /** TODO: doc */
+    /**
+     * Returns the cost.
+     *
+     * # Returns
+     * The cost.
+     */
     pub fn cost(&self) -> i32 {
         match self {
             Entry::BosEos => 0,
             Entry::Middle(entry) => entry.cost,
         }
     }
-    /*
-        int entry::cost() const
-        {
-            return m_cost;
-        }
-    */
 }
 
 /**
@@ -214,62 +211,44 @@ impl<'a> EntryView<'a> {
         }
     }
 
-    /** TODO: doc */
-    pub fn key(&self) -> Option<&'a dyn Input> {
+    /**
+     * Returns the key.
+     *
+     * # Returns
+     * The key.
+     */
+    pub const fn key(&self) -> Option<&'a dyn Input> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(middle_view) => Some(middle_view.key),
         }
     }
-    /*
-        /*!
-            \brief Returns the pointer to the key.
 
-            \return The pointer to the key.
-        */
-        [[nodiscard]] constexpr const input* p_key() const
-        {
-            return m_p_key;
-        }
-    */
-
-    /** TODO: doc */
+    /**
+     * Returns the value.
+     *
+     * # Returns
+     * The value.
+     */
     pub fn value(&self) -> Option<&'a dyn CloneableAny> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(middle_view) => Some(middle_view.value),
         }
     }
-    /*
-        /*!
-            \brief Returns the value.
 
-            \return The value.
-        */
-        [[nodiscard]] constexpr const std::any* value() const
-        {
-            return m_value;
-        }
-    */
-
-    /** TODO: doc */
+    /**
+     * Returns the cost.
+     *
+     * # Returns
+     * The cost.
+     */
     pub fn cost(&self) -> i32 {
         match self {
             EntryView::BosEos => 0,
             EntryView::Middle(middle_view) => middle_view.cost,
         }
     }
-    /*
-        /*!
-            \brief Returns the cost.
-
-            \return The cost.
-        */
-        [[nodiscard]] constexpr int cost() const
-        {
-            return m_cost;
-        }
-    */
 }
 
 #[cfg(test)]
@@ -382,48 +361,103 @@ mod tests {
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(key)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn key() {
         {
-            const tetengo::lattice::entry entry_{ std::make_unique<tetengo::lattice::string_input>(key_mizuho),
-                                                  surface_mizuho,
-                                                  42 };
+            let entry = Entry::new(
+                Box::new(StringInput::new(String::from("みずほ"))),
+                Box::new(String::from("瑞穂")),
+                42,
+            );
 
-            BOOST_TEST_REQUIRE(entry_.p_key());
-            BOOST_TEST_REQUIRE(entry_.p_key()->is<tetengo::lattice::string_input>());
-            BOOST_TEST(entry_.p_key()->as<tetengo::lattice::string_input>().value() == key_mizuho);
+            assert!(entry.key().is_some());
+            assert!(entry.key().unwrap().as_any().is::<StringInput>());
+            assert_eq!(
+                entry
+                    .key()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<StringInput>()
+                    .unwrap()
+                    .value(),
+                "みずほ"
+            );
+        }
+        {
+            let key = StringInput::new(String::from("みずほ"));
+            let value = String::from("瑞穂");
+            let view = EntryView::new(&key, &value, 42);
+
+            assert!(view.key().is_some());
+            assert!(view.key().unwrap().as_any().is::<StringInput>());
+            assert_eq!(
+                view.key()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<StringInput>()
+                    .unwrap()
+                    .value(),
+                "みずほ"
+            );
         }
     }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(value)
-    {
-        BOOST_TEST_PASSPOINT();
 
+    #[test]
+    fn value() {
         {
-            const tetengo::lattice::entry entry_{ std::make_unique<tetengo::lattice::string_input>(key_mizuho),
-                                                  surface_mizuho,
-                                                  42 };
+            let entry = Entry::new(
+                Box::new(StringInput::new(String::from("みずほ"))),
+                Box::new(String::from("瑞穂")),
+                42,
+            );
 
-            BOOST_TEST(std::any_cast<std::string>(entry_.value()) == surface_mizuho);
+            assert!(entry.value().is_some());
+            assert!(entry.value().unwrap().as_any().is::<String>());
+            assert_eq!(
+                entry
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<String>()
+                    .unwrap(),
+                "瑞穂"
+            );
+        }
+        {
+            let key = StringInput::new(String::from("みずほ"));
+            let value = String::from("瑞穂");
+            let view = EntryView::new(&key, &value, 42);
+
+            assert!(view.value().is_some());
+            assert!(view.value().unwrap().as_any().is::<String>());
+            assert_eq!(
+                view.value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<String>()
+                    .unwrap(),
+                "瑞穂"
+            );
         }
     }
-    */
-    /*
-        BOOST_AUTO_TEST_CASE(cost)
+
+    #[test]
+    fn cost() {
         {
-            BOOST_TEST_PASSPOINT();
+            let entry = Entry::new(
+                Box::new(StringInput::new(String::from("みずほ"))),
+                Box::new(String::from("瑞穂")),
+                42,
+            );
 
-            {
-                const tetengo::lattice::entry entry_{ std::make_unique<tetengo::lattice::string_input>(key_mizuho),
-                                                      surface_mizuho,
-                                                      42 };
-
-                BOOST_TEST(entry_.cost() == 42);
-            }
+            assert_eq!(entry.cost(), 42);
         }
-    */
+        {
+            let key = StringInput::new(String::from("みずほ"));
+            let value = String::from("瑞穂");
+            let view = EntryView::new(&key, &value, 42);
+
+            assert_eq!(view.cost(), 42);
+        }
+    }
 }
