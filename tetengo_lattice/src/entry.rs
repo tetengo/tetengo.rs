@@ -10,16 +10,16 @@ use std::fmt::Debug;
 use crate::input::Input;
 
 /**
- * A cloneable any.
+ * An any value.
  */
-pub trait CloneableAny: Any {
+pub trait AnyValue: Any {
     /**
      * Clones this object.
      *
      * # Returns
      * A box of a clone of this object.
      */
-    fn clone_box(&self) -> Box<dyn CloneableAny>;
+    fn clone_box(&self) -> Box<dyn AnyValue>;
 
     /**
      * Returns this object as 'Any'.
@@ -30,8 +30,8 @@ pub trait CloneableAny: Any {
     fn as_any(&self) -> &dyn Any;
 }
 
-impl<T: Clone + 'static> CloneableAny for T {
-    fn clone_box(&self) -> Box<dyn CloneableAny> {
+impl<T: Clone + 'static> AnyValue for T {
+    fn clone_box(&self) -> Box<dyn AnyValue> {
         Box::new(self.clone())
     }
 
@@ -45,7 +45,7 @@ impl<T: Clone + 'static> CloneableAny for T {
  */
 pub struct Middle {
     key: Box<dyn Input>,
-    value: Box<dyn CloneableAny>,
+    value: Box<dyn AnyValue>,
     cost: i32,
 }
 
@@ -53,7 +53,7 @@ impl Debug for Middle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MiddleEntry")
             .field("key", &"Box<dyn Input>")
-            .field("value", &"Box<dyn CloneableAny>")
+            .field("value", &"Box<dyn AnyValue>")
             .field("cost", &self.cost)
             .finish()
     }
@@ -90,7 +90,7 @@ impl Entry {
      * * `value` - A box of a value.
      * * `cost`  - A cost.
      */
-    pub fn new(key: Box<dyn Input>, value: Box<dyn CloneableAny>, cost: i32) -> Self {
+    pub fn new(key: Box<dyn Input>, value: Box<dyn AnyValue>, cost: i32) -> Self {
         Entry::Middle(Middle { key, value, cost })
     }
 
@@ -130,7 +130,7 @@ impl Entry {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&dyn CloneableAny> {
+    pub fn value(&self) -> Option<&dyn AnyValue> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
@@ -157,7 +157,7 @@ impl Entry {
 #[derive(Clone)]
 pub struct MiddleView<'a> {
     key: &'a dyn Input,
-    value: &'a dyn CloneableAny,
+    value: &'a dyn AnyValue,
     cost: i32,
 }
 
@@ -165,7 +165,7 @@ impl Debug for MiddleView<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MiddleEntryView")
             .field("key", &"Option<&dyn Input>")
-            .field("value", &"Option<&'a dyn CloneableAny>")
+            .field("value", &"Option<&'a dyn AnyValue>")
             .field("cost", &self.cost)
             .finish()
     }
@@ -192,7 +192,7 @@ impl<'a> EntryView<'a> {
      * * `value` - A value.
      * * `cost`  - A cost.
      */
-    pub const fn new(key: &'a dyn Input, value: &'a dyn CloneableAny, cost: i32) -> Self {
+    pub const fn new(key: &'a dyn Input, value: &'a dyn AnyValue, cost: i32) -> Self {
         EntryView::Middle(MiddleView { key, value, cost })
     }
 
@@ -230,7 +230,7 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&'a dyn CloneableAny> {
+    pub fn value(&self) -> Option<&'a dyn AnyValue> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(middle_view) => Some(middle_view.value),
