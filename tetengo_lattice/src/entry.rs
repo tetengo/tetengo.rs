@@ -5,7 +5,7 @@
  */
 
 use std::any::Any;
-use std::fmt::Debug;
+use std::fmt::{self, Debug, Formatter};
 
 use crate::input::Input;
 
@@ -50,7 +50,7 @@ pub struct Middle {
 }
 
 impl Debug for Middle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("MiddleEntry")
             .field("key", &"Box<dyn Input>")
             .field("value", &"Box<dyn AnyValue>")
@@ -74,7 +74,7 @@ impl Clone for Middle {
  */
 #[derive(Debug, Clone)]
 pub enum Entry {
-    /// The BOS/EOS (Beginning/End of Sequence) entry.
+    /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,
 
     /// The middle entry.
@@ -162,7 +162,7 @@ pub struct MiddleView<'a> {
 }
 
 impl Debug for MiddleView<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("MiddleEntryView")
             .field("key", &"Option<&dyn Input>")
             .field("value", &"Option<&'a dyn AnyValue>")
@@ -176,7 +176,7 @@ impl Debug for MiddleView<'_> {
  */
 #[derive(Debug, Clone)]
 pub enum EntryView<'a> {
-    /// The BOS/EOS (Beginning/End of Sequence) entry.
+    /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,
 
     /// The middle entry.

@@ -4,11 +4,42 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::fmt::{self, Debug, Formatter};
+
+use crate::input::Input;
+
+/**
+ * A middle node.
+ */
+#[derive(Clone, Copy)]
+pub struct Middle<'a> {
+    _input: Option<&'a dyn Input>,
+}
+
+impl Debug for Middle<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("MiddleEntryView")
+            .field("input", &"Option<&dyn Input>")
+            .finish()
+    }
+}
+
 /**
  * A node.
  */
-#[derive(Debug, Clone, Copy)]
-pub struct Node {
+#[derive(Debug, Clone)]
+pub enum Node<'a> {
+    /// The BOS (Beginning of Sequence) entry.
+    Bos,
+
+    /// The EOS (Ending of Sequence) entry.
+    Eos,
+
+    /// The middle entry.
+    Middle(Middle<'a>),
+}
+
+impl Node<'_> {
     /*
         /*!
             \brief Returns the BOS (Beginning of Sequence).
@@ -212,4 +243,14 @@ pub struct Node {
         */
         [[nodiscard]] bool is_bos() const;
     */
+}
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+
+    #[test]
+    fn test() {
+        // assert!(true);
+    }
 }
