@@ -36,7 +36,7 @@ pub struct Bos<'a> {
  */
 #[derive(Clone, Copy, Debug)]
 pub struct Eos<'a> {
-    _preceding_step: usize,
+    preceding_step: usize,
     _preceding_edge_costs: &'a Vec<i32>,
     _best_preceding_node: usize,
     _path_cost: i32,
@@ -115,7 +115,7 @@ impl<'a> Node<'a> {
         path_cost: i32,
     ) -> Self {
         Node::Eos(Eos {
-            _preceding_step: preceding_step,
+            preceding_step,
             _preceding_edge_costs: preceding_edge_costs,
             _best_preceding_node: best_preceding_node,
             _path_cost: path_cost,
@@ -251,17 +251,19 @@ impl<'a> Node<'a> {
         }
     }
 
-    /*
-        /*!
-            \brief Returns the index of the preceding step.
-
-            \return The index of the preceding step.
-        */
-        [[nodiscard]] constexpr std::size_t preceding_step() const
-        {
-            return m_preceding_step;
+    /**
+     * Returns the preceding step.
+     *
+     * # Returns
+     * The preceding step.
+     */
+    pub const fn preceding_step(&self) -> usize {
+        match self {
+            Node::Bos(_) => usize::MAX,
+            Node::Eos(eos) => eos.preceding_step,
+            Node::Middle(middle) => middle.preceding_step,
         }
-    */
+    }
     /*
         /*!
             \brief Returns the preceding edge costs.
@@ -332,7 +334,7 @@ mod tests {
         assert!(bos.key().is_none());
         assert!(bos.value().is_none());
         assert_eq!(bos.index_in_step(), 0);
-        // BOOST_TEST(bos.preceding_step() == std::numeric_limits<std::size_t>::max());
+        assert_eq!(bos.preceding_step(), usize::MAX);
         // BOOST_TEST(&bos.preceding_edge_costs() == &preceding_edge_costs);
         // BOOST_TEST(bos.best_preceding_node() == std::numeric_limits<std::size_t>::max());
         // BOOST_TEST(bos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
@@ -347,7 +349,7 @@ mod tests {
         assert!(eos.key().is_none());
         assert!(eos.value().is_none());
         assert_eq!(eos.index_in_step(), 0);
-        // BOOST_TEST(eos.preceding_step() == 1U);
+        assert_eq!(eos.preceding_step(), 1);
         // BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
         // BOOST_TEST(eos.best_preceding_node() == 5U);
         // BOOST_TEST(eos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
@@ -389,7 +391,7 @@ mod tests {
                 &42
             );
             assert_eq!(node.index_in_step(), 53);
-            // BOOST_TEST(node_.preceding_step() == 1U);
+            assert_eq!(node.preceding_step(), 1);
             // BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
             // BOOST_TEST(node_.best_preceding_node() == 5U);
             // BOOST_TEST(node_.node_cost() == 24);
@@ -478,21 +480,16 @@ mod tests {
 
         assert_eq!(node.index_in_step(), 53);
     }
-    /*
-    BOOST_AUTO_TEST_CASE(preceding_step)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
+    #[test]
+    fn preceding_step() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
 
-            BOOST_TEST(node_.preceding_step() == 1U);
-        }
+        assert_eq!(node.preceding_step(), 1);
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(preceding_edge_costs)
     {
