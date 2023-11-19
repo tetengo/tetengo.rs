@@ -46,7 +46,7 @@ pub struct Eos<'a> {
  */
 #[derive(Clone, Copy)]
 pub struct Middle<'a> {
-    _key: &'a dyn Input,
+    key: &'a dyn Input,
     _value: &'a dyn AnyValue,
     index_in_step: usize,
     preceding_step: usize,
@@ -146,7 +146,7 @@ impl<'a> Node<'a> {
         path_cost: i32,
     ) -> Self {
         Node::Middle(Middle {
-            _key: key,
+            key,
             _value: value,
             index_in_step,
             preceding_step,
@@ -178,7 +178,7 @@ impl<'a> Node<'a> {
             return Err(NodeError::BosOrEosEntryNotAllowed.into());
         };
         Ok(Node::Middle(Middle {
-            _key: key,
+            key,
             _value: value,
             index_in_step,
             preceding_step,
@@ -208,17 +208,21 @@ impl<'a> Node<'a> {
                     one.node_cost() == another.node_cost() && one.path_cost() == another.path_cost();
         }
     */
-    /*
-        /*!
-            \brief Returns the key.
 
-            \return The key.
-        */
-        [[nodiscard]] constexpr const input* p_key() const
-        {
-            return m_p_key;
+    /**
+     * Returns the key.
+     *
+     * # Returns
+     * The key.
+     */
+    pub const fn key(&self) -> Option<&dyn Input> {
+        match self {
+            Node::Bos(_) => None,
+            Node::Eos(_) => None,
+            Node::Middle(middle) => Some(middle.key),
         }
-    */
+    }
+
     /*
         /*!
             \brief Returns the value.
@@ -316,9 +320,9 @@ mod tests {
     #[test]
     fn bos() {
         let preceding_edge_costs = Vec::new();
-        let _bos = Node::bos(&preceding_edge_costs);
+        let bos = Node::bos(&preceding_edge_costs);
 
-        // BOOST_TEST(bos.p_key() == tetengo::lattice::entry_view::bos_eos().p_key());
+        assert!(bos.key().is_none());
         // BOOST_TEST(!bos.value().has_value());
         // BOOST_TEST(bos.preceding_step() == std::numeric_limits<std::size_t>::max());
         // BOOST_TEST(&bos.preceding_edge_costs() == &preceding_edge_costs);
@@ -330,9 +334,9 @@ mod tests {
     #[test]
     fn eos() {
         let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let _eos = Node::eos(1, &preceding_edge_costs, 5, 42);
+        let eos = Node::eos(1, &preceding_edge_costs, 5, 42);
 
-        // BOOST_TEST(eos.p_key() == tetengo::lattice::entry_view::bos_eos().p_key());
+        assert!(eos.key().is_none());
         // BOOST_TEST(!eos.value().has_value());
         // BOOST_TEST(eos.preceding_step() == 1U);
         // BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
@@ -358,8 +362,15 @@ mod tests {
             let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
             let node = Node::from(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
 
-            let _node = node.unwrap();
-            // BOOST_TEST(node_.p_key() == &entry_key);
+            let node = node.unwrap();
+            assert_eq!(
+                node.key()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<StringInput>()
+                    .unwrap(),
+                &entry_key
+            );
             // BOOST_TEST(std::any_cast<int>(node_.value()) == 42);
             // BOOST_TEST(node_.preceding_step() == 1U);
             // BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
@@ -405,23 +416,24 @@ mod tests {
         }
     }
     */
-    /*
-    BOOST_AUTO_TEST_CASE(key)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
+    #[test]
+    fn key() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
 
-            BOOST_TEST_REQUIRE(node_.p_key());
-            BOOST_TEST_REQUIRE(node_.p_key()->is<tetengo::lattice::string_input>());
-            BOOST_TEST(node_.p_key()->as<tetengo::lattice::string_input>().value() == "mizuho");
-        }
+        assert_eq!(
+            node.key()
+                .unwrap()
+                .as_any()
+                .downcast_ref::<StringInput>()
+                .unwrap()
+                .value(),
+            "mizuho"
+        );
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(value)
     {
