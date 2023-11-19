@@ -17,6 +17,16 @@ pub struct Bos<'a> {
 }
 
 /**
+ * A EOS (Ending of Sequence) node.
+ */
+#[derive(Clone, Copy, Debug)]
+pub struct Eos<'a> {
+    _preceding_step: usize,
+    _preceding_edge_costs: &'a Vec<i32>,
+    _best_preceding_node: usize,
+    _path_cost: i32,
+}
+/**
  * A middle node.
  */
 #[derive(Clone, Copy)]
@@ -41,7 +51,7 @@ pub enum Node<'a> {
     Bos(Bos<'a>),
 
     /// The EOS (Ending of Sequence) node.
-    Eos,
+    Eos(Eos<'a>),
 
     /// The middle node.
     Middle(Middle<'a>),
@@ -60,37 +70,28 @@ impl<'a> Node<'a> {
         })
     }
 
-    /*
-        /*!
-            \brief Returns the BOS (Beginning of Sequence).
-
-            \param p_preceding_edge_costs A pointer to preceding edge costs.
-
-            \return The BOS.
-
-            \throw std::invalid_argument When p_preceding_edge_costs is nullptr.
-        */
-        [[nodiscard]] static node bos(const std::vector<int>* p_preceding_edge_costs);
-    */
-    /*
-        /*!
-            \brief Returns an EOS (End of Sequence).
-
-            \param preceding_step         An index of a preceding step.
-            \param p_preceding_edge_costs A pointer to preceding edge costs.
-            \param best_preceding_node    An index of a best preceding node.
-            \param path_cost              A path cost.
-
-            \return An EOS.
-
-            \throw std::invalid_argument When p_preceding_edge_costs is nullptr.
-        */
-        [[nodiscard]] static node
-        eos(std::size_t             preceding_step,
-            const std::vector<int>* p_preceding_edge_costs,
-            std::size_t             best_preceding_node,
-            int                     path_cost);
-    */
+    /**
+     * Creates an EOS (Ending of Sequence).
+     *
+     * # Arguments
+     * * preceding_step       - An index of a preceding step.
+     * * preceding_edge_costs - Preceding edge costs.
+     * * best_preceding_node  - An index of a best preceding node.
+     * * path_cost            - A path cost.
+     */
+    pub fn eos(
+        preceding_step: usize,
+        preceding_edge_costs: &'a Vec<i32>,
+        best_preceding_node: usize,
+        path_cost: i32,
+    ) -> Self {
+        Node::Eos(Eos {
+            _preceding_step: preceding_step,
+            _preceding_edge_costs: preceding_edge_costs,
+            _best_preceding_node: best_preceding_node,
+            _path_cost: path_cost,
+        })
+    }
     /*
         /*!
             \brief Creates a node.
@@ -283,25 +284,19 @@ mod tests {
         // BOOST_TEST(bos.path_cost() == 0);
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(eos)
-    {
-        BOOST_TEST_PASSPOINT();
+    #[test]
+    fn eos() {
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let _eos = Node::eos(1, &preceding_edge_costs, 5, 42);
 
-        {
-            const std::vector<int> preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const auto             eos = tetengo::lattice::node::eos(1, &preceding_edge_costs, 5, 42);
-
-            BOOST_TEST(eos.p_key() == tetengo::lattice::entry_view::bos_eos().p_key());
-            BOOST_TEST(!eos.value().has_value());
-            BOOST_TEST(eos.preceding_step() == 1U);
-            BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
-            BOOST_TEST(eos.best_preceding_node() == 5U);
-            BOOST_TEST(eos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
-            BOOST_TEST(eos.path_cost() == 42);
-        }
+        // BOOST_TEST(eos.p_key() == tetengo::lattice::entry_view::bos_eos().p_key());
+        // BOOST_TEST(!eos.value().has_value());
+        // BOOST_TEST(eos.preceding_step() == 1U);
+        // BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
+        // BOOST_TEST(eos.best_preceding_node() == 5U);
+        // BOOST_TEST(eos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
+        // BOOST_TEST(eos.path_cost() == 42);
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(construction)
     {
