@@ -28,7 +28,7 @@ pub enum NodeError {
  */
 #[derive(Clone, Copy, Debug)]
 pub struct Bos<'a> {
-    _preceding_edge_costs: &'a Vec<i32>,
+    preceding_edge_costs: &'a Vec<i32>,
 }
 
 /**
@@ -37,7 +37,7 @@ pub struct Bos<'a> {
 #[derive(Clone, Copy, Debug)]
 pub struct Eos<'a> {
     preceding_step: usize,
-    _preceding_edge_costs: &'a Vec<i32>,
+    preceding_edge_costs: &'a Vec<i32>,
     _best_preceding_node: usize,
     _path_cost: i32,
 }
@@ -95,7 +95,7 @@ impl<'a> Node<'a> {
      */
     pub const fn bos(preceding_edge_costs: &'a Vec<i32>) -> Self {
         Node::Bos(Bos {
-            _preceding_edge_costs: preceding_edge_costs,
+            preceding_edge_costs,
         })
     }
 
@@ -116,7 +116,7 @@ impl<'a> Node<'a> {
     ) -> Self {
         Node::Eos(Eos {
             preceding_step,
-            _preceding_edge_costs: preceding_edge_costs,
+            preceding_edge_costs,
             _best_preceding_node: best_preceding_node,
             _path_cost: path_cost,
         })
@@ -264,18 +264,20 @@ impl<'a> Node<'a> {
             Node::Middle(middle) => middle.preceding_step,
         }
     }
-    /*
-        /*!
-            \brief Returns the preceding edge costs.
 
-            \return The preceding edge costs.
-        */
-        [[nodiscard]] constexpr const std::vector<int>& preceding_edge_costs() const
-        {
-            assert(m_p_preceding_edge_costs);
-            return *m_p_preceding_edge_costs;
+    /**
+     * Returns the preceding edge costs.
+     *
+     * # Returns
+     * The preceding edge costs.
+     */
+    pub const fn preceding_edge_costs(&self) -> &Vec<i32> {
+        match self {
+            Node::Bos(bos) => bos.preceding_edge_costs,
+            Node::Eos(eos) => eos.preceding_edge_costs,
+            Node::Middle(middle) => middle.preceding_edge_costs,
         }
-    */
+    }
     /*
         /*!
             \brief Returns the index of the best preceding node.
@@ -335,7 +337,7 @@ mod tests {
         assert!(bos.value().is_none());
         assert_eq!(bos.index_in_step(), 0);
         assert_eq!(bos.preceding_step(), usize::MAX);
-        // BOOST_TEST(&bos.preceding_edge_costs() == &preceding_edge_costs);
+        assert_eq!(bos.preceding_edge_costs(), &preceding_edge_costs);
         // BOOST_TEST(bos.best_preceding_node() == std::numeric_limits<std::size_t>::max());
         // BOOST_TEST(bos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
         // BOOST_TEST(bos.path_cost() == 0);
@@ -350,7 +352,7 @@ mod tests {
         assert!(eos.value().is_none());
         assert_eq!(eos.index_in_step(), 0);
         assert_eq!(eos.preceding_step(), 1);
-        // BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
+        assert_eq!(eos.preceding_edge_costs(), &preceding_edge_costs);
         // BOOST_TEST(eos.best_preceding_node() == 5U);
         // BOOST_TEST(eos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
         // BOOST_TEST(eos.path_cost() == 42);
@@ -392,7 +394,7 @@ mod tests {
             );
             assert_eq!(node.index_in_step(), 53);
             assert_eq!(node.preceding_step(), 1);
-            // BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
+            assert_eq!(node.preceding_edge_costs(), &preceding_edge_costs);
             // BOOST_TEST(node_.best_preceding_node() == 5U);
             // BOOST_TEST(node_.node_cost() == 24);
             // BOOST_TEST(node_.path_cost() == 2424);
@@ -490,21 +492,16 @@ mod tests {
 
         assert_eq!(node.preceding_step(), 1);
     }
-    /*
-    BOOST_AUTO_TEST_CASE(preceding_edge_costs)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
+    #[test]
+    fn preceding_edge_costs() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
 
-            BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
-        }
+        assert_eq!(node.preceding_edge_costs(), &preceding_edge_costs);
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(best_preceding_node)
     {
