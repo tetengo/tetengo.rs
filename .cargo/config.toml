@@ -1,5 +1,6 @@
 [build]
 rustflags = [
+    "-A", "clippy::too_many_arguments",
     "-D", "absolute_paths_not_starting_with_crate",
 #    "-D", "box_pointers",
     "-D", "elided_lifetimes_in_paths",

@@ -6,6 +6,7 @@
 
 use std::fmt::{self, Debug, Formatter};
 
+use crate::entry::AnyValue;
 use crate::input::Input;
 
 /**
@@ -31,13 +32,27 @@ pub struct Eos<'a> {
  */
 #[derive(Clone, Copy)]
 pub struct Middle<'a> {
-    _input: Option<&'a dyn Input>,
+    _key: &'a dyn Input,
+    _value: &'a dyn AnyValue,
+    index_in_step: usize,
+    preceding_step: usize,
+    preceding_edge_costs: &'a Vec<i32>,
+    best_preceding_node: usize,
+    node_cost: i32,
+    path_cost: i32,
 }
 
 impl Debug for Middle<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("MiddleEntryView")
-            .field("input", &"Option<&dyn Input>")
+        f.debug_struct("Middle")
+            .field("key", &"&'a dyn Input")
+            .field("value", &"&'a dyn AnyValue")
+            .field("index_in_step", &self.index_in_step)
+            .field("preceding_step", &self.preceding_step)
+            .field("preceding_edge_costs", &self.preceding_edge_costs)
+            .field("best_preceding_node", &self.best_preceding_node)
+            .field("node_cost", &self.node_cost)
+            .field("path_cost", &self.path_cost)
             .finish()
     }
 }
@@ -64,7 +79,7 @@ impl<'a> Node<'a> {
      * # Arguments
      * * preceding_edge_costs - Preceding edge costs.
      */
-    pub fn bos(preceding_edge_costs: &'a Vec<i32>) -> Self {
+    pub const fn bos(preceding_edge_costs: &'a Vec<i32>) -> Self {
         Node::Bos(Bos {
             _preceding_edge_costs: preceding_edge_costs,
         })
@@ -79,7 +94,7 @@ impl<'a> Node<'a> {
      * * best_preceding_node  - An index of a best preceding node.
      * * path_cost            - A path cost.
      */
-    pub fn eos(
+    pub const fn eos(
         preceding_step: usize,
         preceding_edge_costs: &'a Vec<i32>,
         best_preceding_node: usize,
@@ -92,38 +107,42 @@ impl<'a> Node<'a> {
             _path_cost: path_cost,
         })
     }
-    /*
-        /*!
-            \brief Creates a node.
 
-            \param p_key                  A pointer to a key.
-            \param p_value                A pointer to a value.
-            \param index_in_step          An index in the step.
-            \param preceding_step         An index of a preceding step.
-            \param p_preceding_edge_costs A pointer to preceding edge costs.
-            \param best_preceding_node    An index of a best preceding node.
-            \param node_cost              A node cost.
-            \param path_cost              A path cost.
-        */
-        constexpr node(
-            const input*            p_key,
-            const std::any*         p_value,
-            std::size_t             index_in_step,
-            std::size_t             preceding_step,
-            const std::vector<int>* p_preceding_edge_costs,
-            std::size_t             best_preceding_node,
-            int                     node_cost,
-            int                     path_cost) :
-        m_p_key{ p_key },
-        m_p_value{ p_value },
-        m_index_in_step{ index_in_step },
-        m_preceding_step{ preceding_step },
-        m_p_preceding_edge_costs{ p_preceding_edge_costs },
-        m_best_preceding_node{ best_preceding_node },
-        m_node_cost{ node_cost },
-        m_path_cost{ path_cost }
-        {}
-    */
+    /**
+     * Creates a node.
+     *
+     * # Arguments
+     * * key                  - A key.
+     * * value                - A value.
+     * * index_in_step        - An index in the step.
+     * * preceding_step       - An index of a preceding step.
+     * * preceding_edge_costs - Preceding edge costs.
+     * * best_preceding_node  - An index of a best preceding node.
+     * * node_cost            - A node cost.
+     * * path_cost            - A path cost.
+     */
+    pub const fn new(
+        key: &'a dyn Input,
+        value: &'a dyn AnyValue,
+        index_in_step: usize,
+        preceding_step: usize,
+        preceding_edge_costs: &'a Vec<i32>,
+        best_preceding_node: usize,
+        node_cost: i32,
+        path_cost: i32,
+    ) -> Self {
+        Node::Middle(Middle {
+            _key: key,
+            _value: value,
+            index_in_step,
+            preceding_step,
+            preceding_edge_costs,
+            best_preceding_node,
+            node_cost,
+            path_cost,
+        })
+    }
+
     /*
         /*!
             \brief Creates a node from a vocabulary entry.
@@ -268,6 +287,8 @@ impl<'a> Node<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::StringInput;
+
     use super::*;
 
     #[test]
@@ -296,6 +317,23 @@ mod tests {
         // BOOST_TEST(eos.best_preceding_node() == 5U);
         // BOOST_TEST(eos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
         // BOOST_TEST(eos.path_cost() == 42);
+    }
+
+    #[test]
+    fn new() {
+        {
+            let key = StringInput::new(String::from("mizuho"));
+            let value = 42;
+            let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+            let _node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        }
+        // {
+        //     let entry_key = StringInput::new(String::from("mizuho"));
+        //     let entry_value = 42;
+        //     let entry = EntryView::new(&entry_key, &entry_value, 24);
+        //     let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        //     let _node = Node::new(&entry, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        // }
     }
     /*
     BOOST_AUTO_TEST_CASE(construction)
