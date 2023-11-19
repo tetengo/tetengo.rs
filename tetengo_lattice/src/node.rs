@@ -47,7 +47,7 @@ pub struct Eos<'a> {
 #[derive(Clone, Copy)]
 pub struct Middle<'a> {
     key: &'a dyn Input,
-    _value: &'a dyn AnyValue,
+    value: &'a dyn AnyValue,
     index_in_step: usize,
     preceding_step: usize,
     preceding_edge_costs: &'a Vec<i32>,
@@ -147,7 +147,7 @@ impl<'a> Node<'a> {
     ) -> Self {
         Node::Middle(Middle {
             key,
-            _value: value,
+            value,
             index_in_step,
             preceding_step,
             preceding_edge_costs,
@@ -179,7 +179,7 @@ impl<'a> Node<'a> {
         };
         Ok(Node::Middle(Middle {
             key,
-            _value: value,
+            value,
             index_in_step,
             preceding_step,
             preceding_edge_costs,
@@ -223,18 +223,19 @@ impl<'a> Node<'a> {
         }
     }
 
-    /*
-        /*!
-            \brief Returns the value.
-
-            \return The value.
-        */
-        [[nodiscard]] constexpr const std::any& value() const
-        {
-            assert(m_p_value);
-            return *m_p_value;
+    /**
+     * Returns the value.
+     *
+     * # Returns
+     * The value.
+     */
+    pub const fn value(&self) -> Option<&dyn AnyValue> {
+        match self {
+            Node::Bos(_) => None,
+            Node::Eos(_) => None,
+            Node::Middle(middle) => Some(middle.value),
         }
-    */
+    }
     /*
         /*!
             \brief Returns the index in the step.
@@ -323,7 +324,7 @@ mod tests {
         let bos = Node::bos(&preceding_edge_costs);
 
         assert!(bos.key().is_none());
-        // BOOST_TEST(!bos.value().has_value());
+        assert!(bos.value().is_none());
         // BOOST_TEST(bos.preceding_step() == std::numeric_limits<std::size_t>::max());
         // BOOST_TEST(&bos.preceding_edge_costs() == &preceding_edge_costs);
         // BOOST_TEST(bos.best_preceding_node() == std::numeric_limits<std::size_t>::max());
@@ -337,7 +338,7 @@ mod tests {
         let eos = Node::eos(1, &preceding_edge_costs, 5, 42);
 
         assert!(eos.key().is_none());
-        // BOOST_TEST(!eos.value().has_value());
+        assert!(eos.value().is_none());
         // BOOST_TEST(eos.preceding_step() == 1U);
         // BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
         // BOOST_TEST(eos.best_preceding_node() == 5U);
@@ -371,7 +372,14 @@ mod tests {
                     .unwrap(),
                 &entry_key
             );
-            // BOOST_TEST(std::any_cast<int>(node_.value()) == 42);
+            assert_eq!(
+                node.value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<i32>()
+                    .unwrap(),
+                &42
+            );
             // BOOST_TEST(node_.preceding_step() == 1U);
             // BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
             // BOOST_TEST(node_.best_preceding_node() == 5U);
@@ -434,21 +442,24 @@ mod tests {
             "mizuho"
         );
     }
-    /*
-    BOOST_AUTO_TEST_CASE(value)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
+    #[test]
+    fn value() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
 
-            BOOST_TEST(std::any_cast<int>(node_.value()) == 42);
-        }
+        assert_eq!(
+            node.value()
+                .unwrap()
+                .as_any()
+                .downcast_ref::<i32>()
+                .unwrap(),
+            &42
+        );
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(index_in_step)
     {
