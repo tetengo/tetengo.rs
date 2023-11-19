@@ -217,8 +217,8 @@ impl<'a> Node<'a> {
      */
     pub const fn key(&self) -> Option<&dyn Input> {
         match self {
-            Node::Bos(_) => None,
-            Node::Eos(_) => None,
+            Node::Bos(_) => EntryView::BosEos.key(),
+            Node::Eos(_) => EntryView::BosEos.key(),
             Node::Middle(middle) => Some(middle.key),
         }
     }
@@ -231,21 +231,27 @@ impl<'a> Node<'a> {
      */
     pub const fn value(&self) -> Option<&dyn AnyValue> {
         match self {
-            Node::Bos(_) => None,
-            Node::Eos(_) => None,
+            Node::Bos(_) => EntryView::BosEos.value(),
+            Node::Eos(_) => EntryView::BosEos.value(),
             Node::Middle(middle) => Some(middle.value),
         }
     }
-    /*
-        /*!
-            \brief Returns the index in the step.
 
-            \return The index in the step.
-        */
-        [[nodiscard]] constexpr std::size_t index_in_step() const
-        {
-            return m_index_in_step;
+    /**
+     * Returns the index in the step.
+     *
+     * # Returns
+     * The index in the step.
+     */
+    pub const fn index_in_step(&self) -> usize {
+        match self {
+            Node::Bos(_) => 0,
+            Node::Eos(_) => 0,
+            Node::Middle(middle) => middle.index_in_step,
         }
+    }
+
+    /*
         /*!
             \brief Returns the index of the preceding step.
 
@@ -325,6 +331,7 @@ mod tests {
 
         assert!(bos.key().is_none());
         assert!(bos.value().is_none());
+        assert_eq!(bos.index_in_step(), 0);
         // BOOST_TEST(bos.preceding_step() == std::numeric_limits<std::size_t>::max());
         // BOOST_TEST(&bos.preceding_edge_costs() == &preceding_edge_costs);
         // BOOST_TEST(bos.best_preceding_node() == std::numeric_limits<std::size_t>::max());
@@ -339,6 +346,7 @@ mod tests {
 
         assert!(eos.key().is_none());
         assert!(eos.value().is_none());
+        assert_eq!(eos.index_in_step(), 0);
         // BOOST_TEST(eos.preceding_step() == 1U);
         // BOOST_TEST(&eos.preceding_edge_costs() == &preceding_edge_costs);
         // BOOST_TEST(eos.best_preceding_node() == 5U);
@@ -380,6 +388,7 @@ mod tests {
                     .unwrap(),
                 &42
             );
+            assert_eq!(node.index_in_step(), 53);
             // BOOST_TEST(node_.preceding_step() == 1U);
             // BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
             // BOOST_TEST(node_.best_preceding_node() == 5U);
@@ -460,21 +469,15 @@ mod tests {
         );
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(index_in_step)
-    {
-        BOOST_TEST_PASSPOINT();
+    #[test]
+    fn index_in_step() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
 
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
-
-            BOOST_TEST(node_.index_in_step() == 53U);
-        }
+        assert_eq!(node.index_in_step(), 53);
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(preceding_step)
     {
