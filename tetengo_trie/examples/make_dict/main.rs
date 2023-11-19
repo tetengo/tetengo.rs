@@ -37,7 +37,7 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 enum DictMakingError {
     #[error("Invalid UniDic lex.csv format.")]
     InvalidUnidicLexCsvFormat,

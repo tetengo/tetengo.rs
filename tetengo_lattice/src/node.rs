@@ -27,7 +27,7 @@ impl Debug for Middle<'_> {
 /**
  * A node.
  */
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum Node<'a> {
     /// The BOS (Beginning of Sequence) entry.
     Bos,

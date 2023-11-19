@@ -14,7 +14,7 @@ use crate::input::{Input, InputError};
 /**
  * A string input.
  */
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct StringInput {
     value: String,
 }

@@ -72,7 +72,7 @@ impl Clone for Middle {
 /**
  * An entry.
  */
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum Entry {
     /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,
@@ -174,7 +174,7 @@ impl Debug for MiddleView<'_> {
 /**
  * An entry view.
  */
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum EntryView<'a> {
     /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,

@@ -11,7 +11,7 @@ use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 /**
  * A string (&str) serializer.
  */
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct StrSerializer;
 
 impl Serializer for StrSerializer {
@@ -29,7 +29,7 @@ impl Serializer for StrSerializer {
 /**
  * A string (String) serializer.
  */
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct StringSerializer;
 
 impl Serializer for StringSerializer {
@@ -47,7 +47,7 @@ impl Serializer for StringSerializer {
 /**
  * A string (String) deserializer.
  */
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct StringDeserializer;
 
 impl Deserializer for StringDeserializer {

@@ -60,7 +60,7 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 enum DictSearchingError {
     #[error("Can't read the whole of lex.csv file.")]
     CantReadWholeOfLexCsvFile,
