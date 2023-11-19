@@ -6,8 +6,22 @@
 
 use std::fmt::{self, Debug, Formatter};
 
-use crate::entry::AnyValue;
+use anyhow::Result;
+
+use crate::entry::{AnyValue, EntryView};
 use crate::input::Input;
+
+/**
+ * A node error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum NodeError {
+    /**
+     * A BOS or EOS entry is not allowed.
+     */
+    #[error("BOS or EOS entry is not allowed")]
+    BosOrEosEntryNotAllowed,
+}
 
 /**
  * A BOS (Beginning of Sequence) node.
@@ -143,30 +157,38 @@ impl<'a> Node<'a> {
         })
     }
 
-    /*
-        /*!
-            \brief Creates a node from a vocabulary entry.
+    /**
+     * Creates a node from a vocabulary entry.
+     *
+     * # Errors
+     * * When `entry` is BOS or EOS.
+     */
+    pub fn from(
+        entry: &'a EntryView<'a>,
+        index_in_step: usize,
+        preceding_step: usize,
+        preceding_edge_costs: &'a Vec<i32>,
+        best_preceding_node: usize,
+        path_cost: i32,
+    ) -> Result<Self> {
+        let Some(key) = entry.key() else {
+            return Err(NodeError::BosOrEosEntryNotAllowed.into());
+        };
+        let Some(value) = entry.value() else {
+            return Err(NodeError::BosOrEosEntryNotAllowed.into());
+        };
+        Ok(Node::Middle(Middle {
+            _key: key,
+            _value: value,
+            index_in_step,
+            preceding_step,
+            preceding_edge_costs,
+            best_preceding_node,
+            node_cost: entry.cost(),
+            path_cost,
+        }))
+    }
 
-            \param entry                  An entry.
-            \param index_in_step          An index in the step.
-            \param preceding_step         An index of a preceding step.
-            \param p_preceding_edge_costs A pointer to preceding edge costs.
-            \param best_preceding_node    An index of a best preceding node.
-            \param path_cost              A path cost.
-
-            \throw std::invalid_argument When p_preceding_edge_costs is nullptr.
-        */
-        constexpr node(
-            const entry_view&       entry,
-            std::size_t             index_in_step,
-            std::size_t             preceding_step,
-            const std::vector<int>* p_preceding_edge_costs,
-            std::size_t             best_preceding_node,
-            int                     path_cost) :
-        node{ entry.p_key(),          entry.value(),       index_in_step, preceding_step,
-                p_preceding_edge_costs, best_preceding_node, entry.cost(),  path_cost }
-        {}
-    */
     /*
         /*!
             \brief Returns true if one node is equal to another.
@@ -321,48 +343,39 @@ mod tests {
 
     #[test]
     fn new() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let _node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+    }
+
+    #[test]
+    fn from() {
         {
-            let key = StringInput::new(String::from("mizuho"));
-            let value = 42;
+            let entry_key = StringInput::new(String::from("mizuho"));
+            let entry_value = 42;
+            let entry = EntryView::new(&entry_key, &entry_value, 24);
             let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            let _node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
-        }
-        // {
-        //     let entry_key = StringInput::new(String::from("mizuho"));
-        //     let entry_value = 42;
-        //     let entry = EntryView::new(&entry_key, &entry_value, 24);
-        //     let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        //     let _node = Node::new(&entry, 53, 1, &preceding_edge_costs, 5, 24, 2424);
-        // }
-    }
-    /*
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
+            let node = Node::from(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
 
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
+            let _node = node.unwrap();
+            // BOOST_TEST(node_.p_key() == &entry_key);
+            // BOOST_TEST(std::any_cast<int>(node_.value()) == 42);
+            // BOOST_TEST(node_.preceding_step() == 1U);
+            // BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
+            // BOOST_TEST(node_.best_preceding_node() == 5U);
+            // BOOST_TEST(node_.node_cost() == 24);
+            // BOOST_TEST(node_.path_cost() == 2424);
         }
         {
-            const tetengo::lattice::string_input entry_key{ "mizuho" };
-            const std::any                       entry_value{ 42 };
-            const tetengo::lattice::entry_view   entry{ &entry_key, &entry_value, 24 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ entry, 53, 1, &preceding_edge_costs, 5, 2424 };
+            let entry = EntryView::BosEos;
+            let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+            let node = Node::from(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
 
-            BOOST_TEST(node_.p_key() == &entry_key);
-            BOOST_TEST(std::any_cast<int>(node_.value()) == 42);
-            BOOST_TEST(node_.preceding_step() == 1U);
-            BOOST_TEST(&node_.preceding_edge_costs() == &preceding_edge_costs);
-            BOOST_TEST(node_.best_preceding_node() == 5U);
-            BOOST_TEST(node_.node_cost() == 24);
-            BOOST_TEST(node_.path_cost() == 2424);
+            assert!(node.is_err());
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(operator_equal)
     {
