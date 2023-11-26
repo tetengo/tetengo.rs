@@ -74,7 +74,7 @@ impl Debug for Middle<'_> {
 /**
  * A node.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug /*, Eq*/)]
 pub enum Node<'a> {
     /// The BOS (Beginning of Sequence) node.
     Bos(Bos<'a>),
@@ -321,6 +321,25 @@ impl<'a> Node<'a> {
         [[nodiscard]] bool is_bos() const;
     */
 }
+
+// impl PartialEq for Node<'_> {
+//     fn eq(&self, other: &Self) -> bool {
+//         match (self, other) {
+//             (Node::Bos(_), Node::Bos(_)) => true,
+//             (Node::Eos(_), Node::Eos(_)) => true,
+//             (Node::Middle(one), Node::Middle(another)) => {
+//                 one.key == another.key
+//                     && one.index_in_step == another.index_in_step
+//                     && one.preceding_step == another.preceding_step
+//                     && one.preceding_edge_costs == another.preceding_edge_costs
+//                     && one.best_preceding_node == another.best_preceding_node
+//                     && one.node_cost == another.node_cost
+//                     && one.path_cost == another.path_cost
+//             }
+//             _ => false,
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
