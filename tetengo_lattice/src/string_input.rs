@@ -5,7 +5,8 @@
  */
 
 use std::any::Any;
-use std::hash::Hash;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use anyhow::Result;
 
@@ -60,7 +61,9 @@ impl Input for StringInput {
     }
 
     fn hash_value(&self) -> u64 {
-        42
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish()
     }
 
     fn length(&self) -> usize {
@@ -166,8 +169,6 @@ mod tests {
             let input1 = StringInput::new(String::from("hoge"));
             let input2 = StringInput::new(String::from("hoge"));
 
-            assert_eq!(input1, input2);
-            assert_eq!(input2, input1);
             assert!(input1.equal_to(&input2));
             assert!(input2.equal_to(&input1));
         }
@@ -175,8 +176,6 @@ mod tests {
             let input1 = StringInput::new(String::from("hoge"));
             let input2 = StringInput::new(String::from("fuga"));
 
-            assert_ne!(input1, input2);
-            assert_ne!(input2, input1);
             assert!(!input1.equal_to(&input2));
             assert!(!input2.equal_to(&input1));
         }
@@ -188,21 +187,21 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn hash_value() {
-    //     {
-    //         let input1 = StringInput::new(String::from("hoge"));
-    //         let input2 = StringInput::new(String::from("hoge"));
+    #[test]
+    fn hash_value() {
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("hoge"));
 
-    //         assert_eq!(hash_value(&input1), hash_value(&input2));
-    //     }
-    //     {
-    //         let input1 = StringInput::new(String::from("hoge"));
-    //         let input2 = StringInput::new(String::from("fuga"));
+            assert_eq!(input1.hash_value(), input2.hash_value());
+        }
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("fuga"));
 
-    //         assert_ne!(hash_value(&input1), hash_value(&input2));
-    //     }
-    // }
+            assert_ne!(input1.hash_value(), input2.hash_value());
+        }
+    }
 
     #[test]
     fn length() {
