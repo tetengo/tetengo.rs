@@ -53,11 +53,10 @@ impl StringInput {
 
 impl Input for StringInput {
     fn equal_to(&self, other: &dyn Input) -> bool {
-        if !other.as_any().is::<StringInput>() {
+        let Some(other) = other.as_any().downcast_ref::<StringInput>() else {
             return false;
-        }
-
-        false
+        };
+        self == other
     }
 
     fn hash_value(&self) -> u64 {
@@ -161,23 +160,33 @@ mod tests {
         assert_eq!(input.value_mut(), "fuga");
     }
 
-    // #[test]
-    // fn equal_to() {
-    //     {
-    //         let input1 = StringInput::new(String::from("hoge"));
-    //         let input2 = StringInput::new(String::from("hoge"));
+    #[test]
+    fn equal_to() {
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("hoge"));
 
-    //         assert_eq!(input1, input2);
-    //         assert_eq!(input2, input1);
-    //     }
-    //     {
-    //         let input1 = StringInput::new(String::from("hoge"));
-    //         let input2 = StringInput::new(String::from("fuga"));
+            assert_eq!(input1, input2);
+            assert_eq!(input2, input1);
+            assert!(input1.equal_to(&input2));
+            assert!(input2.equal_to(&input1));
+        }
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = StringInput::new(String::from("fuga"));
 
-    //         assert_ne!(input1, input2);
-    //         assert_ne!(input2, input1);
-    //     }
-    // }
+            assert_ne!(input1, input2);
+            assert_ne!(input2, input1);
+            assert!(!input1.equal_to(&input2));
+            assert!(!input2.equal_to(&input1));
+        }
+        {
+            let input1 = StringInput::new(String::from("hoge"));
+            let input2 = AnotherInput {};
+
+            assert!(!input1.equal_to(&input2));
+        }
+    }
 
     // #[test]
     // fn hash_value() {
