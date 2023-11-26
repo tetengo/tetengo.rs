@@ -31,6 +31,25 @@ pub enum InputError {
  */
 pub trait Input {
     /**
+     * Returns `true` if this input is equal to the other.
+     *
+     * # Arguments
+     * * `other` - The other input.
+     *
+     * # Returns
+     * `true` if this input is equal to the other.
+     */
+    fn equal_to(&self, other: &dyn Input) -> bool;
+
+    /**
+     * Returns the hash value.
+     *
+     * # Returns
+     * The hash value.
+     */
+    fn hash_value(&self) -> u64;
+
+    /**
      * Returns the length.
      *
      * # Returns
