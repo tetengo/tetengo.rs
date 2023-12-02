@@ -161,8 +161,7 @@ fn to_bytes_with_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> {
 }
 
 fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> {
-    let mut bytes = vec![];
-    bytes.reserve(mem::size_of::<Object>());
+    let mut bytes = Vec::with_capacity(mem::size_of::<Object>());
     let mut object = *object;
     for _ in 0..mem::size_of::<Object>() {
         let byte_object = object & Object::from(0xFFu8);

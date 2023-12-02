@@ -5,7 +5,7 @@
  */
 
 use std::any::Any;
-use std::fmt::Debug;
+use std::fmt::{self, Debug, Formatter};
 
 use crate::input::Input;
 
@@ -50,7 +50,7 @@ pub struct Middle {
 }
 
 impl Debug for Middle {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("MiddleEntry")
             .field("key", &"Box<dyn Input>")
             .field("value", &"Box<dyn AnyValue>")
@@ -72,9 +72,9 @@ impl Clone for Middle {
 /**
  * An entry.
  */
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum Entry {
-    /// The BOS/EOS (Beginning/End of Sequence) entry.
+    /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,
 
     /// The middle entry.
@@ -162,7 +162,7 @@ pub struct MiddleView<'a> {
 }
 
 impl Debug for MiddleView<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("MiddleEntryView")
             .field("key", &"Option<&dyn Input>")
             .field("value", &"Option<&'a dyn AnyValue>")
@@ -174,9 +174,9 @@ impl Debug for MiddleView<'_> {
 /**
  * An entry view.
  */
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum EntryView<'a> {
-    /// The BOS/EOS (Beginning/End of Sequence) entry.
+    /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,
 
     /// The middle entry.
@@ -230,7 +230,7 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&'a dyn AnyValue> {
+    pub const fn value(&self) -> Option<&'a dyn AnyValue> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(middle_view) => Some(middle_view.value),
@@ -243,7 +243,7 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The cost.
      */
-    pub fn cost(&self) -> i32 {
+    pub const fn cost(&self) -> i32 {
         match self {
             EntryView::BosEos => 0,
             EntryView::Middle(middle_view) => middle_view.cost,

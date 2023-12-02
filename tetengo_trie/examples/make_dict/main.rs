@@ -37,7 +37,7 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 enum DictMakingError {
     #[error("Invalid UniDic lex.csv format.")]
     InvalidUnidicLexCsvFormat,
@@ -174,8 +174,7 @@ fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<()> {
 }
 
 fn serialize_value(vpus: &Vec<(usize, usize)>) -> Vec<u8> {
-    let mut serialized = Vec::new();
-    serialized.reserve(SERIALIZED_VALUE_SIZE);
+    let mut serialized = Vec::with_capacity(SERIALIZED_VALUE_SIZE);
 
     let serialized_size = serialize_usize(vpus.len());
     serialized.extend(serialized_size);
@@ -194,8 +193,7 @@ fn serialize_value(vpus: &Vec<(usize, usize)>) -> Vec<u8> {
 }
 
 fn serialize_pair_of_usize(pus: &(usize, usize)) -> Vec<u8> {
-    let mut serialized = Vec::new();
-    serialized.reserve(size_of::<usize>() * 2);
+    let mut serialized = Vec::with_capacity(size_of::<usize>() * 2);
 
     let (offset, length) = pus;
     serialized.extend(serialize_usize(*offset));

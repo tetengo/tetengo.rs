@@ -60,7 +60,7 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 enum DictSearchingError {
     #[error("Can't read the whole of lex.csv file.")]
     CantReadWholeOfLexCsvFile,
@@ -95,10 +95,8 @@ const VALUE_CAPACITY: usize = 4usize;
 fn deserialize_value(bytes: &[u8]) -> Result<Vec<(usize, usize)>> {
     let mut byte_offset = 0usize;
 
-    let mut vps = Vec::new();
-
     let size = deserialize_usize(bytes, &mut byte_offset)?;
-    vps.reserve(size);
+    let mut vps = Vec::with_capacity(size);
     for _ in 0..min(size, VALUE_CAPACITY) {
         vps.push(deserialize_pair_of_usize(bytes, &mut byte_offset)?);
     }
