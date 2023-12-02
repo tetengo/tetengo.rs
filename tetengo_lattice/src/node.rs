@@ -26,7 +26,7 @@ pub enum NodeError {
 /**
  * A BOS (Beginning of Sequence) node.
  */
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Bos<'a> {
     preceding_edge_costs: &'a Vec<i32>,
 }
@@ -34,7 +34,7 @@ pub struct Bos<'a> {
 /**
  * A EOS (Ending of Sequence) node.
  */
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Eos<'a> {
     preceding_step: usize,
     preceding_edge_costs: &'a Vec<i32>,
@@ -71,10 +71,24 @@ impl Debug for Middle<'_> {
     }
 }
 
+impl Eq for Middle<'_> {}
+
+impl PartialEq for Middle<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.key.equal_to(other.key)
+            && self.index_in_step == other.index_in_step
+            && self.preceding_step == other.preceding_step
+            && self.preceding_edge_costs == other.preceding_edge_costs
+            && self.best_preceding_node == other.best_preceding_node
+            && self.node_cost == other.node_cost
+            && self.path_cost == other.path_cost
+    }
+}
+
 /**
  * A node.
  */
-#[derive(Clone, Debug /*, Eq*/)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Node<'a> {
     /// The BOS (Beginning of Sequence) node.
     Bos(Bos<'a>),
@@ -189,26 +203,6 @@ impl<'a> Node<'a> {
         }))
     }
 
-    /*
-        /*!
-            \brief Returns true if one node is equal to another.
-
-            \param one     One node.
-            \param another Another node.
-
-            \retval true  When one node is equal to another.
-            \retval valse Otherwise.
-        */
-        friend constexpr bool operator==(const node& one, const node& another)
-        {
-            return ((!one.p_key() && !another.p_key()) ||
-                    (one.p_key() && another.p_key() && *one.p_key() == *another.p_key())) &&
-                    one.preceding_step() == another.preceding_step() &&
-                    one.best_preceding_node() == another.best_preceding_node() &&
-                    one.node_cost() == another.node_cost() && one.path_cost() == another.path_cost();
-        }
-    */
-
     /**
      * Returns the key.
      *
@@ -322,25 +316,6 @@ impl<'a> Node<'a> {
     */
 }
 
-// impl PartialEq for Node<'_> {
-//     fn eq(&self, other: &Self) -> bool {
-//         match (self, other) {
-//             (Node::Bos(_), Node::Bos(_)) => true,
-//             (Node::Eos(_), Node::Eos(_)) => true,
-//             (Node::Middle(one), Node::Middle(another)) => {
-//                 one.key == another.key
-//                     && one.index_in_step == another.index_in_step
-//                     && one.preceding_step == another.preceding_step
-//                     && one.preceding_edge_costs == another.preceding_edge_costs
-//                     && one.best_preceding_node == another.best_preceding_node
-//                     && one.node_cost == another.node_cost
-//                     && one.path_cost == another.path_cost
-//             }
-//             _ => false,
-//         }
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use crate::StringInput;
@@ -426,36 +401,6 @@ mod tests {
             assert!(node.is_err());
         }
     }
-
-    /*
-    BOOST_AUTO_TEST_CASE(operator_equal)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-
-            const std::vector<int> preceding_edge_costs_bos{};
-            const auto             bos = tetengo::lattice::node::bos(&preceding_edge_costs_bos);
-
-            const std::vector<int> preceding_edge_costs_eos{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const auto             eos = tetengo::lattice::node::eos(1, &preceding_edge_costs_eos, 5, 42);
-
-            const std::any               value1{ 42 };
-            const std::vector<int>       preceding_edge_costs1{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node node1{ &key, &value1, 53, 1, &preceding_edge_costs1, 5, 24, 2424 };
-
-            const std::any               value2{ 42 };
-            const std::vector<int>       preceding_edge_costs2{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node node2{ &key, &value2, 53, 1, &preceding_edge_costs2, 5, 24, 2424 };
-
-            BOOST_CHECK(bos == bos);
-            BOOST_CHECK(bos != eos);
-            BOOST_CHECK(bos != node1);
-            BOOST_CHECK(node1 == node2);
-        }
-    }
-    */
 
     #[test]
     fn key() {
@@ -587,4 +532,28 @@ mod tests {
         }
     }
     */
+
+    #[test]
+    fn eq() {
+        let key = StringInput::new(String::from("mizuho"));
+
+        let preceding_edge_costs_bos = Vec::new();
+        let bos = Node::bos(&preceding_edge_costs_bos);
+
+        let preceding_edge_costs_eos = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let eos = Node::eos(1, &preceding_edge_costs_eos, 5, 42);
+
+        let value1 = 42;
+        let preceding_edge_costs1 = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node1 = Node::new(&key, &value1, 53, 1, &preceding_edge_costs1, 5, 24, 2424);
+
+        let value2 = 42;
+        let preceding_edge_costs2 = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node2 = Node::new(&key, &value2, 53, 1, &preceding_edge_costs2, 5, 24, 2424);
+
+        assert_eq!(bos, bos);
+        assert_ne!(bos, eos);
+        assert_ne!(bos, node1);
+        assert_eq!(node1, node2);
+    }
 }
