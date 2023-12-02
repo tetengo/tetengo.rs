@@ -38,8 +38,8 @@ pub struct Bos<'a> {
 pub struct Eos<'a> {
     preceding_step: usize,
     preceding_edge_costs: &'a Vec<i32>,
-    _best_preceding_node: usize,
-    _path_cost: i32,
+    best_preceding_node: usize,
+    path_cost: i32,
 }
 /**
  * A middle node.
@@ -131,8 +131,8 @@ impl<'a> Node<'a> {
         Node::Eos(Eos {
             preceding_step,
             preceding_edge_costs,
-            _best_preceding_node: best_preceding_node,
-            _path_cost: path_cost,
+            best_preceding_node,
+            path_cost,
         })
     }
 
@@ -282,42 +282,48 @@ impl<'a> Node<'a> {
     pub const fn best_preceding_node(&self) -> usize {
         match self {
             Node::Bos(_) => usize::MAX,
-            Node::Eos(eos) => eos._best_preceding_node,
+            Node::Eos(eos) => eos.best_preceding_node,
             Node::Middle(middle) => middle.best_preceding_node,
         }
     }
 
-    /*
-        /*!
-            \brief Returns the node cost.
-
-            \return The node cost.
-        */
-        [[nodiscard]] constexpr int node_cost() const
-        {
-            return m_node_cost;
+    /**
+     * Returns the node cost.
+     *
+     * # Returns
+     * The node cost.
+     */
+    pub const fn node_cost(&self) -> i32 {
+        match self {
+            Node::Bos(_) => EntryView::BosEos.cost(),
+            Node::Eos(_) => EntryView::BosEos.cost(),
+            Node::Middle(middle) => middle.node_cost,
         }
-    */
-    /*
-        /*!
-            \brief Returns the path cost.
+    }
 
-            \return The path cost.
-        */
-        [[nodiscard]] constexpr int path_cost() const
-        {
-            return m_path_cost;
+    /**
+     * Returns the path cost.
+     *
+     * # Returns
+     * The path cost.
+     */
+    pub const fn path_cost(&self) -> i32 {
+        match self {
+            Node::Bos(_) => 0,
+            Node::Eos(eos) => eos.path_cost,
+            Node::Middle(middle) => middle.path_cost,
         }
-    */
-    /*
-        /*!
-            \brief Returns true is this node is the BOS.
+    }
 
-            \retval true  When this node is the BOS.
-            \retval false Otherwise.
-        */
-        [[nodiscard]] bool is_bos() const;
-    */
+    /**
+     * Returns `true` if this node is the BOS.
+     *
+     * # Returns
+     * `true` if this node is the BOS.
+     */
+    pub const fn is_bos(&self) -> bool {
+        matches!(self, Node::Bos(_))
+    }
 }
 
 #[cfg(test)]
@@ -337,8 +343,8 @@ mod tests {
         assert_eq!(bos.preceding_step(), usize::MAX);
         assert_eq!(bos.preceding_edge_costs(), &preceding_edge_costs);
         assert_eq!(bos.best_preceding_node(), usize::MAX);
-        // BOOST_TEST(bos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
-        // BOOST_TEST(bos.path_cost() == 0);
+        assert_eq!(bos.node_cost(), EntryView::BosEos.cost());
+        assert_eq!(bos.path_cost(), 0);
     }
 
     #[test]
@@ -352,8 +358,8 @@ mod tests {
         assert_eq!(eos.preceding_step(), 1);
         assert_eq!(eos.preceding_edge_costs(), &preceding_edge_costs);
         assert_eq!(eos.best_preceding_node(), 5);
-        // BOOST_TEST(eos.node_cost() == tetengo::lattice::entry_view::bos_eos().cost());
-        // BOOST_TEST(eos.path_cost() == 42);
+        assert_eq!(eos.node_cost(), EntryView::BosEos.cost());
+        assert_eq!(eos.path_cost(), 42);
     }
 
     #[test]
@@ -394,8 +400,8 @@ mod tests {
             assert_eq!(node.preceding_step(), 1);
             assert_eq!(node.preceding_edge_costs(), &preceding_edge_costs);
             assert_eq!(node.best_preceding_node(), 5);
-            // BOOST_TEST(node_.node_cost() == 24);
-            // BOOST_TEST(node_.path_cost() == 2424);
+            assert_eq!(node.node_cost(), 24);
+            assert_eq!(node.path_cost(), 2424);
         }
         {
             let entry = EntryView::BosEos;
@@ -481,57 +487,43 @@ mod tests {
         assert_eq!(node.best_preceding_node(), 5);
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(node_cost)
-    {
-        BOOST_TEST_PASSPOINT();
+    #[test]
+    fn node_cost() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
 
+        assert_eq!(node.node_cost(), 24);
+    }
+
+    #[test]
+    fn path_cost() {
+        let key = StringInput::new(String::from("mizuho"));
+        let value = 42;
+        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+
+        assert_eq!(node.path_cost(), 2424);
+    }
+
+    #[test]
+    fn is_bos() {
         {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
-
-            BOOST_TEST(node_.node_cost() == 24);
+            let preceding_edge_costs_bos = Vec::new();
+            assert!(Node::bos(&preceding_edge_costs_bos).is_bos());
+        }
+        {
+            let preceding_edge_costs_eos = vec![3, 1, 4, 1, 5, 9, 2, 6];
+            assert!(!Node::eos(1, &preceding_edge_costs_eos, 5, 42).is_bos());
+        }
+        {
+            let key = StringInput::new(String::from("mizuho"));
+            let value = 42;
+            let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
+            assert!(!Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424).is_bos());
         }
     }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(path_cost)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            const tetengo::lattice::node         node_{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 };
-
-            BOOST_TEST(node_.path_cost() == 2424);
-        }
-    }
-    */
-    /*
-    BOOST_AUTO_TEST_CASE(is_bos)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const std::vector<int> preceding_edge_costs{};
-            BOOST_TEST(tetengo::lattice::node::bos(&preceding_edge_costs).is_bos());
-        }
-        {
-            const std::vector<int> preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            BOOST_TEST(!tetengo::lattice::node::eos(1, &preceding_edge_costs, 5, 42).is_bos());
-        }
-        {
-            const tetengo::lattice::string_input key{ "mizuho" };
-            const std::any                       value{ 42 };
-            const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            BOOST_TEST((!tetengo::lattice::node{ &key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424 }.is_bos()));
-        }
-    }
-    */
 
     #[test]
     fn eq() {
