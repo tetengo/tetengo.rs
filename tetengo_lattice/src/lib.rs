@@ -9,6 +9,7 @@ pub mod entry;
 pub mod input;
 pub mod node;
 pub mod string_input;
+pub mod vocabulary;
 
 pub use connection::Connection;
 pub use entry::AnyValue;
@@ -19,3 +20,4 @@ pub use input::InputError;
 pub use node::Node;
 pub use node::NodeError;
 pub use string_input::StringInput;
+pub use vocabulary::Vocabulary;
