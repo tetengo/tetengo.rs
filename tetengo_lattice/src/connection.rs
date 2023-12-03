@@ -8,60 +8,45 @@
  * A connection.
  */
 #[derive(Clone, Copy, Debug)]
-pub struct Connection {}
+pub struct Connection {
+    cost: i32,
+}
 
 impl Connection {
-    // /*!
-    //     \brief Creates a connection.
+    /**
+     * Creates a connection.
+     *
+     * # Arguments
+     * * `cost` - A cost.
+     */
+    pub const fn new(cost: i32) -> Self {
+        Self { cost }
+    }
 
-    //     \param cost A cost.
-    // */
-    // explicit constexpr connection(int cost) : m_cost{ cost } {}
-
-    // // functions
-
-    // /*!
-    //     \brief Returns the cost.
-
-    //     \return The cost.
-    // */
-    // [[nodiscard]] constexpr int cost() const
-    // {
-    //     return m_cost;
-    // }
+    /**
+     * Returns the cost.
+     *
+     * # Returns
+     * The cost.
+     */
+    pub const fn cost(&self) -> i32 {
+        self.cost
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use super::*;
 
-    // BOOST_AUTO_TEST_CASE(construction)
-    // {
-    //     BOOST_TEST_PASSPOINT();
+    #[test]
+    fn new() {
+        let _ = Connection::new(42);
+    }
 
-    //     {
-    //         [[maybe_unused]] const tetengo::lattice::connection connection_{ 42 };
-    //     }
+    #[test]
+    fn cost() {
+        let connection_ = Connection::new(42);
 
-    //     {
-    //         [[maybe_unused]] const tetengo_lattice_connection_t connection_{ 42 };
-    //     }
-    // }
-
-    // BOOST_AUTO_TEST_CASE(cost)
-    // {
-    //     BOOST_TEST_PASSPOINT();
-
-    //     {
-    //         const tetengo::lattice::connection connection_{ 42 };
-
-    //         BOOST_TEST(connection_.cost() == 42);
-    //     }
-
-    //     {
-    //         const tetengo_lattice_connection_t connection_{ 42 };
-
-    //         BOOST_TEST(connection_.cost == 42);
-    //     }
-    // }
+        assert_eq!(connection_.cost(), 42);
+    }
 }
