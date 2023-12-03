@@ -4,13 +4,18 @@
 //#![doc = include_str!("../tests/usage.rs")]
 //#![doc = "```"]
 
+pub mod connection;
 pub mod entry;
 pub mod input;
 pub mod node;
 pub mod string_input;
 
+pub use connection::Connection;
+pub use entry::AnyValue;
 pub use entry::Entry;
+pub use entry::EntryView;
 pub use input::Input;
 pub use input::InputError;
 pub use node::Node;
+pub use node::NodeError;
 pub use string_input::StringInput;
