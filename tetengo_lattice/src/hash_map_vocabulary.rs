@@ -4,18 +4,28 @@
  * Copyright 2023 kaoru  <https://www.tetengo.org/>
  */
 
+use std::collections::HashMap;
+
 use crate::connection::Connection;
-use crate::entry::EntryView;
+use crate::entry::{Entry, EntryView};
 use crate::node::Node;
 use crate::vocabulary::Vocabulary;
+
+type EntryMap = HashMap<String, Vec<Entry>>;
+
+type ConnectionMap<'a> = HashMap<(EntryView<'a>, EntryView<'a>), i32>;
 
 /**
  * A hash map vocabulary.
  */
-#[derive(Clone, Copy, Debug)]
-pub struct HashMapVocabulary {}
+#[derive(Clone, Debug)]
+pub struct HashMapVocabulary<'a> {
+    _entry_map: EntryMap,
+    _connection_keys: Vec<(Entry, Entry)>,
+    _connection_map: ConnectionMap<'a>,
+}
 
-impl HashMapVocabulary {
+impl HashMapVocabulary<'_> {
     /*
         /*!
             \brief Creates an unordered map vocabulary.
@@ -33,8 +43,8 @@ impl HashMapVocabulary {
     */
 }
 
-impl Vocabulary for HashMapVocabulary {
-    fn find_entries(&self, _key: &dyn crate::Input) -> Vec<EntryView<'_>> {
+impl<'a> Vocabulary for HashMapVocabulary<'a> {
+    fn find_entries(&self, _key: &dyn crate::Input) -> Vec<EntryView<'a>> {
         todo!()
     }
 
