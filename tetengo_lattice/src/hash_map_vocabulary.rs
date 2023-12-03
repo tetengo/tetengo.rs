@@ -5,6 +5,7 @@
  */
 
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 use crate::connection::Connection;
 use crate::entry::{Entry, EntryView};
@@ -13,38 +14,138 @@ use crate::vocabulary::Vocabulary;
 
 type EntryMap = HashMap<String, Vec<Entry>>;
 
-type ConnectionMap<'a> = HashMap<(EntryView<'a>, EntryView<'a>), i32>;
+#[derive(Clone, Debug)]
+struct HashableEntry {
+    entry: Entry,
+    hash_value: fn(&EntryView<'_>) -> u64,
+    equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+}
+
+impl HashableEntry {
+    fn from(
+        entry: Entry,
+        hash_value: fn(&EntryView<'_>) -> u64,
+        equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    ) -> Self {
+        HashableEntry {
+            entry,
+            hash_value,
+            equal,
+        }
+    }
+}
+
+impl Eq for HashableEntry {}
+
+impl Hash for HashableEntry {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let entry_view = EntryView::from_entry(&self.entry);
+        let hash_value = (self.hash_value)(&entry_view);
+        hash_value.hash(state);
+    }
+}
+
+impl PartialEq for HashableEntry {
+    fn eq(&self, other: &Self) -> bool {
+        let self_entry_view = EntryView::from_entry(&self.entry);
+        let other_entry_view = EntryView::from_entry(&other.entry);
+        (self.equal)(&self_entry_view, &other_entry_view)
+    }
+}
+
+type ConnectionMap = HashMap<(HashableEntry, HashableEntry), i32>;
 
 /**
  * A hash map vocabulary.
  */
 #[derive(Clone, Debug)]
-pub struct HashMapVocabulary<'a> {
+pub struct HashMapVocabulary {
     _entry_map: EntryMap,
-    _connection_keys: Vec<(Entry, Entry)>,
-    _connection_map: ConnectionMap<'a>,
+    _connection_map: ConnectionMap,
 }
 
-impl HashMapVocabulary<'_> {
-    /*
-        /*!
-            \brief Creates an unordered map vocabulary.
+impl HashMapVocabulary {
+    /**
+     * Creates a hash map vocabulary.
+     *
+     * # Arguments
+     * * `entries`          - Entries.
+     * * `connections`      - Connections.
+     * * `entry_hash_value` - A hash function for an entry.
+     */
+    pub fn new(
+        entries: Vec<(String, Vec<Entry>)>,
+        connections: Vec<((Entry, Entry), i32)>,
+        entry_hash_value: fn(&EntryView<'_>) -> u64,
+        entry_equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    ) -> Self {
+        let entry_map = Self::make_entry_map(entries);
+        let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
+        HashMapVocabulary {
+            _entry_map: entry_map,
+            _connection_map: connection_map,
+        }
+    }
 
-            \param entries        Entries.
-            \param connections    Connections.
-            \param entry_hash     A hash function for an entry.
-            \param entry_equal_to An eqaul_to function for an entry.
-        */
-        unordered_map_vocabulary(
-            std::vector<std::pair<std::string, std::vector<entry>>>   entries,
-            std::vector<std::pair<std::pair<entry, entry>, int>>      connections,
-            std::function<std::size_t(const entry_view&)>             entry_hash,
-            std::function<bool(const entry_view&, const entry_view&)> entry_equal_to);
+    fn make_entry_map(entries: Vec<(String, Vec<Entry>)>) -> EntryMap {
+        let mut entry_map = EntryMap::new();
+        for (key, entries) in entries {
+            let _prev_value = entry_map.insert(key, entries);
+        }
+        entry_map
+    }
+
+    fn make_connection_map(
+        connections: Vec<((Entry, Entry), i32)>,
+        entry_hash_value: fn(&EntryView<'_>) -> u64,
+        entry_equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    ) -> ConnectionMap {
+        let mut connection_map = ConnectionMap::new();
+        for ((from, to), cost) in connections {
+            let from = HashableEntry::from(from, entry_hash_value, entry_equal);
+            let to = HashableEntry::from(to, entry_hash_value, entry_equal);
+            let _prev_value = connection_map.insert((from, to), cost);
+        }
+        connection_map
+    }
+    /*
+    static void build_connection_map(
+        std::vector<std::pair<std::pair<entry, entry>, int>>      connections,
+        std::function<std::size_t(const entry_view&)>             entry_hash,
+        std::function<bool(const entry_view&, const entry_view&)> entry_equal_to,
+        std::vector<std::pair<entry, entry>>&                     connection_keys,
+        std::unique_ptr<connection_map_type>&                     p_connection_map)
+    {
+        connection_keys.reserve(std::size(connections));
+        for (auto&& e: connections)
+        {
+            connection_keys.push_back(std::move(e.first));
+        }
+
+        auto p_map = std::make_unique<connection_map_type>(
+            std::size(connections),
+            connection_map_hash{ std::move(entry_hash) },
+            connection_map_key_eq{ std::move(entry_equal_to) });
+        p_map->reserve(std::size(connections));
+        for (auto i = static_cast<std::size_t>(0); i < std::size(connections); ++i)
+        {
+            const auto&      connection_key = connection_keys[i];
+            const entry_view from{ connection_key.first.p_key(),
+                                   &connection_key.first.value(),
+                                   connection_key.first.cost() };
+            const entry_view to{ connection_key.second.p_key(),
+                                 &connection_key.second.value(),
+                                 connection_key.second.cost() };
+            p_map->insert(std::make_pair(std::make_pair(from, to), connections[i].second));
+        }
+
+        p_connection_map = std::move(p_map);
+    }
     */
 }
 
-impl<'a> Vocabulary for HashMapVocabulary<'a> {
-    fn find_entries(&self, _key: &dyn crate::Input) -> Vec<EntryView<'a>> {
+impl Vocabulary for HashMapVocabulary {
+    fn find_entries(&self, _key: &dyn crate::Input) -> Vec<EntryView<'_>> {
         todo!()
     }
 
@@ -55,28 +156,28 @@ impl<'a> Vocabulary for HashMapVocabulary<'a> {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use crate::string_input::StringInput;
+
+    use super::*;
+
+    fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
+        let Some(key) = entry.key() else {
+            return 0;
+        };
+        key.hash_value()
+    }
+
+    fn entry_equal(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+        match (one.key(), other.key()) {
+            (Some(one_key), Some(other_key)) => one_key.equal_to(other_key),
+            (None, None) => true,
+            _ => false,
+        }
+    }
 
     /*
      namespace
      {
-         using key_type = tetengo::lattice::string_input;
-
-         constexpr char operator""_c(const unsigned long long int uc)
-         {
-             return static_cast<char>(uc);
-         }
-
-         const std::string key_mizuho{ 0xE3_c, 0x81_c, 0xBF_c, 0xE3_c, 0x81_c, 0x9A_c, 0xE3_c, 0x81_c, 0xBB_c };
-
-         const std::string surface_mizuho{ 0xE7_c, 0x91_c, 0x9E_c, 0xE7_c, 0xA9_c, 0x82_c };
-
-         const std::string key_sakura{ 0xE3_c, 0x81_c, 0x95_c, 0xE3_c, 0x81_c, 0x8F_c, 0xE3_c, 0x82_c, 0x89_c };
-
-         const std::string surface_sakura1{ 0xE6_c, 0xA1_c, 0x9C_c };
-
-         const std::string surface_sakura2{ 0xE3_c, 0x81_c, 0x95_c, 0xE3_c, 0x81_c, 0x8F_c, 0xE3_c, 0x82_c, 0x89_c };
-
          tetengo::lattice::node make_node(const tetengo::lattice::entry_view& entry)
          {
              static const std::vector<int> preceding_edge_costs{};
@@ -88,20 +189,62 @@ mod tests {
                                             std::numeric_limits<int>::max() };
          }
 
-         std::size_t cpp_entry_hash(const tetengo::lattice::entry_view& entry)
-         {
-             return entry.p_key() ? entry.p_key()->hash_value() : 0;
-         }
-
-         bool cpp_entry_equal_to(const tetengo::lattice::entry_view& one, const tetengo::lattice::entry_view& another)
-         {
-             return (!one.p_key() && !another.p_key()) ||
-                    (one.p_key() && another.p_key() && *one.p_key() == *another.p_key());
-         }
-
     }
-     */
+    */
 
+    #[test]
+    fn new() {
+        {
+            let entries = Vec::<(String, Vec<Entry>)>::new();
+            let connections = Vec::<((Entry, Entry), i32)>::new();
+            let _vocaburary =
+                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+        }
+        {
+            let entries = vec![
+                (
+                    String::from("みずほ"),
+                    vec![Entry::new(
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
+                        42,
+                    )],
+                ),
+                (
+                    String::from("さくら"),
+                    vec![
+                        Entry::new(
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
+                            24,
+                        ),
+                        Entry::new(
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
+                            2424,
+                        ),
+                    ],
+                ),
+            ];
+            let connections = vec![(
+                (
+                    Entry::new(
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
+                        42,
+                    ),
+                    Entry::new(
+                        Box::new(StringInput::new(String::from("さくら"))),
+                        Box::new(String::from("桜")),
+                        24,
+                    ),
+                ),
+                4242,
+            )];
+            let _vocaburary =
+                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+        }
+    }
     /*
     BOOST_AUTO_TEST_CASE(construction)
     {
