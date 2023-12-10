@@ -53,7 +53,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
      * # Errors
      * * When it fails to read the memory.
      */
-    pub fn from_reader(
+    pub fn new_with_reader(
         reader: &mut dyn Read,
         value_deserializer: &ValueDeserializer<Value>,
     ) -> Result<Self> {
@@ -362,7 +362,7 @@ mod tests {
     }
 
     #[test]
-    fn from_reader() {
+    fn new_with_reader() {
         {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::new(|serialized| {
@@ -370,7 +370,7 @@ mod tests {
                     Lazy::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
+            let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(storage.value_at(4).unwrap().unwrap().as_ref(), "hoge");
@@ -384,7 +384,7 @@ mod tests {
                     Lazy::new(|| IntegerDeserializer::<u32>::new(false));
                 U32_DESERIALIZER.deserialize(serialized)
             });
-            let storage = MemoryStorage::from_reader(&mut reader, &deserializer).unwrap();
+            let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3);
@@ -398,7 +398,7 @@ mod tests {
                     Lazy::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let result = MemoryStorage::from_reader(&mut reader, &deserializer);
+            let result = MemoryStorage::new_with_reader(&mut reader, &deserializer);
             assert!(result.is_err());
         }
     }
