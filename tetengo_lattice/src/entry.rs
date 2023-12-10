@@ -95,19 +95,17 @@ impl Entry {
     }
 
     /**
-     * Creates an entry.
+     * Casts this object to a view.
      *
      * # Arguments
-     * * `view` - An entry view.
+     * * `entry` - An entry.
      */
-    pub fn from_view(view: &EntryView<'_>) -> Self {
-        match view {
-            EntryView::BosEos => Entry::BosEos,
-            EntryView::Middle(middle_view) => Entry::new(
-                middle_view.key.clone_box(),
-                middle_view.value.clone_box(),
-                middle_view.cost,
-            ),
+    pub fn as_view(&self) -> EntryView<'_> {
+        match self {
+            Entry::BosEos => EntryView::BosEos,
+            Entry::Middle(middle) => {
+                EntryView::new(middle.key.as_ref(), middle.value.as_ref(), middle.cost)
+            }
         }
     }
 
@@ -197,17 +195,19 @@ impl<'a> EntryView<'a> {
     }
 
     /**
-     * Creates an entry view.
+     * Creates an entry.
      *
      * # Arguments
-     * * `entry` - An entry.
+     * * `view` - An entry view.
      */
-    pub fn from_entry(entry: &'a Entry) -> Self {
-        match entry {
-            Entry::BosEos => EntryView::BosEos,
-            Entry::Middle(middle) => {
-                EntryView::new(middle.key.as_ref(), middle.value.as_ref(), middle.cost)
-            }
+    pub fn to_entry(&self) -> Entry {
+        match self {
+            EntryView::BosEos => Entry::BosEos,
+            EntryView::Middle(middle_view) => Entry::new(
+                middle_view.key.clone_box(),
+                middle_view.value.clone_box(),
+                middle_view.cost,
+            ),
         }
     }
 
@@ -294,14 +294,14 @@ mod tests {
     }
 
     #[test]
-    fn from_view_and_from_entry() {
+    fn as_view_and_to_entry() {
         let entry1 = Entry::new(
             Box::new(StringInput::new(String::from("みずほ"))),
             Box::new(String::from("瑞穂")),
             42,
         );
-        let view = EntryView::from_entry(&entry1);
-        let entry2 = Entry::from_view(&view);
+        let view = entry1.as_view();
+        let entry2 = view.to_entry();
 
         assert_eq!(
             entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),

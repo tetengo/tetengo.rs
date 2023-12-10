@@ -172,12 +172,12 @@ impl<'a> Node<'a> {
     }
 
     /**
-     * Creates a node from a vocabulary entry.
+     * Creates a node with a vocabulary entry view.
      *
      * # Errors
      * * When `entry` is BOS or EOS.
      */
-    pub fn from(
+    pub fn new_with_entry_view(
         entry: &'a EntryView<'a>,
         index_in_step: usize,
         preceding_step: usize,
@@ -371,13 +371,13 @@ mod tests {
     }
 
     #[test]
-    fn from() {
+    fn new_with_entry_view() {
         {
             let entry_key = StringInput::new(String::from("mizuho"));
             let entry_value = 42;
             let entry = EntryView::new(&entry_key, &entry_value, 24);
             let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            let node = Node::from(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
+            let node = Node::new_with_entry_view(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
 
             let node = node.unwrap();
             assert_eq!(
@@ -406,7 +406,7 @@ mod tests {
         {
             let entry = EntryView::BosEos;
             let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            let node = Node::from(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
+            let node = Node::new_with_entry_view(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
 
             assert!(node.is_err());
         }

@@ -558,7 +558,7 @@ mod tests {
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage =
-                Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
+                Box::new(MemoryStorage::new_with_reader(&mut reader, &value_deserializer).unwrap());
             let _trie = Trie::<&str, String>::builder_with_storage(storage).build();
         }
 
@@ -570,7 +570,7 @@ mod tests {
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage =
-                Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
+                Box::new(MemoryStorage::new_with_reader(&mut reader, &value_deserializer).unwrap());
             let _trie = Trie::<&str, String>::builder_with_storage(storage)
                 .key_serializer(StrSerializer::new(true))
                 .build();
@@ -856,7 +856,7 @@ mod tests {
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage =
-                Box::new(MemoryStorage::from_reader(&mut reader, &value_deserializer).unwrap());
+                Box::new(MemoryStorage::new_with_reader(&mut reader, &value_deserializer).unwrap());
             let trie = Trie::<&str, String>::builder_with_storage(storage).build();
 
             let storage = trie.storage();

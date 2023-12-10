@@ -45,11 +45,11 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
      * # Errors
      * * When it fails to read the memory.
      */
-    pub fn from_reader(
+    pub fn new_with_reader(
         reader: &mut dyn Read,
         value_deserializer: &ValueDeserializer<Value>,
     ) -> Result<Self> {
-        let entity = MemoryStorage::<Value>::from_reader(reader, value_deserializer)?;
+        let entity = MemoryStorage::<Value>::new_with_reader(reader, value_deserializer)?;
         Ok(Self {
             entity: Rc::new(entity),
         })
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[test]
-    fn from_reader() {
+    fn new_with_reader() {
         {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
@@ -190,7 +190,7 @@ mod tests {
                     Lazy::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let storage = SharedStorage::from_reader(&mut reader, &deserializer).unwrap();
+            let storage = SharedStorage::new_with_reader(&mut reader, &deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(storage.value_at(4).unwrap().unwrap().as_ref(), "hoge");
@@ -204,7 +204,7 @@ mod tests {
                     Lazy::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
-            let result = SharedStorage::from_reader(&mut reader, &deserializer);
+            let result = SharedStorage::new_with_reader(&mut reader, &deserializer);
             assert!(result.is_err());
         }
     }
