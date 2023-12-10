@@ -110,23 +110,6 @@ impl Entry {
     }
 
     /**
-     * Creates an entry.
-     *
-     * # Arguments
-     * * `view` - An entry view.
-     */
-    pub fn from_view(view: &EntryView<'_>) -> Self {
-        match view {
-            EntryView::BosEos => Entry::BosEos,
-            EntryView::Middle(middle_view) => Entry::new(
-                middle_view.key.clone_box(),
-                middle_view.value.clone_box(),
-                middle_view.cost,
-            ),
-        }
-    }
-
-    /**
      * Returns the key.
      *
      * # Returns
@@ -212,6 +195,23 @@ impl<'a> EntryView<'a> {
     }
 
     /**
+     * Creates an entry.
+     *
+     * # Arguments
+     * * `view` - An entry view.
+     */
+    pub fn to_entry(&self) -> Entry {
+        match self {
+            EntryView::BosEos => Entry::BosEos,
+            EntryView::Middle(middle_view) => Entry::new(
+                middle_view.key.clone_box(),
+                middle_view.value.clone_box(),
+                middle_view.cost,
+            ),
+        }
+    }
+
+    /**
      * Returns the key.
      *
      * # Returns
@@ -294,14 +294,14 @@ mod tests {
     }
 
     #[test]
-    fn from_view_and_as_view() {
+    fn as_view_and_to_entry() {
         let entry1 = Entry::new(
             Box::new(StringInput::new(String::from("みずほ"))),
             Box::new(String::from("瑞穂")),
             42,
         );
         let view = entry1.as_view();
-        let entry2 = Entry::from_view(&view);
+        let entry2 = view.to_entry();
 
         assert_eq!(
             entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
