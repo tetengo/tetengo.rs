@@ -108,40 +108,6 @@ impl HashMapVocabulary {
         }
         connection_map
     }
-    /*
-    static void build_connection_map(
-        std::vector<std::pair<std::pair<entry, entry>, int>>      connections,
-        std::function<std::size_t(const entry_view&)>             entry_hash,
-        std::function<bool(const entry_view&, const entry_view&)> entry_equal_to,
-        std::vector<std::pair<entry, entry>>&                     connection_keys,
-        std::unique_ptr<connection_map_type>&                     p_connection_map)
-    {
-        connection_keys.reserve(std::size(connections));
-        for (auto&& e: connections)
-        {
-            connection_keys.push_back(std::move(e.first));
-        }
-
-        auto p_map = std::make_unique<connection_map_type>(
-            std::size(connections),
-            connection_map_hash{ std::move(entry_hash) },
-            connection_map_key_eq{ std::move(entry_equal_to) });
-        p_map->reserve(std::size(connections));
-        for (auto i = static_cast<std::size_t>(0); i < std::size(connections); ++i)
-        {
-            const auto&      connection_key = connection_keys[i];
-            const entry_view from{ connection_key.first.p_key(),
-                                   &connection_key.first.value(),
-                                   connection_key.first.cost() };
-            const entry_view to{ connection_key.second.p_key(),
-                                 &connection_key.second.value(),
-                                 connection_key.second.cost() };
-            p_map->insert(std::make_pair(std::make_pair(from, to), connections[i].second));
-        }
-
-        p_connection_map = std::move(p_map);
-    }
-    */
 }
 
 impl Vocabulary for HashMapVocabulary {
@@ -245,39 +211,7 @@ mod tests {
                 HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
         }
     }
-    /*
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
 
-        {
-            std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>                entries{};
-            std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{};
-            const tetengo::lattice::unordered_map_vocabulary                                         vocabulary{
-                std::move(entries), std::move(connections), cpp_entry_hash, cpp_entry_equal_to
-            };
-        }
-        {
-            std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entries{
-                { key_mizuho, { { std::make_unique<tetengo::lattice::string_input>(key_mizuho), surface_mizuho, 42 } } },
-                { key_sakura,
-                  { { std::make_unique<tetengo::lattice::string_input>(key_sakura), surface_sakura1, 24 },
-                    { std::make_unique<tetengo::lattice::string_input>(key_sakura), surface_sakura2, 2424 } } }
-            };
-            std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{
-                { std::make_pair(
-                      tetengo::lattice::entry{
-                          std::make_unique<tetengo::lattice::string_input>(key_mizuho), surface_mizuho, 42 },
-                      tetengo::lattice::entry{
-                          std::make_unique<tetengo::lattice::string_input>(key_sakura), surface_sakura1, 24 }),
-                  4242 }
-            };
-            const tetengo::lattice::unordered_map_vocabulary vocabulary{
-                std::move(entries), std::move(connections), cpp_entry_hash, cpp_entry_equal_to
-            };
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(find_entries)
     {
