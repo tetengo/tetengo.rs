@@ -5,6 +5,7 @@
  */
 
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 use crate::connection::Connection;
@@ -15,31 +16,57 @@ use crate::vocabulary::Vocabulary;
 
 type EntryMap = HashMap<String, Vec<Entry>>;
 
-#[derive(Clone, Debug)]
-struct HashableEntryEntity {
+#[derive(Clone)]
+struct HashableEntryEntity<'a> {
     entry: Entry,
-    hash_value: fn(&EntryView<'_>) -> u64,
-    equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+    equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
 }
 
-#[derive(Clone, Debug)]
+impl Debug for HashableEntryEntity<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HashableEntryEntity")
+            .field("entry", &self.entry)
+            .field("hash_value", &"&'a dyn Fn(&EntryView<'_>) -> u64")
+            .field(
+                "equal",
+                &"&'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool",
+            )
+            .finish()
+    }
+}
+
+#[derive(Clone)]
 struct HashableEntryView<'a> {
     entry_view: EntryView<'a>,
-    hash_value: fn(&EntryView<'_>) -> u64,
-    equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+    equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+}
+
+impl Debug for HashableEntryView<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HashableEntryEntity")
+            .field("entry_view", &self.entry_view)
+            .field("hash_value", &"&'a dyn Fn(&EntryView<'_>) -> u64")
+            .field(
+                "equal",
+                &"&'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool",
+            )
+            .finish()
+    }
 }
 
 #[derive(Clone, Debug)]
 enum HashableEntry<'a> {
-    Entity(HashableEntryEntity),
+    Entity(HashableEntryEntity<'a>),
     View(HashableEntryView<'a>),
 }
 
 impl<'a> HashableEntry<'a> {
     fn from_entity(
         entry: Entry,
-        hash_value: fn(&EntryView<'_>) -> u64,
-        equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+        equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
     ) -> Self {
         HashableEntry::Entity(HashableEntryEntity {
             entry,
@@ -50,8 +77,8 @@ impl<'a> HashableEntry<'a> {
 
     fn from_view(
         entry_view: EntryView<'a>,
-        hash_value: fn(&EntryView<'_>) -> u64,
-        equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+        equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
     ) -> Self {
         HashableEntry::View(HashableEntryView {
             entry_view,
@@ -102,12 +129,26 @@ type ConnectionMap<'a> = HashMap<(HashableEntry<'a>, HashableEntry<'a>), i32>;
 /**
  * A hash map vocabulary.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct HashMapVocabulary<'a> {
     entry_map: EntryMap,
     connection_map: ConnectionMap<'a>,
-    entry_hash_value: fn(&EntryView<'_>) -> u64,
-    entry_equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+    entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+}
+
+impl Debug for HashMapVocabulary<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HashableEntryEntity")
+            .field("entry_map", &self.entry_map)
+            .field("connection_map", &self.connection_map)
+            .field("hash_value", &"&'a dyn Fn(&EntryView<'_>) -> u64")
+            .field(
+                "equal",
+                &"&'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool",
+            )
+            .finish()
+    }
 }
 
 impl<'a> HashMapVocabulary<'a> {
@@ -123,8 +164,8 @@ impl<'a> HashMapVocabulary<'a> {
     pub fn new(
         entries: Vec<(String, Vec<Entry>)>,
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: fn(&EntryView<'_>) -> u64,
-        entry_equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+        entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
     ) -> Self {
         let entry_map = Self::make_entry_map(entries);
         let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
@@ -146,8 +187,8 @@ impl<'a> HashMapVocabulary<'a> {
 
     fn make_connection_map(
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: fn(&EntryView<'_>) -> u64,
-        entry_equal: fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
+        entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
     ) -> ConnectionMap<'a> {
         let mut connection_map = ConnectionMap::new();
         for ((from, to), cost) in connections {
@@ -231,7 +272,7 @@ mod tests {
             let entries = Vec::<(String, Vec<Entry>)>::new();
             let connections = Vec::<((Entry, Entry), i32)>::new();
             let _vocaburary =
-                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
         }
         {
             let entries = vec![
@@ -275,7 +316,7 @@ mod tests {
                 4242,
             )];
             let _vocaburary =
-                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
         }
     }
 
@@ -285,7 +326,7 @@ mod tests {
             let entries = Vec::<(String, Vec<Entry>)>::new();
             let connections = Vec::<((Entry, Entry), i32)>::new();
             let vocaburary =
-                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
             {
                 let found = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
@@ -338,7 +379,7 @@ mod tests {
                 4242,
             )];
             let vocaburary =
-                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
             {
                 let found = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
@@ -455,7 +496,7 @@ mod tests {
                 4242,
             )];
             let vocaburary =
-                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
+                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
             let entries_mizuho = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
             assert_eq!(entries_mizuho.len(), 1);
