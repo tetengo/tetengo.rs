@@ -10,6 +10,7 @@ use std::hash::{Hash, Hasher};
 use crate::connection::Connection;
 use crate::entry::{Entry, EntryView};
 use crate::node::Node;
+use crate::string_input::StringInput;
 use crate::vocabulary::Vocabulary;
 
 type EntryMap = HashMap<String, Vec<Entry>>;
@@ -60,7 +61,7 @@ type ConnectionMap = HashMap<(HashableEntry, HashableEntry), i32>;
  */
 #[derive(Clone, Debug)]
 pub struct HashMapVocabulary {
-    _entry_map: EntryMap,
+    entry_map: EntryMap,
     _connection_map: ConnectionMap,
 }
 
@@ -82,7 +83,7 @@ impl HashMapVocabulary {
         let entry_map = Self::make_entry_map(entries);
         let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
         HashMapVocabulary {
-            _entry_map: entry_map,
+            entry_map,
             _connection_map: connection_map,
         }
     }
@@ -111,19 +112,36 @@ impl HashMapVocabulary {
 }
 
 impl Vocabulary for HashMapVocabulary {
-    fn find_entries(&self, _key: &dyn crate::Input) -> Vec<EntryView<'_>> {
-        todo!()
+    fn find_entries(&self, key: &dyn crate::Input) -> Vec<EntryView<'_>> {
+        let Some(key) = key.as_any().downcast_ref::<StringInput>() else {
+            return Vec::new();
+        };
+        let Some(found) = self.entry_map.get(key.value()) else {
+            return Vec::new();
+        };
+
+        found.iter().map(|entry| entry.as_view()).collect()
     }
 
     fn find_connection(&self, _from: &Node<'_>, _to: &EntryView<'_>) -> Connection {
         todo!()
     }
+    /*
+    connection find_connection_impl(const node& from, const entry_view& to) const
+    {
+        const entry_view from_entry_view{ from.p_key(), &from.value(), from.node_cost() };
+        const auto       found = m_p_connection_map->find(std::make_pair(from_entry_view, to));
+        if (found == std::end(*m_p_connection_map))
+        {
+            return connection{ std::numeric_limits<int>::max() };
+        }
+        return connection{ found->second };
+    }
+    */
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::string_input::StringInput;
-
     use super::*;
 
     fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
@@ -212,70 +230,138 @@ mod tests {
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(find_entries)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn find_entries() {
         {
-            std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>                entries{};
-            std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{};
-            const tetengo::lattice::unordered_map_vocabulary                                         vocabulary{
-                std::move(entries), std::move(connections), cpp_entry_hash, cpp_entry_equal_to
-            };
+            let entries = Vec::<(String, Vec<Entry>)>::new();
+            let connections = Vec::<((Entry, Entry), i32)>::new();
+            let vocaburary =
+                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
 
             {
-                const auto found = vocabulary.find_entries(key_type{ key_mizuho });
-                BOOST_TEST(std::empty(found));
+                let found = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
+                assert!(found.is_empty());
             }
             {
-                const auto found = vocabulary.find_entries(key_type{ key_sakura });
-                BOOST_TEST(std::empty(found));
+                let found = vocaburary.find_entries(&StringInput::new(String::from("さくら")));
+                assert!(found.is_empty());
             }
         }
         {
-            std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entries{
-                { key_mizuho, { { std::make_unique<key_type>(key_mizuho), surface_mizuho, 42 } } },
-                { key_sakura,
-                  { { std::make_unique<key_type>(key_sakura), surface_sakura1, 24 },
-                    { std::make_unique<key_type>(key_sakura), surface_sakura2, 2424 } } }
-            };
-            std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{
-                { std::make_pair(
-                      tetengo::lattice::entry{ std::make_unique<key_type>(key_mizuho), surface_mizuho, 42 },
-                      tetengo::lattice::entry{ std::make_unique<key_type>(key_sakura), surface_sakura1, 24 }),
-                  4242 }
-            };
-            const tetengo::lattice::unordered_map_vocabulary vocabulary{
-                std::move(entries), std::move(connections), cpp_entry_hash, cpp_entry_equal_to
-            };
+            let entries = vec![
+                (
+                    String::from("みずほ"),
+                    vec![Entry::new(
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
+                        42,
+                    )],
+                ),
+                (
+                    String::from("さくら"),
+                    vec![
+                        Entry::new(
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
+                            24,
+                        ),
+                        Entry::new(
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
+                            2424,
+                        ),
+                    ],
+                ),
+            ];
+            let connections = vec![(
+                (
+                    Entry::new(
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
+                        42,
+                    ),
+                    Entry::new(
+                        Box::new(StringInput::new(String::from("さくら"))),
+                        Box::new(String::from("桜")),
+                        24,
+                    ),
+                ),
+                4242,
+            )];
+            let vocaburary =
+                HashMapVocabulary::new(entries, connections, entry_hash_value, entry_equal);
 
             {
-                const auto found = vocabulary.find_entries(key_type{ key_mizuho });
-                BOOST_TEST_REQUIRE(std::size(found) == 1U);
-                BOOST_TEST_REQUIRE(found[0].p_key());
-                BOOST_TEST_REQUIRE(found[0].p_key()->is<key_type>());
-                BOOST_TEST(found[0].p_key()->as<key_type>().value() == key_mizuho);
-                BOOST_TEST(*std::any_cast<std::string>(found[0].value()) == surface_mizuho);
-                BOOST_TEST(found[0].cost() == 42);
+                let found = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
+                assert_eq!(found.len(), 1);
+                assert_eq!(
+                    found[0]
+                        .key()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<StringInput>()
+                        .unwrap()
+                        .value(),
+                    "みずほ"
+                );
+                assert_eq!(
+                    found[0]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<String>()
+                        .unwrap(),
+                    "瑞穂"
+                );
+                assert_eq!(found[0].cost(), 42);
             }
             {
-                const auto found = vocabulary.find_entries(key_type{ key_sakura });
-                BOOST_TEST_REQUIRE(std::size(found) == 2U);
-                BOOST_TEST_REQUIRE(found[0].p_key());
-                BOOST_TEST_REQUIRE(found[0].p_key()->is<key_type>());
-                BOOST_TEST(found[0].p_key()->as<key_type>().value() == key_sakura);
-                BOOST_TEST(*std::any_cast<std::string>(found[0].value()) == surface_sakura1);
-                BOOST_TEST(found[0].cost() == 24);
-                BOOST_TEST_REQUIRE(found[1].p_key());
-                BOOST_TEST_REQUIRE(found[1].p_key()->is<key_type>());
-                BOOST_TEST(found[1].p_key()->as<key_type>().value() == key_sakura);
-                BOOST_TEST(*std::any_cast<std::string>(found[1].value()) == surface_sakura2);
-                BOOST_TEST(found[1].cost() == 2424);
+                let found = vocaburary.find_entries(&StringInput::new(String::from("さくら")));
+                assert_eq!(found.len(), 2);
+                assert_eq!(
+                    found[0]
+                        .key()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<StringInput>()
+                        .unwrap()
+                        .value(),
+                    "さくら"
+                );
+                assert_eq!(
+                    found[0]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<String>()
+                        .unwrap(),
+                    "桜"
+                );
+                assert_eq!(found[0].cost(), 24);
+                assert_eq!(
+                    found[1]
+                        .key()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<StringInput>()
+                        .unwrap()
+                        .value(),
+                    "さくら"
+                );
+                assert_eq!(
+                    found[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<String>()
+                        .unwrap(),
+                    "さくら"
+                );
+                assert_eq!(found[1].cost(), 2424);
             }
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(find_connection)
     {
