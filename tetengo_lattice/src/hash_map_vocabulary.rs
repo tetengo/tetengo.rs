@@ -39,7 +39,7 @@ impl Eq for HashableEntry {}
 
 impl Hash for HashableEntry {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let entry_view = EntryView::from_entry(&self.entry);
+        let entry_view = self.entry.as_view();
         let hash_value = (self.hash_value)(&entry_view);
         hash_value.hash(state);
     }
@@ -47,8 +47,8 @@ impl Hash for HashableEntry {
 
 impl PartialEq for HashableEntry {
     fn eq(&self, other: &Self) -> bool {
-        let self_entry_view = EntryView::from_entry(&self.entry);
-        let other_entry_view = EntryView::from_entry(&other.entry);
+        let self_entry_view = self.entry.as_view();
+        let other_entry_view = other.entry.as_view();
         (self.equal)(&self_entry_view, &other_entry_view)
     }
 }

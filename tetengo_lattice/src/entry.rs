@@ -95,6 +95,21 @@ impl Entry {
     }
 
     /**
+     * Casts this object to a view.
+     *
+     * # Arguments
+     * * `entry` - An entry.
+     */
+    pub fn as_view(&self) -> EntryView<'_> {
+        match self {
+            Entry::BosEos => EntryView::BosEos,
+            Entry::Middle(middle) => {
+                EntryView::new(middle.key.as_ref(), middle.value.as_ref(), middle.cost)
+            }
+        }
+    }
+
+    /**
      * Creates an entry.
      *
      * # Arguments
@@ -197,21 +212,6 @@ impl<'a> EntryView<'a> {
     }
 
     /**
-     * Creates an entry view.
-     *
-     * # Arguments
-     * * `entry` - An entry.
-     */
-    pub fn from_entry(entry: &'a Entry) -> Self {
-        match entry {
-            Entry::BosEos => EntryView::BosEos,
-            Entry::Middle(middle) => {
-                EntryView::new(middle.key.as_ref(), middle.value.as_ref(), middle.cost)
-            }
-        }
-    }
-
-    /**
      * Returns the key.
      *
      * # Returns
@@ -294,13 +294,13 @@ mod tests {
     }
 
     #[test]
-    fn from_view_and_from_entry() {
+    fn from_view_and_as_view() {
         let entry1 = Entry::new(
             Box::new(StringInput::new(String::from("みずほ"))),
             Box::new(String::from("瑞穂")),
             42,
         );
-        let view = EntryView::from_entry(&entry1);
+        let view = entry1.as_view();
         let entry2 = Entry::from_view(&view);
 
         assert_eq!(
