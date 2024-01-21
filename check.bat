@@ -1,6 +1,6 @@
 @echo off
 rem Checks this package
-rem Copyright 2023 kaoru  https://www.tetengo.org/
+rem Copyright (C) 2023-2024 kaoru  https://www.tetengo.org/
 
 cargo verify-project
 if errorlevel 1 exit /b 1
