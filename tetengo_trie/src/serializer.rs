@@ -1,7 +1,7 @@
 /*!
  * A serializer/deserializer.
  *
- * Copyright 2023 kaoru  <https://www.tetengo.org/>
+ * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
 use anyhow::Result;

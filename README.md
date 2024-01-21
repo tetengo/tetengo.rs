@@ -13,7 +13,7 @@ Implemented with double array.
 
 ---
 
-Copyright (C) 2023 kaoru  <https://www.tetengo.org/>
+Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
 
 This product is released under the MIT license.
 See [the LICENSE
