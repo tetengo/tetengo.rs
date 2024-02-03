@@ -45,7 +45,7 @@ impl<'a> GraphStep<'a> {
  */
 pub struct Lattice<'a> {
     _vocabulary: &'a dyn Vocabulary,
-    _input: Box<dyn Input>,
+    _input: Option<Box<dyn Input>>,
     graph: Vec<GraphStep<'a>>,
 }
 
@@ -59,7 +59,22 @@ impl Debug for Lattice<'_> {
     }
 }
 
-impl Lattice<'_> {
+impl<'a> Lattice<'a> {
+    /**
+     * Creates a lattice.
+     *
+     * # Arguments
+     * * `vocabulary` - A vocabulary.
+     */
+    pub fn new(vocabulary: &'a dyn Vocabulary) -> Self {
+        // self_.push_back(bos_step());
+        Self {
+            _vocabulary: vocabulary,
+            _input: None,
+            graph: Vec::new(),
+        }
+    }
+
     /*
            /*!
                \brief Creates a lattice.
@@ -68,6 +83,20 @@ impl Lattice<'_> {
            */
            explicit lattice(const vocabulary& vocabulary_);
     */
+    /*
+
+
+        class lattice::impl : private boost::noncopyable
+        {
+        public:
+            // constructors and destructor
+
+            explicit impl(const vocabulary& vocabulary_) : m_vocabulary{ vocabulary_ }, m_p_input{}, m_graph{}
+            {
+                m_graph.push_back(bos_step());
+            }
+    */
+
     /*
            /*!
                \brief Destroys the lattice.
@@ -114,19 +143,6 @@ impl Lattice<'_> {
            [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
     */
 
-    /*
-
-
-        class lattice::impl : private boost::noncopyable
-        {
-        public:
-            // constructors and destructor
-
-            explicit impl(const vocabulary& vocabulary_) : m_vocabulary{ vocabulary_ }, m_p_input{}, m_graph{}
-            {
-                m_graph.push_back(bos_step());
-            }
-    */
     /*
             // functions
 
