@@ -20,42 +20,20 @@ impl<'a> _GraphStep<'a> {
             preceding_edge_costs,
         }
     }
+
+    fn _input_tail(&self) -> usize {
+        self.input_tail
+    }
+
+    fn _nodes(&self) -> &[Node<'a>] {
+        &self.nodes
+    }
+
+    fn _preceding_edge_costs(&self, index: usize) -> &[i32] {
+        assert!(index < self.preceding_edge_costs.len());
+        &self.preceding_edge_costs[index]
+    }
 }
-
-/*
-        // functions
-
-        std::size_t input_tail() const
-        {
-            return m_input_tail;
-        }
-*/
-/*
-        const std::vector<node>& nodes() const
-        {
-            return m_nodes;
-        }
-*/
-/*
-        const std::vector<int>& preceding_edge_costs(const std::size_t index) const
-        {
-            assert(index < std::size(m_p_preceding_edge_costs));
-            assert(m_p_preceding_edge_costs[index]);
-            return *m_p_preceding_edge_costs[index];
-        }
-*/
-/*
-
-    private:
-        // variables
-
-        std::size_t m_input_tail;
-
-        std::vector<node> m_nodes;
-
-        std::vector<std::unique_ptr<std::vector<int>>> m_p_preceding_edge_costs;
-    };
-*/
 
 /**
  * A lattice.
