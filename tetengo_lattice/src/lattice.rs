@@ -4,11 +4,66 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use crate::node::Node;
+
+struct _GraphStep<'a> {
+    input_tail: usize,
+    nodes: Vec<Node<'a>>,
+    preceding_edge_costs: Vec<Vec<i32>>,
+}
+
+impl<'a> _GraphStep<'a> {
+    fn _new(input_tail: usize, nodes: Vec<Node<'a>>, preceding_edge_costs: Vec<Vec<i32>>) -> Self {
+        Self {
+            input_tail,
+            nodes,
+            preceding_edge_costs,
+        }
+    }
+}
+
+/*
+        // functions
+
+        std::size_t input_tail() const
+        {
+            return m_input_tail;
+        }
+*/
+/*
+        const std::vector<node>& nodes() const
+        {
+            return m_nodes;
+        }
+*/
+/*
+        const std::vector<int>& preceding_edge_costs(const std::size_t index) const
+        {
+            assert(index < std::size(m_p_preceding_edge_costs));
+            assert(m_p_preceding_edge_costs[index]);
+            return *m_p_preceding_edge_costs[index];
+        }
+*/
+/*
+
+    private:
+        // variables
+
+        std::size_t m_input_tail;
+
+        std::vector<node> m_nodes;
+
+        std::vector<std::unique_ptr<std::vector<int>>> m_p_preceding_edge_costs;
+    };
+*/
+
 /**
  * A lattice.
  */
 #[derive(Debug, Clone, Copy)]
-pub struct Lattice {
+pub struct Lattice {}
+
+impl Lattice {
     /*
            /*!
                \brief Creates a lattice.
@@ -63,55 +118,6 @@ pub struct Lattice {
            [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
     */
 
-    /*
-        class graph_step
-        {
-        public:
-            // constructors and destructor
-
-            graph_step(
-                const std::size_t                                input_tail,
-                std::vector<node>                                nodes,
-                std::vector<std::unique_ptr<std::vector<int>>>&& p_preceding_edge_costs) :
-            m_input_tail{ input_tail },
-            m_nodes{ std::move(nodes) },
-            m_p_preceding_edge_costs{ std::move(p_preceding_edge_costs) }
-            {}
-    */
-    /*
-            // functions
-
-            std::size_t input_tail() const
-            {
-                return m_input_tail;
-            }
-    */
-    /*
-            const std::vector<node>& nodes() const
-            {
-                return m_nodes;
-            }
-    */
-    /*
-            const std::vector<int>& preceding_edge_costs(const std::size_t index) const
-            {
-                assert(index < std::size(m_p_preceding_edge_costs));
-                assert(m_p_preceding_edge_costs[index]);
-                return *m_p_preceding_edge_costs[index];
-            }
-    */
-    /*
-
-        private:
-            // variables
-
-            std::size_t m_input_tail;
-
-            std::vector<node> m_nodes;
-
-            std::vector<std::unique_ptr<std::vector<int>>> m_p_preceding_edge_costs;
-        };
-    */
     /*
 
 
