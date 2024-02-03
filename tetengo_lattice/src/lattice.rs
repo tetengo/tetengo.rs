@@ -4,44 +4,62 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use crate::node::Node;
+use std::fmt::{self, Debug, Formatter};
 
-struct _GraphStep<'a> {
-    input_tail: usize,
-    nodes: Vec<Node<'a>>,
-    preceding_edge_costs: Vec<Vec<i32>>,
+use crate::input::Input;
+use crate::node::Node;
+use crate::vocabulary::Vocabulary;
+
+#[derive(Debug)]
+struct GraphStep<'a> {
+    _input_tail: usize,
+    _nodes: Vec<Node<'a>>,
+    _preceding_edge_costs: Vec<Vec<i32>>,
 }
 
-impl<'a> _GraphStep<'a> {
+impl<'a> GraphStep<'a> {
     fn _new(input_tail: usize, nodes: Vec<Node<'a>>, preceding_edge_costs: Vec<Vec<i32>>) -> Self {
         Self {
-            input_tail,
-            nodes,
-            preceding_edge_costs,
+            _input_tail: input_tail,
+            _nodes: nodes,
+            _preceding_edge_costs: preceding_edge_costs,
         }
     }
 
     fn _input_tail(&self) -> usize {
-        self.input_tail
+        self._input_tail
     }
 
     fn _nodes(&self) -> &[Node<'a>] {
-        &self.nodes
+        &self._nodes
     }
 
     fn _preceding_edge_costs(&self, index: usize) -> &[i32] {
-        assert!(index < self.preceding_edge_costs.len());
-        &self.preceding_edge_costs[index]
+        assert!(index < self._preceding_edge_costs.len());
+        &self._preceding_edge_costs[index]
     }
 }
 
 /**
  * A lattice.
  */
-#[derive(Debug, Clone, Copy)]
-pub struct Lattice {}
+pub struct Lattice<'a> {
+    _vocabulary: &'a dyn Vocabulary,
+    _input: Box<dyn Input>,
+    graph: Vec<GraphStep<'a>>,
+}
 
-impl Lattice {
+impl Debug for Lattice<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Lattice")
+            .field("vocabulary", &"&'a dyn Vocabulary")
+            .field("input", &"Box<dyn Input>")
+            .field("graph", &self.graph)
+            .finish()
+    }
+}
+
+impl Lattice<'_> {
     /*
            /*!
                \brief Creates a lattice.
@@ -245,17 +263,6 @@ impl Lattice {
                     return one + another;
                 }
             }
-    */
-    /*
-
-            // variables
-
-            const vocabulary& m_vocabulary;
-
-            std::unique_ptr<input> m_p_input;
-
-            std::vector<graph_step> m_graph;
-
     */
     /*
             // functions
