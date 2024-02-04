@@ -233,6 +233,8 @@ impl Vocabulary for HashMapVocabulary<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::*;
 
     fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
@@ -253,12 +255,12 @@ mod tests {
     fn make_node<'a>(entry: &'a EntryView<'_>) -> Node<'a> {
         static PRECEDING_EDGE_COSTS: Vec<i32> = Vec::new();
         match entry {
-            EntryView::BosEos => Node::bos(&PRECEDING_EDGE_COSTS),
+            EntryView::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
             EntryView::Middle(_) => Node::new_with_entry_view(
                 entry,
                 0,
                 usize::MAX,
-                &PRECEDING_EDGE_COSTS,
+                Rc::new(PRECEDING_EDGE_COSTS.clone()),
                 usize::MAX,
                 i32::MAX,
             )
