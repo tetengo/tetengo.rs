@@ -81,47 +81,11 @@ impl<'a> Lattice<'a> {
         self_
     }
 
-    /*
-           /*!
-               \brief Creates a lattice.
-
-               \param vocabulary_ A vocabulary.
-           */
-           explicit lattice(const vocabulary& vocabulary_);
-    */
-    /*
-
-
-        class lattice::impl : private boost::noncopyable
-        {
-        public:
-            // constructors and destructor
-
-            explicit impl(const vocabulary& vocabulary_) : m_vocabulary{ vocabulary_ }, m_p_input{}, m_graph{}
-            {
-                m_graph.push_back(bos_step());
-            }
-    */
-
     fn bos_step() -> GraphStep<'a> {
         let node_preceding_edge_costs = vec![Rc::new(Vec::new())];
         let nodes = vec![Node::bos(node_preceding_edge_costs[0].clone())];
         GraphStep::_new(0, nodes, node_preceding_edge_costs)
     }
-
-    /*
-
-        private:
-            // static functions
-
-            static graph_step bos_step()
-            {
-                std::vector<std::unique_ptr<std::vector<int>>> p_node_preceding_edge_costs{};
-                p_node_preceding_edge_costs.push_back(std::make_unique<std::vector<int>>());
-                std::vector<node> nodes{ node::bos(std::to_address(p_node_preceding_edge_costs[0])) };
-                return graph_step{ 0, std::move(nodes), std::move(p_node_preceding_edge_costs) };
-            }
-    */
 
     /*
            /*!
@@ -322,27 +286,22 @@ mod tests {
 
     use super::*;
 
-    /*
-    namespace
-    {
-        std::unique_ptr<tetengo::lattice::input> to_input(const char* const string)
-        {
-            return std::make_unique<tetengo::lattice::string_input>(string);
-        }
-    */
+    fn to_input(string: &str) -> Box<dyn Input> {
+        Box::new(crate::string_input::StringInput::new(string.to_string()))
+    }
 
     /*
-                    +------------------mizuho/sakura/tsubame-------------------+
-                    |                path cost: 4270/3220/2990                 |
-                    |                                                          |
-                    +------------ariake/rapid811------------+                  |
-                    |          path cost: 2850/2010         |                  |
-                    |                                       |                  |
+                   +------------------mizuho/sakura/tsubame-------------------+
+                   |                path cost: 4270/3220/2990                 |
+                   |                                                          |
+                   +------------ariake/rapid811------------+                  |
+                   |          path cost: 2850/2010         |                  |
+                   |                                       |                  |
         BOS--(Hakata)--kamome/local415--(Tosu)--local813--(Omuta)--local817--(Kumamoto)--EOS
-                        path cost: 1640/1370   |   pc: 2830           pc: 3160   |     path cost:3390
+                     path cost: 1640/1370   |   pc: 2830           pc: 3160   |     path cost:3390
                                             |                                 |
                                             +------------local815-------------+
-                                                        path cost: 3550
+                                                      path cost: 3550
 
         (0) 3390  BOS - tsubame - EOS
             [ sakura(3620),   local817(3760), local815(4050), mizuho(4670)   ]
@@ -365,72 +324,169 @@ mod tests {
         (9) ----  -
             [                                                                ]
     */
-    const ENTRIES: Vec<(String, Vec<Entry>)> = vec![];
+    fn entries() -> Vec<(String, Vec<Entry>)> {
+        vec![
+            (
+                String::from("[HakataTosu][TosuOmuta][OmutaKumamoto]"),
+                vec![
+                    Entry::new(
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("mizuho"),
+                        3670,
+                    ),
+                    Entry::new(
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("sakura"),
+                        2620,
+                    ),
+                    Entry::new(
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("tsubame"),
+                        2390,
+                    ),
+                ],
+            ),
+            (
+                String::from("[HakataTosu][TosuOmuta]"),
+                vec![
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("ariake"), 2150),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("rapid811"), 1310),
+                ],
+            ),
+            (
+                String::from("[HakataTosu]"),
+                vec![
+                    Entry::new(to_input("Hakata-Tosu"), Box::new("kamome"), 840),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new("local415"), 570),
+                ],
+            ),
+            (
+                String::from("[TosuOmuta]"),
+                vec![Entry::new(
+                    to_input("Tosu-Omuta"),
+                    Box::new("local813"),
+                    860,
+                )],
+            ),
+            (
+                String::from("[TosuOmuta][OmutaKumamoto]"),
+                vec![Entry::new(
+                    to_input("Tosu-Omuta-Kumamoto"),
+                    Box::new("local815"),
+                    1680,
+                )],
+            ),
+            (
+                String::from("[OmutaKumamoto]"),
+                vec![Entry::new(
+                    to_input("Omuta-Kumamoto"),
+                    Box::new("local817"),
+                    950,
+                )],
+            ),
+        ]
+    }
 
-    /*
-        const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entries{
-            { "[HakataTosu][TosuOmuta][OmutaKumamoto]",
-              {
-                  { to_input("Hakata-Tosu-Omuta-Kumamoto"), std::string{ "mizuho" }, 3670 },
-                  { to_input("Hakata-Tosu-Omuta-Kumamoto"), std::string{ "sakura" }, 2620 },
-                  { to_input("Hakata-Tosu-Omuta-Kumamoto"), std::string{ "tsubame" }, 2390 },
-              } },
-            { "[HakataTosu][TosuOmuta]",
-              {
-                  { to_input("Hakata-Tosu-Omuta"), std::string{ "ariake" }, 2150 },
-                  { to_input("Hakata-Tosu-Omuta"), std::string{ "rapid811" }, 1310 },
-              } },
-            { "[HakataTosu]",
-              {
-                  { to_input("Hakata-Tosu"), std::string{ "kamome" }, 840 },
-                  { to_input("Hakata-Tosu"), std::string{ "local415" }, 570 },
-              } },
-            { "[TosuOmuta]",
-              {
-                  { to_input("Tosu-Omuta"), std::string{ "local813" }, 860 },
-              } },
-            { "[TosuOmuta][OmutaKumamoto]",
-              {
-                  { to_input("Tosu-Omuta-Kumamoto"), std::string{ "local815" }, 1680 },
-              } },
-            { "[OmutaKumamoto]",
-              {
-                  { to_input("Omuta-Kumamoto"), std::string{ "local817" }, 950 },
-              } },
-        };
-    */
-
-    const CONNECTIONS: Vec<((Entry, Entry), i32)> = vec![];
-
-    /*
-        const std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{
-            { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu-Omuta-Kumamoto"), {}, 0 } }, 600 },
-            { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu-Omuta"), {}, 0 } }, 700 },
-            { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu"), {}, 0 } }, 800 },
-            { { tetengo::lattice::entry::bos_eos(), tetengo::lattice::entry::bos_eos() }, 8000 },
-            { { { to_input("Hakata-Tosu"), {}, 0 }, { to_input("Tosu-Omuta-Kumamoto"), {}, 0 } }, 500 },
-            { { { to_input("Hakata-Tosu"), {}, 0 }, { to_input("Tosu-Omuta"), {}, 0 } }, 600 },
-            { { { to_input("Hakata-Tosu"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 6000 },
-            { { { to_input("Hakata-Tosu-Omuta"), {}, 0 }, { to_input("Omuta-Kumamoto"), {}, 0 } }, 200 },
-            { { { to_input("Hakata-Tosu-Omuta"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 2000 },
-            { { { to_input("Tosu-Omuta"), {}, 0 }, { to_input("Omuta-Kumamoto"), {}, 0 } }, 300 },
-            { { { to_input("Tosu-Omuta"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 3000 },
-            { { { to_input("Hakata-Tosu-Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 400 },
-            { { { to_input("Tosu-Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 500 },
-            { { { to_input("Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 600 },
-        };
-    */
+    fn connections() -> Vec<((Entry, Entry), i32)> {
+        vec![
+            (
+                (
+                    Entry::BosEos,
+                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                600,
+            ),
+            (
+                (
+                    Entry::BosEos,
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                ),
+                700,
+            ),
+            (
+                (
+                    Entry::BosEos,
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                ),
+                800,
+            ),
+            ((Entry::BosEos, Entry::BosEos), 8000),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                500,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                ),
+                600,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                6000,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                200,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                2000,
+            ),
+            (
+                (
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                300,
+            ),
+            (
+                (
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                3000,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                400,
+            ),
+            (
+                (
+                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                500,
+            ),
+            (
+                (
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                600,
+            ),
+        ]
+    }
 
     fn entry_hash(entry: &EntryView<'_>) -> u64 {
         entry.key().map_or(0, |key| key.hash_value())
     }
-
-    /*
-        std::size_t cpp_entry_hash(const tetengo::lattice::entry_view& entry)
-        {
-            return entry.p_key() ? entry.p_key()->hash_value() : 0;
-        }
-    */
 
     fn entry_equal_to(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
         if one.key().is_none() && other.key().is_none() {
@@ -443,30 +499,16 @@ mod tests {
         }
         false
     }
-    /*
-        bool cpp_entry_equal_to(const tetengo::lattice::entry_view& one, const tetengo::lattice::entry_view& another)
-        {
-            return (!one.p_key() && !another.p_key()) ||
-                   (one.p_key() && another.p_key() && *one.p_key() == *another.p_key());
-        }
-    */
 
     fn create_vocabulary() -> Box<dyn Vocabulary> {
         Box::new(HashMapVocabulary::new(
-            ENTRIES.clone(),
-            CONNECTIONS.clone(),
+            entries(),
+            connections(),
             &entry_hash,
             &entry_equal_to,
         ))
     }
 
-    /*
-        std::unique_ptr<tetengo::lattice::vocabulary> create_cpp_vocabulary()
-        {
-            return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
-                entries, connections, cpp_entry_hash, cpp_entry_equal_to);
-        }
-    */
     /*
         std::unique_ptr<tetengo::lattice::vocabulary> create_cpp_empty_vocabulary()
         {
@@ -484,18 +526,6 @@ mod tests {
         let _lattice = Lattice::new(vocabulary.as_ref());
     }
 
-    /*
-
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                      p_vocabulary = create_cpp_vocabulary();
-            const tetengo::lattice::lattice lattice_{ *p_vocabulary };
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(step_count)
     {
