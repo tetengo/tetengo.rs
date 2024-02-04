@@ -5,6 +5,7 @@
  */
 
 use std::fmt::{self, Debug, Formatter};
+use std::rc::Rc;
 
 use crate::input::Input;
 use crate::node::Node;
@@ -14,11 +15,15 @@ use crate::vocabulary::Vocabulary;
 struct GraphStep<'a> {
     _input_tail: usize,
     _nodes: Vec<Node<'a>>,
-    _preceding_edge_costs: Vec<Vec<i32>>,
+    _preceding_edge_costs: Vec<Rc<Vec<i32>>>,
 }
 
 impl<'a> GraphStep<'a> {
-    fn _new(input_tail: usize, nodes: Vec<Node<'a>>, preceding_edge_costs: Vec<Vec<i32>>) -> Self {
+    fn _new(
+        input_tail: usize,
+        nodes: Vec<Node<'a>>,
+        preceding_edge_costs: Vec<Rc<Vec<i32>>>,
+    ) -> Self {
         Self {
             _input_tail: input_tail,
             _nodes: nodes,
@@ -67,12 +72,13 @@ impl<'a> Lattice<'a> {
      * * `vocabulary` - A vocabulary.
      */
     pub fn new(vocabulary: &'a dyn Vocabulary) -> Self {
-        // self_.push_back(bos_step());
-        Self {
+        let mut self_ = Self {
             _vocabulary: vocabulary,
             _input: None,
             graph: Vec::new(),
-        }
+        };
+        self_.graph.push(Self::bos_step());
+        self_
     }
 
     /*
@@ -94,6 +100,26 @@ impl<'a> Lattice<'a> {
             explicit impl(const vocabulary& vocabulary_) : m_vocabulary{ vocabulary_ }, m_p_input{}, m_graph{}
             {
                 m_graph.push_back(bos_step());
+            }
+    */
+
+    fn bos_step() -> GraphStep<'a> {
+        let node_preceding_edge_costs = vec![Rc::new(Vec::new())];
+        let nodes = vec![Node::bos(node_preceding_edge_costs[0].clone())];
+        GraphStep::_new(0, nodes, node_preceding_edge_costs)
+    }
+
+    /*
+
+        private:
+            // static functions
+
+            static graph_step bos_step()
+            {
+                std::vector<std::unique_ptr<std::vector<int>>> p_node_preceding_edge_costs{};
+                p_node_preceding_edge_costs.push_back(std::make_unique<std::vector<int>>());
+                std::vector<node> nodes{ node::bos(std::to_address(p_node_preceding_edge_costs[0])) };
+                return graph_step{ 0, std::move(nodes), std::move(p_node_preceding_edge_costs) };
             }
     */
 
@@ -239,19 +265,6 @@ impl<'a> Lattice<'a> {
             }
     */
     /*
-
-        private:
-            // static functions
-
-            static graph_step bos_step()
-            {
-                std::vector<std::unique_ptr<std::vector<int>>> p_node_preceding_edge_costs{};
-                p_node_preceding_edge_costs.push_back(std::make_unique<std::vector<int>>());
-                std::vector<node> nodes{ node::bos(std::to_address(p_node_preceding_edge_costs[0])) };
-                return graph_step{ 0, std::move(nodes), std::move(p_node_preceding_edge_costs) };
-            }
-    */
-    /*
             static std::size_t best_preceding_node_index(const graph_step& step, const std::vector<int>& edge_costs)
             {
                 assert(!std::empty(step.nodes()));
@@ -304,11 +317,10 @@ impl<'a> Lattice<'a> {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use crate::entry::{Entry, EntryView};
+    use crate::hash_map_vocabulary::HashMapVocabulary;
 
-    // #[test]
-    // fn test_lattice() {
-    // }
+    use super::*;
 
     /*
     namespace
@@ -318,41 +330,44 @@ mod tests {
             return std::make_unique<tetengo::lattice::string_input>(string);
         }
     */
-    /*
-        /*
-                       +------------------mizuho/sakura/tsubame-------------------+
-                       |                path cost: 4270/3220/2990                 |
-                       |                                                          |
-                       +------------ariake/rapid811------------+                  |
-                       |          path cost: 2850/2010         |                  |
-                       |                                       |                  |
-            BOS--(Hakata)--kamome/local415--(Tosu)--local813--(Omuta)--local817--(Kumamoto)--EOS
-                         path cost: 1640/1370   |   pc: 2830           pc: 3160   |     path cost:3390
-                                                |                                 |
-                                                +------------local815-------------+
-                                                          path cost: 3550
 
-            (0) 3390  BOS - tsubame - EOS
-                [ sakura(3620),   local817(3760), local815(4050), mizuho(4670)   ]
-            (1) 3620  BOS - sakura - EOS
-                [ local817(3760), local815(4050), mizuho(4670)                   ]
-            (2) 3760  BOS - rapid811 - local817 - EOS
-                [ local815(4050), ariake(4600),   mizuho(4670),   local813(4680) ]
-            (3) 4050  BOS - local415 - local815 - EOS
-                [ kamome(4320),   ariake(4600),   mizuho(4670),   local813(4680) ]
-            (4) 4320  BOS - kamome - local815 - EOS
-                [ ariake(4600),   mizuho(4670),   local813(4680)                 ]
-            (5) 4600  BOS - ariake - local817 - EOS
-                [ mizuho(4670),   local813(4680)                                 ]
-            (6) 4670  BOS - mizuho - EOS
-                [ local813(4680)                                                 ]
-            (7) 4680  BOS - local415 - local813 - local817 - EOS
-                [ kamome(4950)                                                   ]
-            (8) 4950  BOS - kamome - local813 - local817 - EOS
-                [                                                                ]
-            (9) ----  -
-                [                                                                ]
-        */
+    /*
+                    +------------------mizuho/sakura/tsubame-------------------+
+                    |                path cost: 4270/3220/2990                 |
+                    |                                                          |
+                    +------------ariake/rapid811------------+                  |
+                    |          path cost: 2850/2010         |                  |
+                    |                                       |                  |
+        BOS--(Hakata)--kamome/local415--(Tosu)--local813--(Omuta)--local817--(Kumamoto)--EOS
+                        path cost: 1640/1370   |   pc: 2830           pc: 3160   |     path cost:3390
+                                            |                                 |
+                                            +------------local815-------------+
+                                                        path cost: 3550
+
+        (0) 3390  BOS - tsubame - EOS
+            [ sakura(3620),   local817(3760), local815(4050), mizuho(4670)   ]
+        (1) 3620  BOS - sakura - EOS
+            [ local817(3760), local815(4050), mizuho(4670)                   ]
+        (2) 3760  BOS - rapid811 - local817 - EOS
+            [ local815(4050), ariake(4600),   mizuho(4670),   local813(4680) ]
+        (3) 4050  BOS - local415 - local815 - EOS
+            [ kamome(4320),   ariake(4600),   mizuho(4670),   local813(4680) ]
+        (4) 4320  BOS - kamome - local815 - EOS
+            [ ariake(4600),   mizuho(4670),   local813(4680)                 ]
+        (5) 4600  BOS - ariake - local817 - EOS
+            [ mizuho(4670),   local813(4680)                                 ]
+        (6) 4670  BOS - mizuho - EOS
+            [ local813(4680)                                                 ]
+        (7) 4680  BOS - local415 - local813 - local817 - EOS
+            [ kamome(4950)                                                   ]
+        (8) 4950  BOS - kamome - local813 - local817 - EOS
+            [                                                                ]
+        (9) ----  -
+            [                                                                ]
+    */
+    const ENTRIES: Vec<(String, Vec<Entry>)> = vec![];
+
+    /*
         const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entries{
             { "[HakataTosu][TosuOmuta][OmutaKumamoto]",
               {
@@ -384,6 +399,9 @@ mod tests {
               } },
         };
     */
+
+    const CONNECTIONS: Vec<((Entry, Entry), i32)> = vec![];
+
     /*
         const std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{
             { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu-Omuta-Kumamoto"), {}, 0 } }, 600 },
@@ -402,12 +420,29 @@ mod tests {
             { { { to_input("Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 600 },
         };
     */
+
+    fn entry_hash(entry: &EntryView<'_>) -> u64 {
+        entry.key().map_or(0, |key| key.hash_value())
+    }
+
     /*
         std::size_t cpp_entry_hash(const tetengo::lattice::entry_view& entry)
         {
             return entry.p_key() ? entry.p_key()->hash_value() : 0;
         }
     */
+
+    fn entry_equal_to(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+        if one.key().is_none() && other.key().is_none() {
+            return true;
+        }
+        if let Some(one_key) = one.key() {
+            if let Some(other_key) = other.key() {
+                return one_key.equal_to(other_key);
+            }
+        }
+        false
+    }
     /*
         bool cpp_entry_equal_to(const tetengo::lattice::entry_view& one, const tetengo::lattice::entry_view& another)
         {
@@ -415,6 +450,16 @@ mod tests {
                    (one.p_key() && another.p_key() && *one.p_key() == *another.p_key());
         }
     */
+
+    fn create_vocabulary() -> Box<dyn Vocabulary> {
+        Box::new(HashMapVocabulary::new(
+            ENTRIES.clone(),
+            CONNECTIONS.clone(),
+            &entry_hash,
+            &entry_equal_to,
+        ))
+    }
+
     /*
         std::unique_ptr<tetengo::lattice::vocabulary> create_cpp_vocabulary()
         {
@@ -432,6 +477,13 @@ mod tests {
                 cpp_entry_equal_to);
         }
     */
+
+    #[test]
+    fn new() {
+        let vocabulary = create_vocabulary();
+        let _lattice = Lattice::new(vocabulary.as_ref());
+    }
+
     /*
 
     BOOST_AUTO_TEST_CASE(construction)
