@@ -19,7 +19,7 @@ struct GraphStep<'a> {
 }
 
 impl<'a> GraphStep<'a> {
-    fn _new(
+    fn new(
         input_tail: usize,
         nodes: Vec<Node<'a>>,
         preceding_edge_costs: Vec<Rc<Vec<i32>>>,
@@ -84,15 +84,18 @@ impl<'a> Lattice<'a> {
     fn bos_step() -> GraphStep<'a> {
         let node_preceding_edge_costs = vec![Rc::new(Vec::new())];
         let nodes = vec![Node::bos(node_preceding_edge_costs[0].clone())];
-        GraphStep::_new(0, nodes, node_preceding_edge_costs)
+        GraphStep::new(0, nodes, node_preceding_edge_costs)
     }
 
-    /*
-           /*!
-               \brief Destroys the lattice.
-           */
-           ~lattice();
-    */
+    /**
+     * Returns the step count.
+     *
+     * # Returns
+     * The step count.
+     */
+    pub fn step_count(&self) -> usize {
+        self.graph.len()
+    }
     /*
            /*!
                \brief Returns the step count.
@@ -101,6 +104,15 @@ impl<'a> Lattice<'a> {
            */
            [[nodiscard]] std::size_t step_count() const;
     */
+    /*
+            // functions
+
+            std::size_t step_count() const
+            {
+                return std::size(m_graph);
+            }
+    */
+
     /*
            /*!
                \brief Returns the nodes at the specified step.
@@ -133,14 +145,6 @@ impl<'a> Lattice<'a> {
            [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
     */
 
-    /*
-            // functions
-
-            std::size_t step_count() const
-            {
-                return std::size(m_graph);
-            }
-    */
     /*
             const std::vector<node>& nodes_at(const std::size_t step) const
             {
@@ -524,6 +528,22 @@ mod tests {
     fn new() {
         let vocabulary = create_vocabulary();
         let _lattice = Lattice::new(vocabulary.as_ref());
+    }
+
+    #[test]
+    fn step_count() {
+        let vocabulary = create_vocabulary();
+        let lattice = Lattice::new(vocabulary.as_ref());
+        assert_eq!(lattice.step_count(), 1);
+
+        // lattice.push_back(to_input("[HakataTosu]"));
+        // assert_eq!(lattice.step_count(), 2);
+
+        // lattice.push_back(to_input("[TosuOmuta]"));
+        // assert_eq!(lattice.step_count(), 3);
+
+        // lattice.push_back(to_input("[OmutaKumamoto]"));
+        // assert_eq!(lattice.step_count(), 4);
     }
 
     /*
