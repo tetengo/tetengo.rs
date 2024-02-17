@@ -167,8 +167,7 @@ impl<'a> Lattice<'a> {
                 {
                     m_p_input = std::move(p_input);
                 }
-    */
-    /*
+
                 std::vector<node> nodes{};
                 auto              p_node_preceding_edge_costs = std::vector<std::unique_ptr<std::vector<int>>>{};
                 for (auto i = static_cast<std::size_t>(0); i < std::size(m_graph); ++i)
