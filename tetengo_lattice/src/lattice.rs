@@ -97,35 +97,6 @@ impl<'a> Lattice<'a> {
     pub fn step_count(&self) -> usize {
         self.graph.len()
     }
-    /*
-           /*!
-               \brief Returns the step count.
-
-               \return The step count.
-           */
-           [[nodiscard]] std::size_t step_count() const;
-    */
-    /*
-            // functions
-
-            std::size_t step_count() const
-            {
-                return std::size(m_graph);
-            }
-    */
-
-    /*
-           /*!
-               \brief Returns the nodes at the specified step.
-
-               \param step A step.
-
-               \return The nodes.
-
-               \throw std::out_of_rage When step is too large.
-           */
-           [[nodiscard]] const std::vector<node>& nodes_at(std::size_t step) const;
-    */
 
     /**
      * Pushes back an input.
@@ -627,17 +598,6 @@ mod tests {
         ))
     }
 
-    /*
-        std::unique_ptr<tetengo::lattice::vocabulary> create_cpp_empty_vocabulary()
-        {
-            return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
-                std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>{},
-                std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>>{},
-                cpp_entry_hash,
-                cpp_entry_equal_to);
-        }
-    */
-
     #[test]
     fn new() {
         let vocabulary = create_vocabulary();
@@ -647,43 +607,22 @@ mod tests {
     #[test]
     fn step_count() {
         let vocabulary = create_vocabulary();
-        let lattice = Lattice::new(vocabulary.as_ref());
+        let mut lattice = Lattice::new(vocabulary.as_ref());
         assert_eq!(lattice.step_count(), 1);
 
-        // lattice.push_back(to_input("[HakataTosu]"));
-        // assert_eq!(lattice.step_count(), 2);
+        let result1 = lattice.push_back(to_input("[HakataTosu]"));
+        assert!(result1.is_ok());
+        assert_eq!(lattice.step_count(), 2);
 
-        // lattice.push_back(to_input("[TosuOmuta]"));
-        // assert_eq!(lattice.step_count(), 3);
+        let result2 = lattice.push_back(to_input("[TosuOmuta]"));
+        assert!(result2.is_ok());
+        assert_eq!(lattice.step_count(), 3);
 
-        // lattice.push_back(to_input("[OmutaKumamoto]"));
-        // assert_eq!(lattice.step_count(), 4);
+        let result3 = lattice.push_back(to_input("[OmutaKumamoto]"));
+        assert!(result3.is_ok());
+        assert_eq!(lattice.step_count(), 4);
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(step_count)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-
-            BOOST_TEST(lattice_.step_count() == 1U);
-
-            lattice_.push_back(to_input("[HakataTosu]"));
-
-            BOOST_TEST(lattice_.step_count() == 2U);
-
-            lattice_.push_back(to_input("[TosuOmuta]"));
-
-            BOOST_TEST(lattice_.step_count() == 3U);
-
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-            BOOST_TEST(lattice_.step_count() == 4U);
-        }
-    }
-    */
     /*
     BOOST_AUTO_TEST_CASE(nodes_at)
     {
