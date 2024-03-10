@@ -179,7 +179,7 @@ impl<'a> Node<'a> {
      * * When `entry` is BOS or EOS.
      */
     pub fn new_with_entry_view(
-        entry: &'a EntryView<'a>,
+        entry: &EntryView<'a>,
         index_in_step: usize,
         preceding_step: usize,
         preceding_edge_costs: Rc<Vec<i32>>,

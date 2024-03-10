@@ -7,14 +7,15 @@
 use std::fmt::{self, Debug, Formatter};
 use std::rc::Rc;
 
+use crate::entry::EntryView;
 use crate::input::Input;
 use crate::node::Node;
 use crate::vocabulary::Vocabulary;
 
 #[derive(Debug)]
 struct GraphStep<'a> {
-    _input_tail: usize,
-    _nodes: Vec<Node<'a>>,
+    input_tail: usize,
+    nodes: Vec<Node<'a>>,
     _preceding_edge_costs: Vec<Rc<Vec<i32>>>,
 }
 
@@ -25,18 +26,18 @@ impl<'a> GraphStep<'a> {
         preceding_edge_costs: Vec<Rc<Vec<i32>>>,
     ) -> Self {
         Self {
-            _input_tail: input_tail,
-            _nodes: nodes,
+            input_tail,
+            nodes,
             _preceding_edge_costs: preceding_edge_costs,
         }
     }
 
-    fn _input_tail(&self) -> usize {
-        self._input_tail
+    fn input_tail(&self) -> usize {
+        self.input_tail
     }
 
-    fn _nodes(&self) -> &[Node<'a>] {
-        &self._nodes
+    fn nodes(&self) -> &[Node<'a>] {
+        &self.nodes
     }
 
     fn _preceding_edge_costs(&self, index: usize) -> &[i32] {
@@ -49,8 +50,8 @@ impl<'a> GraphStep<'a> {
  * A lattice.
  */
 pub struct Lattice<'a> {
-    _vocabulary: &'a dyn Vocabulary,
-    _input: Option<Box<dyn Input>>,
+    vocabulary: &'a dyn Vocabulary,
+    input: Option<Box<dyn Input>>,
     graph: Vec<GraphStep<'a>>,
 }
 
@@ -73,8 +74,8 @@ impl<'a> Lattice<'a> {
      */
     pub fn new(vocabulary: &'a dyn Vocabulary) -> Self {
         let mut self_ = Self {
-            _vocabulary: vocabulary,
-            _input: None,
+            vocabulary,
+            input: None,
             graph: Vec::new(),
         };
         self_.graph.push(Self::bos_step());
@@ -125,6 +126,81 @@ impl<'a> Lattice<'a> {
            */
            [[nodiscard]] const std::vector<node>& nodes_at(std::size_t step) const;
     */
+
+    /**
+     * Pushes back an input.
+     *
+     * # Arguments
+     * * `input` - An input.
+     */
+    pub fn push_back(&mut self, input: Box<dyn Input>) -> anyhow::Result<()> {
+        if let Some(self_input) = &mut self.input {
+            self_input.append(input)?;
+        } else {
+            self.input = Some(input);
+        };
+        let self_input = match &self.input {
+            Some(self_input) => self_input,
+            None => unreachable!(),
+        };
+
+        let mut nodes = Vec::new();
+        let mut node_preceding_edge_costs = Vec::new();
+        for i in 0..self.graph.len() {
+            let step = &self.graph[i];
+
+            let node_key = match self_input
+                .create_subrange(step.input_tail(), self_input.length() - step.input_tail())
+            {
+                Ok(node_key) => node_key,
+                Err(e) => return Err(e),
+            };
+            let found = self.vocabulary.find_entries(node_key.as_ref());
+
+            let mut preceding_edge_cost_indexes = Vec::new();
+            for e in &found {
+                let preceding_edge_costs = self.preceding_edge_costs(step, e);
+                preceding_edge_cost_indexes.push(node_preceding_edge_costs.len());
+                node_preceding_edge_costs.push(preceding_edge_costs);
+            }
+
+            for j in 0..found.len() {
+                let entry = &found[j];
+                let preceding_edge_costs =
+                    &node_preceding_edge_costs[preceding_edge_cost_indexes[j]];
+                let best_preceding_node_index_ =
+                    Self::best_preceding_node_index(step, preceding_edge_costs.as_slice());
+                let best_preceding_path_cost = Self::add_cost(
+                    step.nodes[best_preceding_node_index_].path_cost(),
+                    preceding_edge_costs[best_preceding_node_index_],
+                );
+                let new_node = match Node::new_with_entry_view(
+                    entry,
+                    nodes.len(),
+                    i,
+                    preceding_edge_costs.clone(),
+                    best_preceding_node_index_,
+                    best_preceding_path_cost,
+                ) {
+                    Ok(new_node) => new_node,
+                    Err(e) => return Err(e),
+                };
+                nodes.push(new_node);
+            }
+        }
+        if nodes.is_empty() {
+            panic!("No node is found for the input.");
+        }
+
+        self.graph.push(GraphStep::new(
+            self_input.length(),
+            nodes,
+            node_preceding_edge_costs,
+        ));
+
+        Ok(())
+    }
+
     /*
            /*!
                \brief Pushes back an input.
@@ -132,29 +208,6 @@ impl<'a> Lattice<'a> {
                \param p_input A unique pointer to an input.
            */
            void push_back(std::unique_ptr<input>&& p_input);
-    */
-    /*
-           /*!
-               \brief Settles this lattice.
-
-               You can modify the lattice after settlement.
-               Modification of the lattice after settlement invalidate the EOS node.
-
-               \return The EOS node and its preceding edge costs.
-           */
-           [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
-    */
-
-    /*
-            const std::vector<node>& nodes_at(const std::size_t step) const
-            {
-                if (step >= std::size(m_graph))
-                {
-                    throw std::out_of_range{ "step is too large." };
-                }
-
-                return m_graph[step].nodes();
-            }
     */
     /*
             void push_back(std::unique_ptr<input>&& p_input)
@@ -214,52 +267,21 @@ impl<'a> Lattice<'a> {
                 m_graph.emplace_back(m_p_input->length(), std::move(nodes), std::move(p_node_preceding_edge_costs));
             }
     */
-    /*
-            std::pair<node, std::unique_ptr<std::vector<int>>> settle()
-            {
-                auto       p_preceding_edge_costs = preceding_edge_costs(m_graph.back(), entry_view::bos_eos());
-                const auto best_preceding_node_index_ = best_preceding_node_index(m_graph.back(), *p_preceding_edge_costs);
-                const auto best_preceding_path_cost = add_cost(
-                    m_graph.back().nodes()[best_preceding_node_index_].path_cost(),
-                    (*p_preceding_edge_costs)[best_preceding_node_index_]);
 
-                node eos_node{ node::eos(
-                    std::size(m_graph) - 1,
-                    std::to_address(p_preceding_edge_costs),
-                    best_preceding_node_index_,
-                    best_preceding_path_cost) };
-                return std::make_pair(std::move(eos_node), std::move(p_preceding_edge_costs));
-            }
-    */
-    /*
-            static std::size_t best_preceding_node_index(const graph_step& step, const std::vector<int>& edge_costs)
-            {
-                assert(!std::empty(step.nodes()));
-                auto min_index = static_cast<std::size_t>(0);
-                for (auto i = static_cast<std::size_t>(1); i < std::size(step.nodes()); ++i)
-                {
-                    if (add_cost(step.nodes()[i].path_cost(), edge_costs[i]) <
-                        add_cost(step.nodes()[min_index].path_cost(), edge_costs[min_index]))
-                    {
-                        min_index = i;
-                    }
-                }
-                return min_index;
-            }
-    */
-    /*
-            static int add_cost(const int one, const int another)
-            {
-                if (one == std::numeric_limits<int>::max() || another == std::numeric_limits<int>::max())
-                {
-                    return std::numeric_limits<int>::max();
-                }
-                else
-                {
-                    return one + another;
-                }
-            }
-    */
+    fn preceding_edge_costs(
+        &self,
+        step: &GraphStep<'_>,
+        next_entry: &EntryView<'_>,
+    ) -> Rc<Vec<i32>> {
+        assert!(!step.nodes().is_empty());
+        let costs = step
+            .nodes()
+            .iter()
+            .map(|node| self.vocabulary.find_connection(node, next_entry).cost())
+            .collect::<Vec<_>>();
+        Rc::new(costs)
+    }
+
     /*
             // functions
 
@@ -280,11 +302,104 @@ impl<'a> Lattice<'a> {
             }
         };
     */
+
+    fn best_preceding_node_index(step: &GraphStep<'_>, edge_costs: &[i32]) -> usize {
+        assert!(!step.nodes().is_empty());
+        let mut min_index = 0;
+        for i in 1..step.nodes().len() {
+            if Self::add_cost(step.nodes()[i].path_cost(), edge_costs[i])
+                < Self::add_cost(step.nodes()[min_index].path_cost(), edge_costs[min_index])
+            {
+                min_index = i;
+            }
+        }
+        min_index
+    }
+
+    /*
+            static std::size_t best_preceding_node_index(const graph_step& step, const std::vector<int>& edge_costs)
+            {
+                assert(!std::empty(step.nodes()));
+                auto min_index = static_cast<std::size_t>(0);
+                for (auto i = static_cast<std::size_t>(1); i < std::size(step.nodes()); ++i)
+                {
+                    if (add_cost(step.nodes()[i].path_cost(), edge_costs[i]) <
+                        add_cost(step.nodes()[min_index].path_cost(), edge_costs[min_index]))
+                    {
+                        min_index = i;
+                    }
+                }
+                return min_index;
+            }
+    */
+
+    fn add_cost(one: i32, another: i32) -> i32 {
+        if one == i32::MAX || another == i32::MAX {
+            i32::MAX
+        } else {
+            one + another
+        }
+    }
+
+    /*
+            static int add_cost(const int one, const int another)
+            {
+                if (one == std::numeric_limits<int>::max() || another == std::numeric_limits<int>::max())
+                {
+                    return std::numeric_limits<int>::max();
+                }
+                else
+                {
+                    return one + another;
+                }
+            }
+    */
+
+    /*
+           /*!
+               \brief Settles this lattice.
+
+               You can modify the lattice after settlement.
+               Modification of the lattice after settlement invalidate the EOS node.
+
+               \return The EOS node and its preceding edge costs.
+           */
+           [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
+    */
+
+    /*
+            const std::vector<node>& nodes_at(const std::size_t step) const
+            {
+                if (step >= std::size(m_graph))
+                {
+                    throw std::out_of_range{ "step is too large." };
+                }
+
+                return m_graph[step].nodes();
+            }
+    */
+    /*
+            std::pair<node, std::unique_ptr<std::vector<int>>> settle()
+            {
+                auto       p_preceding_edge_costs = preceding_edge_costs(m_graph.back(), entry_view::bos_eos());
+                const auto best_preceding_node_index_ = best_preceding_node_index(m_graph.back(), *p_preceding_edge_costs);
+                const auto best_preceding_path_cost = add_cost(
+                    m_graph.back().nodes()[best_preceding_node_index_].path_cost(),
+                    (*p_preceding_edge_costs)[best_preceding_node_index_]);
+
+                node eos_node{ node::eos(
+                    std::size(m_graph) - 1,
+                    std::to_address(p_preceding_edge_costs),
+                    best_preceding_node_index_,
+                    best_preceding_path_cost) };
+                return std::make_pair(std::move(eos_node), std::move(p_preceding_edge_costs));
+            }
+    */
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::entry::{Entry, EntryView};
+    use crate::entry::Entry;
     use crate::hash_map_vocabulary::HashMapVocabulary;
 
     use super::*;
