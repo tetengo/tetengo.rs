@@ -98,6 +98,30 @@ impl<'a> Lattice<'a> {
         self.graph.len()
     }
 
+    /*
+        /*!
+            \brief Returns the nodes at the specified step.
+
+            \param step A step.
+
+            \return The nodes.
+
+            \throw std::out_of_rage When step is too large.
+        */
+        [[nodiscard]] const std::vector<node>& nodes_at(std::size_t step) const;
+        /*
+                const std::vector<node>& nodes_at(const std::size_t step) const
+                {
+                    if (step >= std::size(m_graph))
+                    {
+                        throw std::out_of_range{ "step is too large." };
+                    }
+
+                    return m_graph[step].nodes();
+                }
+        */
+    */
+
     /**
      * Pushes back an input.
      *
@@ -338,17 +362,6 @@ impl<'a> Lattice<'a> {
            [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
     */
 
-    /*
-            const std::vector<node>& nodes_at(const std::size_t step) const
-            {
-                if (step >= std::size(m_graph))
-                {
-                    throw std::out_of_range{ "step is too large." };
-                }
-
-                return m_graph[step].nodes();
-            }
-    */
     /*
             std::pair<node, std::unique_ptr<std::vector<int>>> settle()
             {
