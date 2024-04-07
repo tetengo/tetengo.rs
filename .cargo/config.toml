@@ -3,6 +3,7 @@ rustflags = [
     "-A", "clippy::too_many_arguments",
     "-D", "absolute_paths_not_starting_with_crate",
 #    "-D", "box_pointers",
+    "-D", "dead_code",
     "-D", "elided_lifetimes_in_paths",
     "-D", "explicit_outlives_requirements",
 #    "-D", "ffi_unwind_calls",
@@ -39,6 +40,5 @@ rustflags = [
     "-D", "unused_macro_rules",
     "-D", "unused_qualifications",
     "-D", "unused_results",
-    "-D", "unused_tuple_struct_fields",
     "-D", "variant_size_differences",
 ]
