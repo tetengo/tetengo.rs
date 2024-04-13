@@ -132,30 +132,6 @@ impl<'a> Lattice<'a> {
         }
     }
 
-    /*
-        /*!
-            \brief Returns the nodes at the specified step.
-
-            \param step A step.
-
-            \return The nodes.
-
-            \throw std::out_of_rage When step is too large.
-        */
-        [[nodiscard]] const std::vector<node>& nodes_at(std::size_t step) const;
-        /*
-                const std::vector<node>& nodes_at(const std::size_t step) const
-                {
-                    if (step >= std::size(m_graph))
-                    {
-                        throw std::out_of_range{ "step is too large." };
-                    }
-
-                    return m_graph[step].nodes();
-                }
-        */
-    */
-
     /**
      * Pushes back an input.
      *
@@ -699,145 +675,125 @@ mod tests {
             let nodes = nodes.unwrap();
 
             assert_eq!(nodes.len(), 2);
-            let _x = format!(
-                "{:?}",
-                nodes[0].value().unwrap().as_any().downcast_ref::<String>()
+            assert_eq!(
+                nodes[0]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"kamome"
             );
-            // if _x.is_none() {
-            //     panic!();
-            // }
-            // assert_eq!(
-            //     nodes[0]
-            //         .value()
-            //         .unwrap()
-            //         .as_any()
-            //         .downcast_ref::<String>()
-            //         .unwrap(),
-            //     "kamome"
-            // );
-            // assert_eq!(
-            //     nodes[1]
-            //         .value()
-            //         .unwrap()
-            //         .as_any()
-            //         .downcast_ref::<String>()
-            //         .unwrap(),
-            //     "local415"
-            // );
+            assert_eq!(
+                nodes[1]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"local415"
+            );
             for (i, n) in nodes.iter().enumerate() {
                 assert_eq!(n.index_in_step(), i);
             }
         }
-        /*
         {
-            const auto& nodes = lattice_.nodes_at(1);
+            let nodes = lattice.nodes_at(2);
+            assert!(nodes.is_ok());
+            let nodes = nodes.unwrap();
 
-            BOOST_TEST_REQUIRE(std::size(nodes) == 2U);
-            BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "kamome");
-            BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "local415");
-            for (std::size_t i = 0; i < std::size(nodes); ++i)
-            {
-                BOOST_TEST(nodes[i].index_in_step() == i);
+            assert_eq!(nodes.len(), 3);
+            assert_eq!(
+                nodes[0]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"ariake"
+            );
+            assert_eq!(
+                nodes[1]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"rapid811"
+            );
+            assert_eq!(
+                nodes[2]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"local813"
+            );
+            for (i, n) in nodes.iter().enumerate() {
+                assert_eq!(n.index_in_step(), i);
             }
         }
         {
-            const auto& nodes = lattice_.nodes_at(2);
+            let nodes = lattice.nodes_at(3);
+            assert!(nodes.is_ok());
+            let nodes = nodes.unwrap();
 
-            BOOST_TEST_REQUIRE(std::size(nodes) == 3U);
-            BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "ariake");
-            BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "rapid811");
-            BOOST_TEST(std::any_cast<std::string>(nodes[2].value()) == "local813");
-            for (std::size_t i = 0; i < std::size(nodes); ++i)
-            {
-                BOOST_TEST(nodes[i].index_in_step() == i);
+            assert_eq!(nodes.len(), 5);
+            assert_eq!(
+                nodes[0]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"mizuho"
+            );
+            assert_eq!(
+                nodes[1]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"sakura"
+            );
+            assert_eq!(
+                nodes[2]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"tsubame"
+            );
+            assert_eq!(
+                nodes[3]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"local815"
+            );
+            assert_eq!(
+                nodes[4]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"local817"
+            );
+            for (i, n) in nodes.iter().enumerate() {
+                assert_eq!(n.index_in_step(), i);
             }
         }
         {
-            const auto& nodes = lattice_.nodes_at(3);
-
-            BOOST_TEST_REQUIRE(std::size(nodes) == 5U);
-            BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "mizuho");
-            BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "sakura");
-            BOOST_TEST(std::any_cast<std::string>(nodes[2].value()) == "tsubame");
-            BOOST_TEST(std::any_cast<std::string>(nodes[3].value()) == "local815");
-            BOOST_TEST(std::any_cast<std::string>(nodes[4].value()) == "local817");
-            for (std::size_t i = 0; i < std::size(nodes); ++i)
-            {
-                BOOST_TEST(nodes[i].index_in_step() == i);
-            }
-        }
-        {
-            BOOST_CHECK_THROW([[maybe_unused]] const auto& nodes = lattice_.nodes_at(4), std::out_of_range);
-        }
-        */
-    }
-    /*
-    BOOST_AUTO_TEST_CASE(nodes_at)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            {
-                const auto& nodes = lattice_.nodes_at(0);
-
-                BOOST_TEST_REQUIRE(std::size(nodes) == 1U);
-                const std::vector<int> preceding_edge_costs{};
-                BOOST_TEST(
-                    nodes[0].value().has_value() == tetengo::lattice::node::bos(&preceding_edge_costs).value().has_value());
-                for (std::size_t i = 0; i < std::size(nodes); ++i)
-                {
-                    BOOST_TEST(nodes[i].index_in_step() == i);
-                }
-            }
-            {
-                const auto& nodes = lattice_.nodes_at(1);
-
-                BOOST_TEST_REQUIRE(std::size(nodes) == 2U);
-                BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "kamome");
-                BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "local415");
-                for (std::size_t i = 0; i < std::size(nodes); ++i)
-                {
-                    BOOST_TEST(nodes[i].index_in_step() == i);
-                }
-            }
-            {
-                const auto& nodes = lattice_.nodes_at(2);
-
-                BOOST_TEST_REQUIRE(std::size(nodes) == 3U);
-                BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "ariake");
-                BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "rapid811");
-                BOOST_TEST(std::any_cast<std::string>(nodes[2].value()) == "local813");
-                for (std::size_t i = 0; i < std::size(nodes); ++i)
-                {
-                    BOOST_TEST(nodes[i].index_in_step() == i);
-                }
-            }
-            {
-                const auto& nodes = lattice_.nodes_at(3);
-
-                BOOST_TEST_REQUIRE(std::size(nodes) == 5U);
-                BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "mizuho");
-                BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "sakura");
-                BOOST_TEST(std::any_cast<std::string>(nodes[2].value()) == "tsubame");
-                BOOST_TEST(std::any_cast<std::string>(nodes[3].value()) == "local815");
-                BOOST_TEST(std::any_cast<std::string>(nodes[4].value()) == "local817");
-                for (std::size_t i = 0; i < std::size(nodes); ++i)
-                {
-                    BOOST_TEST(nodes[i].index_in_step() == i);
-                }
-            }
-            {
-                BOOST_CHECK_THROW([[maybe_unused]] const auto& nodes = lattice_.nodes_at(4), std::out_of_range);
-            }
+            let nodes = lattice.nodes_at(4);
+            assert!(nodes.is_err());
         }
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(push_back)
     {
