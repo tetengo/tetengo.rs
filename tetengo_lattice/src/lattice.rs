@@ -7,10 +7,24 @@
 use std::fmt::{self, Debug, Formatter};
 use std::rc::Rc;
 
+use anyhow::Result;
+
 use crate::entry::EntryView;
 use crate::input::Input;
 use crate::node::Node;
 use crate::vocabulary::Vocabulary;
+
+/**
+ * A lattice error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum LatticeError {
+    /**
+     * The step is too large.
+     */
+    #[error("The step is too large.")]
+    StepIsTooLarge,
+}
 
 #[derive(Debug)]
 struct GraphStep<'a> {
@@ -98,6 +112,26 @@ impl<'a> Lattice<'a> {
         self.graph.len()
     }
 
+    /**
+     * Returns the nodes at the specified step.
+     *
+     * # Arguments
+     * * `step` - A step.
+     *
+     * # Returns
+     * The nodes.
+     *
+     * # Errors
+     * * When step is too large.
+     */
+    pub fn nodes_at(&self, step: usize) -> Result<&[Node<'a>]> {
+        if step >= self.graph.len() {
+            Err(LatticeError::StepIsTooLarge.into())
+        } else {
+            Ok(self.graph[step].nodes.as_slice())
+        }
+    }
+
     /*
         /*!
             \brief Returns the nodes at the specified step.
@@ -128,7 +162,7 @@ impl<'a> Lattice<'a> {
      * # Arguments
      * * `input` - An input.
      */
-    pub fn push_back(&mut self, input: Box<dyn Input>) -> anyhow::Result<()> {
+    pub fn push_back(&mut self, input: Box<dyn Input>) -> Result<()> {
         if let Some(self_input) = &mut self.input {
             self_input.append(input)?;
         } else {
@@ -636,6 +670,107 @@ mod tests {
         assert_eq!(lattice.step_count(), 4);
     }
 
+    #[test]
+    fn nodes_at() {
+        let vocabulary = create_vocabulary();
+        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let _result1 = lattice.push_back(to_input("[HakataTosu]"));
+        let _result2 = lattice.push_back(to_input("[TosuOmuta]"));
+        let _result3 = lattice.push_back(to_input("[OmutaKumamoto]"));
+
+        {
+            let nodes = lattice.nodes_at(0);
+            assert!(nodes.is_ok());
+            let nodes = nodes.unwrap();
+
+            assert_eq!(nodes.len(), 1);
+            let preceding_edge_costs = Rc::new(Vec::new());
+            assert_eq!(
+                nodes[0].value().is_some(),
+                Node::bos(preceding_edge_costs).value().is_some()
+            );
+            for (i, n) in nodes.iter().enumerate() {
+                assert_eq!(n.index_in_step(), i);
+            }
+        }
+        {
+            let nodes = lattice.nodes_at(1);
+            assert!(nodes.is_ok());
+            let nodes = nodes.unwrap();
+
+            assert_eq!(nodes.len(), 2);
+            let _x = format!(
+                "{:?}",
+                nodes[0].value().unwrap().as_any().downcast_ref::<String>()
+            );
+            // if _x.is_none() {
+            //     panic!();
+            // }
+            // assert_eq!(
+            //     nodes[0]
+            //         .value()
+            //         .unwrap()
+            //         .as_any()
+            //         .downcast_ref::<String>()
+            //         .unwrap(),
+            //     "kamome"
+            // );
+            // assert_eq!(
+            //     nodes[1]
+            //         .value()
+            //         .unwrap()
+            //         .as_any()
+            //         .downcast_ref::<String>()
+            //         .unwrap(),
+            //     "local415"
+            // );
+            for (i, n) in nodes.iter().enumerate() {
+                assert_eq!(n.index_in_step(), i);
+            }
+        }
+        /*
+        {
+            const auto& nodes = lattice_.nodes_at(1);
+
+            BOOST_TEST_REQUIRE(std::size(nodes) == 2U);
+            BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "kamome");
+            BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "local415");
+            for (std::size_t i = 0; i < std::size(nodes); ++i)
+            {
+                BOOST_TEST(nodes[i].index_in_step() == i);
+            }
+        }
+        {
+            const auto& nodes = lattice_.nodes_at(2);
+
+            BOOST_TEST_REQUIRE(std::size(nodes) == 3U);
+            BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "ariake");
+            BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "rapid811");
+            BOOST_TEST(std::any_cast<std::string>(nodes[2].value()) == "local813");
+            for (std::size_t i = 0; i < std::size(nodes); ++i)
+            {
+                BOOST_TEST(nodes[i].index_in_step() == i);
+            }
+        }
+        {
+            const auto& nodes = lattice_.nodes_at(3);
+
+            BOOST_TEST_REQUIRE(std::size(nodes) == 5U);
+            BOOST_TEST(std::any_cast<std::string>(nodes[0].value()) == "mizuho");
+            BOOST_TEST(std::any_cast<std::string>(nodes[1].value()) == "sakura");
+            BOOST_TEST(std::any_cast<std::string>(nodes[2].value()) == "tsubame");
+            BOOST_TEST(std::any_cast<std::string>(nodes[3].value()) == "local815");
+            BOOST_TEST(std::any_cast<std::string>(nodes[4].value()) == "local817");
+            for (std::size_t i = 0; i < std::size(nodes); ++i)
+            {
+                BOOST_TEST(nodes[i].index_in_step() == i);
+            }
+        }
+        {
+            BOOST_CHECK_THROW([[maybe_unused]] const auto& nodes = lattice_.nodes_at(4), std::out_of_range);
+        }
+        */
+    }
     /*
     BOOST_AUTO_TEST_CASE(nodes_at)
     {
