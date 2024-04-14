@@ -24,6 +24,12 @@ pub enum LatticeError {
      */
     #[error("The step is too large.")]
     StepIsTooLarge,
+
+    /**
+     * No node is found for the input.
+     */
+    #[error("No node is found for the input.")]
+    NoNodeIsFoundForTheInput,
 }
 
 #[derive(Debug)]
@@ -194,7 +200,7 @@ impl<'a> Lattice<'a> {
             }
         }
         if nodes.is_empty() {
-            panic!("No node is found for the input.");
+            return Err(LatticeError::NoNodeIsFoundForTheInput.into());
         }
 
         self.graph.push(GraphStep::new(
@@ -208,160 +214,6 @@ impl<'a> Lattice<'a> {
 
     /*
            /*!
-               \brief Pushes back an input.
-
-               \param p_input A unique pointer to an input.
-           */
-           void push_back(std::unique_ptr<input>&& p_input);
-    */
-    /*
-            void push_back(std::unique_ptr<input>&& p_input)
-            {
-                if (m_p_input)
-                {
-                    m_p_input->append(std::move(p_input));
-                }
-                else
-                {
-                    m_p_input = std::move(p_input);
-                }
-
-                std::vector<node> nodes{};
-                auto              p_node_preceding_edge_costs = std::vector<std::unique_ptr<std::vector<int>>>{};
-                for (auto i = static_cast<std::size_t>(0); i < std::size(m_graph); ++i)
-                {
-                    const auto& step = m_graph[i];
-
-                    const auto p_node_key =
-                        m_p_input->create_subrange(step.input_tail(), m_p_input->length() - step.input_tail());
-                    const auto found = m_vocabulary.find_entries(*p_node_key);
-
-                    std::vector<std::size_t> preceding_edge_cost_indexes{};
-                    preceding_edge_cost_indexes.reserve(std::size(found));
-                    for (const auto& e: found)
-                    {
-                        auto p_preceding_edge_costs = preceding_edge_costs(step, e);
-                        preceding_edge_cost_indexes.push_back(std::size(p_node_preceding_edge_costs));
-                        p_node_preceding_edge_costs.push_back(std::move(p_preceding_edge_costs));
-                    }
-
-                    for (auto j = static_cast<std::size_t>(0); j < std::size(found); ++j)
-                    {
-                        const auto& entry = found[j];
-                        const auto& preceding_edge_costs = *p_node_preceding_edge_costs[preceding_edge_cost_indexes[j]];
-
-                        const auto best_preceding_node_index_ = best_preceding_node_index(step, preceding_edge_costs);
-                        const auto best_preceding_path_cost = add_cost(
-                            step.nodes()[best_preceding_node_index_].path_cost(),
-                            preceding_edge_costs[best_preceding_node_index_]);
-
-                        nodes.emplace_back(
-                            entry,
-                            std::size(nodes),
-                            i,
-                            &preceding_edge_costs,
-                            best_preceding_node_index_,
-                            add_cost(best_preceding_path_cost, entry.cost()));
-                    }
-                }
-                if (std::empty(nodes))
-                {
-                    throw std::invalid_argument{ "No node is found for the input." };
-                }
-
-                m_graph.emplace_back(m_p_input->length(), std::move(nodes), std::move(p_node_preceding_edge_costs));
-            }
-    */
-
-    fn preceding_edge_costs(
-        &self,
-        step: &GraphStep<'_>,
-        next_entry: &EntryView<'_>,
-    ) -> Rc<Vec<i32>> {
-        assert!(!step.nodes().is_empty());
-        let costs = step
-            .nodes()
-            .iter()
-            .map(|node| self.vocabulary.find_connection(node, next_entry).cost())
-            .collect::<Vec<_>>();
-        Rc::new(costs)
-    }
-
-    /*
-            // functions
-
-            std::unique_ptr<std::vector<int>>
-            preceding_edge_costs(const graph_step& step, const entry_view& next_entry) const
-            {
-                assert(!std::empty(step.nodes()));
-                std::vector<int> costs{};
-                costs.reserve(std::size(step.nodes()));
-                std::transform(
-                    std::begin(step.nodes()),
-                    std::end(step.nodes()),
-                    std::back_inserter(costs),
-                    [this, &next_entry](const auto& node) {
-                        return m_vocabulary.find_connection(node, next_entry).cost();
-                    });
-                return std::make_unique<std::vector<int>>(std::move(costs));
-            }
-        };
-    */
-
-    fn best_preceding_node_index(step: &GraphStep<'_>, edge_costs: &[i32]) -> usize {
-        assert!(!step.nodes().is_empty());
-        let mut min_index = 0;
-        for i in 1..step.nodes().len() {
-            if Self::add_cost(step.nodes()[i].path_cost(), edge_costs[i])
-                < Self::add_cost(step.nodes()[min_index].path_cost(), edge_costs[min_index])
-            {
-                min_index = i;
-            }
-        }
-        min_index
-    }
-
-    /*
-            static std::size_t best_preceding_node_index(const graph_step& step, const std::vector<int>& edge_costs)
-            {
-                assert(!std::empty(step.nodes()));
-                auto min_index = static_cast<std::size_t>(0);
-                for (auto i = static_cast<std::size_t>(1); i < std::size(step.nodes()); ++i)
-                {
-                    if (add_cost(step.nodes()[i].path_cost(), edge_costs[i]) <
-                        add_cost(step.nodes()[min_index].path_cost(), edge_costs[min_index]))
-                    {
-                        min_index = i;
-                    }
-                }
-                return min_index;
-            }
-    */
-
-    fn add_cost(one: i32, another: i32) -> i32 {
-        if one == i32::MAX || another == i32::MAX {
-            i32::MAX
-        } else {
-            one + another
-        }
-    }
-
-    /*
-            static int add_cost(const int one, const int another)
-            {
-                if (one == std::numeric_limits<int>::max() || another == std::numeric_limits<int>::max())
-                {
-                    return std::numeric_limits<int>::max();
-                }
-                else
-                {
-                    return one + another;
-                }
-            }
-    */
-
-    /*
-           /*!
                \brief Settles this lattice.
 
                You can modify the lattice after settlement.
@@ -371,7 +223,6 @@ impl<'a> Lattice<'a> {
            */
            [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
     */
-
     /*
             std::pair<node, std::unique_ptr<std::vector<int>>> settle()
             {
@@ -389,6 +240,41 @@ impl<'a> Lattice<'a> {
                 return std::make_pair(std::move(eos_node), std::move(p_preceding_edge_costs));
             }
     */
+
+    fn preceding_edge_costs(
+        &self,
+        step: &GraphStep<'_>,
+        next_entry: &EntryView<'_>,
+    ) -> Rc<Vec<i32>> {
+        assert!(!step.nodes().is_empty());
+        let costs = step
+            .nodes()
+            .iter()
+            .map(|node| self.vocabulary.find_connection(node, next_entry).cost())
+            .collect::<Vec<_>>();
+        Rc::new(costs)
+    }
+
+    fn best_preceding_node_index(step: &GraphStep<'_>, edge_costs: &[i32]) -> usize {
+        assert!(!step.nodes().is_empty());
+        let mut min_index = 0;
+        for i in 1..step.nodes().len() {
+            if Self::add_cost(step.nodes()[i].path_cost(), edge_costs[i])
+                < Self::add_cost(step.nodes()[min_index].path_cost(), edge_costs[min_index])
+            {
+                min_index = i;
+            }
+        }
+        min_index
+    }
+
+    fn add_cost(one: i32, another: i32) -> i32 {
+        if one == i32::MAX || another == i32::MAX {
+            i32::MAX
+        } else {
+            one + another
+        }
+    }
 }
 
 #[cfg(test)]
@@ -621,6 +507,15 @@ mod tests {
         ))
     }
 
+    fn create_empty_vocabulary() -> Box<dyn Vocabulary> {
+        Box::new(HashMapVocabulary::new(
+            Vec::new(),
+            Vec::new(),
+            &entry_hash,
+            &entry_equal_to,
+        ))
+    }
+
     #[test]
     fn new() {
         let vocabulary = create_vocabulary();
@@ -794,27 +689,29 @@ mod tests {
             assert!(nodes.is_err());
         }
     }
-    /*
-    BOOST_AUTO_TEST_CASE(push_back)
-    {
-        BOOST_TEST_PASSPOINT();
 
+    #[test]
+    fn push_back() {
         {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
+            let vocabulary = create_vocabulary();
+            let mut lattice = Lattice::new(vocabulary.as_ref());
 
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
+            let result1 = lattice.push_back(to_input("[HakataTosu]"));
+            assert!(result1.is_ok());
+            let result2 = lattice.push_back(to_input("[TosuOmuta]"));
+            assert!(result2.is_ok());
+            let result3 = lattice.push_back(to_input("[OmutaKumamoto]"));
+            assert!(result3.is_ok());
         }
         {
-            const auto                p_vocabulary = create_cpp_empty_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
+            let vocabulary = create_empty_vocabulary();
+            let mut lattice = Lattice::new(vocabulary.as_ref());
 
-            BOOST_CHECK_THROW(lattice_.push_back(to_input("[HakataTosu]")), std::invalid_argument);
+            let result = lattice.push_back(to_input("[HakataTosu]"));
+            assert!(result.is_err());
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(settle)
     {
