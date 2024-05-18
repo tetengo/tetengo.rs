@@ -213,13 +213,19 @@ impl Vocabulary for HashMapVocabulary<'_> {
     }
 
     fn find_connection(&self, from: &Node<'_>, to: &EntryView<'_>) -> Connection {
-        let Some(from_key) = from.key() else {
-            return Connection::new(i32::MAX);
+        let from_entry_view = match from {
+            Node::Middle(_) => {
+                let Some(from_key) = from.key() else {
+                    return Connection::new(i32::MAX);
+                };
+                let Some(from_value) = from.value() else {
+                    return Connection::new(i32::MAX);
+                };
+                EntryView::new(from_key, from_value, from.node_cost())
+            }
+            Node::Bos(_) => EntryView::BosEos,
+            Node::Eos(_) => EntryView::BosEos,
         };
-        let Some(from_value) = from.value() else {
-            return Connection::new(i32::MAX);
-        };
-        let from_entry_view = EntryView::new(from_key, from_value, from.node_cost());
         let key = (
             HashableEntry::from_view(from_entry_view, self.entry_hash_value, self.entry_equal),
             HashableEntry::from_view(to.clone(), self.entry_hash_value, self.entry_equal),
@@ -482,21 +488,24 @@ mod tests {
                     ],
                 ),
             ];
-            let connections = vec![(
+            let connections = vec![
                 (
-                    Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
-                        42,
+                    (
+                        Entry::new(
+                            Box::new(StringInput::new(String::from("みずほ"))),
+                            Box::new(String::from("瑞穂")),
+                            42,
+                        ),
+                        Entry::new(
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
+                            24,
+                        ),
                     ),
-                    Entry::new(
-                        Box::new(StringInput::new(String::from("さくら"))),
-                        Box::new(String::from("桜")),
-                        24,
-                    ),
+                    4242,
                 ),
-                4242,
-            )];
+                ((Entry::BosEos, Entry::BosEos), 999),
+            ];
             let vocaburary =
                 HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
@@ -510,6 +519,12 @@ mod tests {
                     vocaburary.find_connection(&make_node(&entries_mizuho[0]), &entries_sakura[0]);
 
                 assert_eq!(connection.cost(), 4242);
+            }
+            {
+                let connection =
+                    vocaburary.find_connection(&Node::bos(Rc::new(Vec::new())), &EntryView::BosEos);
+
+                assert_eq!(connection.cost(), 999);
             }
             {
                 let connection =
