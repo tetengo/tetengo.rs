@@ -5,6 +5,7 @@
  */
 
 use std::fmt::{self, Debug, Formatter};
+use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -26,31 +27,31 @@ pub enum NodeError {
 /**
  * A BOS (Beginning of Sequence) node.
  */
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Bos<'a> {
-    preceding_edge_costs: &'a Vec<i32>,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Bos {
+    preceding_edge_costs: Rc<Vec<i32>>,
 }
 
 /**
  * A EOS (Ending of Sequence) node.
  */
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Eos<'a> {
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Eos {
     preceding_step: usize,
-    preceding_edge_costs: &'a Vec<i32>,
+    preceding_edge_costs: Rc<Vec<i32>>,
     best_preceding_node: usize,
     path_cost: i32,
 }
 /**
  * A middle node.
  */
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Middle<'a> {
     key: &'a dyn Input,
     value: &'a dyn AnyValue,
     index_in_step: usize,
     preceding_step: usize,
-    preceding_edge_costs: &'a Vec<i32>,
+    preceding_edge_costs: Rc<Vec<i32>>,
     best_preceding_node: usize,
     node_cost: i32,
     path_cost: i32,
@@ -91,10 +92,10 @@ impl PartialEq for Middle<'_> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Node<'a> {
     /// The BOS (Beginning of Sequence) node.
-    Bos(Bos<'a>),
+    Bos(Bos),
 
     /// The EOS (Ending of Sequence) node.
-    Eos(Eos<'a>),
+    Eos(Eos),
 
     /// The middle node.
     Middle(Middle<'a>),
@@ -107,7 +108,7 @@ impl<'a> Node<'a> {
      * # Arguments
      * * preceding_edge_costs - Preceding edge costs.
      */
-    pub const fn bos(preceding_edge_costs: &'a Vec<i32>) -> Self {
+    pub const fn bos(preceding_edge_costs: Rc<Vec<i32>>) -> Self {
         Node::Bos(Bos {
             preceding_edge_costs,
         })
@@ -124,7 +125,7 @@ impl<'a> Node<'a> {
      */
     pub const fn eos(
         preceding_step: usize,
-        preceding_edge_costs: &'a Vec<i32>,
+        preceding_edge_costs: Rc<Vec<i32>>,
         best_preceding_node: usize,
         path_cost: i32,
     ) -> Self {
@@ -154,7 +155,7 @@ impl<'a> Node<'a> {
         value: &'a dyn AnyValue,
         index_in_step: usize,
         preceding_step: usize,
-        preceding_edge_costs: &'a Vec<i32>,
+        preceding_edge_costs: Rc<Vec<i32>>,
         best_preceding_node: usize,
         node_cost: i32,
         path_cost: i32,
@@ -178,10 +179,10 @@ impl<'a> Node<'a> {
      * * When `entry` is BOS or EOS.
      */
     pub fn new_with_entry_view(
-        entry: &'a EntryView<'a>,
+        entry: &EntryView<'a>,
         index_in_step: usize,
         preceding_step: usize,
-        preceding_edge_costs: &'a Vec<i32>,
+        preceding_edge_costs: Rc<Vec<i32>>,
         best_preceding_node: usize,
         path_cost: i32,
     ) -> Result<Self> {
@@ -265,11 +266,11 @@ impl<'a> Node<'a> {
      * # Returns
      * The preceding edge costs.
      */
-    pub const fn preceding_edge_costs(&self) -> &Vec<i32> {
+    pub fn preceding_edge_costs(&self) -> &Vec<i32> {
         match self {
-            Node::Bos(bos) => bos.preceding_edge_costs,
-            Node::Eos(eos) => eos.preceding_edge_costs,
-            Node::Middle(middle) => middle.preceding_edge_costs,
+            Node::Bos(bos) => bos.preceding_edge_costs.as_ref(),
+            Node::Eos(eos) => eos.preceding_edge_costs.as_ref(),
+            Node::Middle(middle) => middle.preceding_edge_costs.as_ref(),
         }
     }
 
@@ -334,14 +335,14 @@ mod tests {
 
     #[test]
     fn bos() {
-        let preceding_edge_costs = Vec::new();
-        let bos = Node::bos(&preceding_edge_costs);
+        let preceding_edge_costs = Rc::new(Vec::new());
+        let bos = Node::bos(preceding_edge_costs.clone());
 
         assert!(bos.key().is_none());
         assert!(bos.value().is_none());
         assert_eq!(bos.index_in_step(), 0);
         assert_eq!(bos.preceding_step(), usize::MAX);
-        assert_eq!(bos.preceding_edge_costs(), &preceding_edge_costs);
+        assert_eq!(bos.preceding_edge_costs(), preceding_edge_costs.as_ref());
         assert_eq!(bos.best_preceding_node(), usize::MAX);
         assert_eq!(bos.node_cost(), EntryView::BosEos.cost());
         assert_eq!(bos.path_cost(), 0);
@@ -349,14 +350,14 @@ mod tests {
 
     #[test]
     fn eos() {
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let eos = Node::eos(1, &preceding_edge_costs, 5, 42);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let eos = Node::eos(1, preceding_edge_costs.clone(), 5, 42);
 
         assert!(eos.key().is_none());
         assert!(eos.value().is_none());
         assert_eq!(eos.index_in_step(), 0);
         assert_eq!(eos.preceding_step(), 1);
-        assert_eq!(eos.preceding_edge_costs(), &preceding_edge_costs);
+        assert_eq!(eos.preceding_edge_costs(), preceding_edge_costs.as_ref());
         assert_eq!(eos.best_preceding_node(), 5);
         assert_eq!(eos.node_cost(), EntryView::BosEos.cost());
         assert_eq!(eos.path_cost(), 42);
@@ -366,8 +367,17 @@ mod tests {
     fn new() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let _node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let _node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
     }
 
     #[test]
@@ -376,8 +386,9 @@ mod tests {
             let entry_key = StringInput::new(String::from("mizuho"));
             let entry_value = 42;
             let entry = EntryView::new(&entry_key, &entry_value, 24);
-            let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            let node = Node::new_with_entry_view(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node =
+                Node::new_with_entry_view(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
 
             let node = node.unwrap();
             assert_eq!(
@@ -398,15 +409,16 @@ mod tests {
             );
             assert_eq!(node.index_in_step(), 53);
             assert_eq!(node.preceding_step(), 1);
-            assert_eq!(node.preceding_edge_costs(), &preceding_edge_costs);
+            assert_eq!(node.preceding_edge_costs(), preceding_edge_costs.as_ref());
             assert_eq!(node.best_preceding_node(), 5);
             assert_eq!(node.node_cost(), 24);
             assert_eq!(node.path_cost(), 2424);
         }
         {
             let entry = EntryView::BosEos;
-            let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            let node = Node::new_with_entry_view(&entry, 53, 1, &preceding_edge_costs, 5, 2424);
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node =
+                Node::new_with_entry_view(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
 
             assert!(node.is_err());
         }
@@ -416,8 +428,17 @@ mod tests {
     fn key() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(
             node.key()
@@ -434,8 +455,17 @@ mod tests {
     fn value() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(
             node.value()
@@ -451,8 +481,17 @@ mod tests {
     fn index_in_step() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(node.index_in_step(), 53);
     }
@@ -461,8 +500,17 @@ mod tests {
     fn preceding_step() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(node.preceding_step(), 1);
     }
@@ -471,18 +519,36 @@ mod tests {
     fn preceding_edge_costs() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
-        assert_eq!(node.preceding_edge_costs(), &preceding_edge_costs);
+        assert_eq!(node.preceding_edge_costs(), preceding_edge_costs.as_ref());
     }
 
     #[test]
     fn best_preceding_node() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(node.best_preceding_node(), 5);
     }
@@ -491,8 +557,17 @@ mod tests {
     fn node_cost() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(node.node_cost(), 24);
     }
@@ -501,8 +576,17 @@ mod tests {
     fn path_cost() {
         let key = StringInput::new(String::from("mizuho"));
         let value = 42;
-        let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node = Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424);
+        let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node = Node::new(
+            &key,
+            &value,
+            53,
+            1,
+            preceding_edge_costs.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(node.path_cost(), 2424);
     }
@@ -510,18 +594,28 @@ mod tests {
     #[test]
     fn is_bos() {
         {
-            let preceding_edge_costs_bos = Vec::new();
-            assert!(Node::bos(&preceding_edge_costs_bos).is_bos());
+            let preceding_edge_costs_bos = Rc::new(Vec::new());
+            assert!(Node::bos(preceding_edge_costs_bos.clone()).is_bos());
         }
         {
-            let preceding_edge_costs_eos = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            assert!(!Node::eos(1, &preceding_edge_costs_eos, 5, 42).is_bos());
+            let preceding_edge_costs_eos = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            assert!(!Node::eos(1, preceding_edge_costs_eos.clone(), 5, 42).is_bos());
         }
         {
             let key = StringInput::new(String::from("mizuho"));
             let value = 42;
-            let preceding_edge_costs = vec![3, 1, 4, 1, 5, 9, 2, 6];
-            assert!(!Node::new(&key, &value, 53, 1, &preceding_edge_costs, 5, 24, 2424).is_bos());
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            assert!(!Node::new(
+                &key,
+                &value,
+                53,
+                1,
+                preceding_edge_costs.clone(),
+                5,
+                24,
+                2424
+            )
+            .is_bos());
         }
     }
 
@@ -529,19 +623,37 @@ mod tests {
     fn eq() {
         let key = StringInput::new(String::from("mizuho"));
 
-        let preceding_edge_costs_bos = Vec::new();
-        let bos = Node::bos(&preceding_edge_costs_bos);
+        let preceding_edge_costs_bos = Rc::new(Vec::new());
+        let bos = Node::bos(preceding_edge_costs_bos.clone());
 
-        let preceding_edge_costs_eos = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let eos = Node::eos(1, &preceding_edge_costs_eos, 5, 42);
+        let preceding_edge_costs_eos = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let eos = Node::eos(1, preceding_edge_costs_eos.clone(), 5, 42);
 
         let value1 = 42;
-        let preceding_edge_costs1 = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node1 = Node::new(&key, &value1, 53, 1, &preceding_edge_costs1, 5, 24, 2424);
+        let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node1 = Node::new(
+            &key,
+            &value1,
+            53,
+            1,
+            preceding_edge_costs1.clone(),
+            5,
+            24,
+            2424,
+        );
 
         let value2 = 42;
-        let preceding_edge_costs2 = vec![3, 1, 4, 1, 5, 9, 2, 6];
-        let node2 = Node::new(&key, &value2, 53, 1, &preceding_edge_costs2, 5, 24, 2424);
+        let preceding_edge_costs2 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+        let node2 = Node::new(
+            &key,
+            &value2,
+            53,
+            1,
+            preceding_edge_costs2.clone(),
+            5,
+            24,
+            2424,
+        );
 
         assert_eq!(bos, bos);
         assert_ne!(bos, eos);

@@ -173,6 +173,7 @@ fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::ptr_arg)]
 fn serialize_value(vpus: &Vec<(usize, usize)>) -> Vec<u8> {
     let mut serialized = Vec::with_capacity(SERIALIZED_VALUE_SIZE);
 
