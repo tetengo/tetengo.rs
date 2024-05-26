@@ -149,6 +149,9 @@ impl<'a> Lattice<'a> {
      *
      * # Arguments
      * * `input` - An input.
+     *
+     * # Errors
+     * * When no node is found for the input.
      */
     pub fn push_back(&mut self, input: Box<dyn Input>) -> Result<()> {
         if let Some(self_input) = &mut self.input {
@@ -250,35 +253,6 @@ impl<'a> Lattice<'a> {
         );
         Ok((eos_node, preceding_edge_costs))
     }
-
-    /*
-           /*!
-               \brief Settles this lattice.
-
-               You can modify the lattice after settlement.
-               Modification of the lattice after settlement invalidate the EOS node.
-
-               \return The EOS node and its preceding edge costs.
-           */
-           [[nodiscard]] std::pair<node, std::unique_ptr<std::vector<int>>> settle();
-    */
-    /*
-            std::pair<node, std::unique_ptr<std::vector<int>>> settle()
-            {
-                auto       p_preceding_edge_costs = preceding_edge_costs(m_graph.back(), entry_view::bos_eos());
-                const auto best_preceding_node_index_ = best_preceding_node_index(m_graph.back(), *p_preceding_edge_costs);
-                const auto best_preceding_path_cost = add_cost(
-                    m_graph.back().nodes()[best_preceding_node_index_].path_cost(),
-                    (*p_preceding_edge_costs)[best_preceding_node_index_]);
-
-                node eos_node{ node::eos(
-                    std::size(m_graph) - 1,
-                    std::to_address(p_preceding_edge_costs),
-                    best_preceding_node_index_,
-                    best_preceding_path_cost) };
-                return std::make_pair(std::move(eos_node), std::move(p_preceding_edge_costs));
-            }
-    */
 
     fn preceding_edge_costs(
         &self,
@@ -781,86 +755,32 @@ mod tests {
                 let expected_preceding_edge_costs = vec![6000, 6000];
                 assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
             }
+
+            let _result = lattice.push_back(to_input("[TosuOmuta]"));
+            {
+                let result = lattice.settle();
+                let (eos_node, preceding_edge_costs) = result.unwrap();
+
+                assert_eq!(eos_node.preceding_step(), 2);
+                assert_eq!(eos_node.best_preceding_node(), 1);
+                assert_eq!(eos_node.path_cost(), 4010);
+
+                let expected_preceding_edge_costs = vec![2000, 2000, 3000];
+                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
+            }
+
+            let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
+            {
+                let result = lattice.settle();
+                let (eos_node, preceding_edge_costs) = result.unwrap();
+
+                assert_eq!(eos_node.preceding_step(), 3);
+                assert_eq!(eos_node.best_preceding_node(), 2);
+                assert_eq!(eos_node.path_cost(), 3390);
+
+                let expected_preceding_edge_costs = vec![400, 400, 400, 500, 600];
+                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
+            }
         }
     }
-    /*
-    BOOST_AUTO_TEST_CASE(settle)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-
-            {
-                const auto eos_node_and_preceding_edge_costs = lattice_.settle();
-
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.preceding_step() == 0U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.best_preceding_node() == 0U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.path_cost() == 8000);
-
-                const std::vector<int> expected_preceding_edge_costs{ 8000 };
-                BOOST_CHECK_EQUAL_COLLECTIONS(
-                    std::begin(*eos_node_and_preceding_edge_costs.second),
-                    std::end(*eos_node_and_preceding_edge_costs.second),
-                    std::begin(expected_preceding_edge_costs),
-                    std::end(expected_preceding_edge_costs));
-            }
-
-            lattice_.push_back(to_input("[HakataTosu]"));
-            {
-                const auto eos_node_and_preceding_edge_costs = lattice_.settle();
-
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.preceding_step() == 1U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.best_preceding_node() == 1U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.path_cost() == 7370);
-
-                const std::vector<int> expected_preceding_edge_costs{ 6000, 6000 };
-                BOOST_CHECK_EQUAL_COLLECTIONS(
-                    std::begin(*eos_node_and_preceding_edge_costs.second),
-                    std::end(*eos_node_and_preceding_edge_costs.second),
-                    std::begin(expected_preceding_edge_costs),
-                    std::end(expected_preceding_edge_costs));
-            }
-
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            {
-                const auto eos_node_and_preceding_edge_costs = lattice_.settle();
-
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.preceding_step() == 2U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.best_preceding_node() == 1U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.path_cost() == 4010);
-
-                const std::vector<int> expected_preceding_edge_costs{ 2000, 2000, 3000 };
-                BOOST_CHECK_EQUAL_COLLECTIONS(
-                    std::begin(*eos_node_and_preceding_edge_costs.second),
-                    std::end(*eos_node_and_preceding_edge_costs.second),
-                    std::begin(expected_preceding_edge_costs),
-                    std::end(expected_preceding_edge_costs));
-            }
-
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-            {
-                const auto eos_node_and_preceding_edge_costs = lattice_.settle();
-
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.preceding_step() == 3U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.best_preceding_node() == 2U);
-                BOOST_TEST(eos_node_and_preceding_edge_costs.first.path_cost() == 3390);
-
-                const std::vector<int> expected_preceding_edge_costs{ 400, 400, 400, 500, 600 };
-                BOOST_CHECK_EQUAL_COLLECTIONS(
-                    std::begin(*eos_node_and_preceding_edge_costs.second),
-                    std::end(*eos_node_and_preceding_edge_costs.second),
-                    std::begin(expected_preceding_edge_costs),
-                    std::end(expected_preceding_edge_costs));
-            }
-        }
-        {
-            const auto                p_vocabulary = create_cpp_empty_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-
-            const auto eos_node_and_preceding_edge_costs = lattice_.settle();
-        }
-    }
-     */
 }
