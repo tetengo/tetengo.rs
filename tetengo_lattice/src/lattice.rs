@@ -30,6 +30,12 @@ pub enum LatticeError {
      */
     #[error("No node is found for the input.")]
     NoNodeIsFoundForTheInput,
+
+    /**
+     * No input.
+     */
+    #[error("No input.")]
+    NoInput,
 }
 
 #[derive(Debug)]
@@ -191,7 +197,7 @@ impl<'a> Lattice<'a> {
                     i,
                     preceding_edge_costs.clone(),
                     best_preceding_node_index_,
-                    best_preceding_path_cost,
+                    Self::add_cost(best_preceding_path_cost, entry.cost()),
                 ) {
                     Ok(new_node) => new_node,
                     Err(e) => return Err(e),
@@ -210,6 +216,39 @@ impl<'a> Lattice<'a> {
         ));
 
         Ok(())
+    }
+
+    /**
+     * Settles this lattice.
+     *
+     * You can modify the lattice after settlement.
+     * Modification of the lattice after settlement invalidate the EOS node.
+     *
+     * # Returns
+     * The EOS node and its preceding edge costs.
+     *
+     * # Errors
+     * * When no input pushed yet.
+     */
+    pub fn settle(&mut self) -> Result<(Node<'a>, Rc<Vec<i32>>)> {
+        let Some(graph_last) = self.graph.last() else {
+            return Err(LatticeError::NoInput.into());
+        };
+        let preceding_edge_costs = self.preceding_edge_costs(graph_last, &EntryView::BosEos);
+        let best_preceding_node_index =
+            Self::best_preceding_node_index(graph_last, preceding_edge_costs.as_slice());
+        let best_preceding_path_cost = Self::add_cost(
+            graph_last.nodes()[best_preceding_node_index].path_cost(),
+            preceding_edge_costs[best_preceding_node_index],
+        );
+
+        let eos_node = Node::eos(
+            self.graph.len() - 1,
+            preceding_edge_costs.clone(),
+            best_preceding_node_index,
+            best_preceding_path_cost,
+        );
+        Ok((eos_node, preceding_edge_costs))
     }
 
     /*
@@ -712,6 +751,38 @@ mod tests {
         }
     }
 
+    #[test]
+    fn settle() {
+        {
+            let vocabulary = create_vocabulary();
+            let mut lattice = Lattice::new(vocabulary.as_ref());
+
+            {
+                let result = lattice.settle();
+                let (eos_node, preceding_edge_costs) = result.unwrap();
+
+                assert_eq!(eos_node.preceding_step(), 0);
+                assert_eq!(eos_node.best_preceding_node(), 0);
+                assert_eq!(eos_node.path_cost(), 8000);
+
+                let expected_preceding_edge_costs = vec![8000];
+                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
+            }
+
+            let _result = lattice.push_back(to_input("[HakataTosu]"));
+            {
+                let result = lattice.settle();
+                let (eos_node, preceding_edge_costs) = result.unwrap();
+
+                assert_eq!(eos_node.preceding_step(), 1);
+                assert_eq!(eos_node.best_preceding_node(), 1);
+                assert_eq!(eos_node.path_cost(), 7370);
+
+                let expected_preceding_edge_costs = vec![6000, 6000];
+                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
+            }
+        }
+    }
     /*
     BOOST_AUTO_TEST_CASE(settle)
     {
