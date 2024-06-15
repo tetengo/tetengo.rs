@@ -29,7 +29,7 @@ fn main_core() -> Result<()> {
         return Ok(());
     }
 
-    let _lex_csv = load_lex_csv(Path::new(&args[1]))?;
+    let lex_csv = load_lex_csv(Path::new(&args[1]))?;
     let trie = load_trie(Path::new(&args[2]))?;
 
     loop {
@@ -54,7 +54,7 @@ fn main_core() -> Result<()> {
 
         found.iter().for_each(|e| {
             let (offset, length) = *e;
-            print!("{}", substring_view(&_lex_csv, offset, length));
+            print!("{}", substring_view(&lex_csv, offset, length));
         });
     }
     Ok(())
