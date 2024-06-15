@@ -558,9 +558,9 @@ mod tests {
     fn nodes_at() {
         let vocabulary = create_vocabulary();
         let mut lattice = Lattice::new(vocabulary.as_ref());
-        let _result1 = lattice.push_back(to_input("[HakataTosu]"));
-        let _result2 = lattice.push_back(to_input("[TosuOmuta]"));
-        let _result3 = lattice.push_back(to_input("[OmutaKumamoto]"));
+        let _result = lattice.push_back(to_input("[HakataTosu]"));
+        let _result = lattice.push_back(to_input("[TosuOmuta]"));
+        let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
         {
             let nodes = lattice.nodes_at(0);
