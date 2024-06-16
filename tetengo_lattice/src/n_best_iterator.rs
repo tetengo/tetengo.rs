@@ -45,7 +45,7 @@ impl Iterator for NBestIterator {
 #[derive(Eq)]
 struct _Cap<'a> {
     tail_path: Vec<Node<'a>>,
-    _tail_path_cost: i32,
+    tail_path_cost: i32,
     whole_path_cost: i32,
 }
 
@@ -53,7 +53,7 @@ impl<'a> _Cap<'a> {
     fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         _Cap {
             tail_path,
-            _tail_path_cost: tail_path_cost,
+            tail_path_cost,
             whole_path_cost,
         }
     }
@@ -62,20 +62,10 @@ impl<'a> _Cap<'a> {
         self.tail_path.as_slice()
     }
 
-    /*
-            /*!
-                \brief Returns the tail path cost.
+    fn _tail_path_cost(&self) -> i32 {
+        self.tail_path_cost
+    }
 
-                \return The tail path cost.
-            */
-            [[nodiscard]] int tail_path_cost() const;
-    */
-    /*
-        int cap::tail_path_cost() const
-        {
-            return m_tail_path_cost;
-        }
-    */
     /*
             /*!
                 \brief Returns the whole path cost.
@@ -170,19 +160,16 @@ mod tests {
             );
         }
 
-        /*
-        BOOST_AUTO_TEST_CASE(tail_path_cost)
-        {
-            BOOST_TEST_PASSPOINT();
+        #[test]
+        fn tail_path_cost() {
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node = Node::eos(1, preceding_edge_costs, 5, 42);
+            let nodes = vec![node];
+            let cap = _Cap::_new(nodes, 24, 42);
 
-            const std::vector<int>              preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            auto                                node = tetengo::lattice::node::eos(1, &preceding_edge_costs, 5, 42);
-            std::vector<tetengo::lattice::node> nodes{ std::move(node) };
-            const tetengo::lattice::cap         cap_{ std::move(nodes), 24, 42 };
-
-            BOOST_TEST(cap_.tail_path_cost() == 24);
+            assert_eq!(cap._tail_path_cost(), 24);
         }
-        */
+
         /*
         BOOST_AUTO_TEST_CASE(whole_path_cost)
         {
