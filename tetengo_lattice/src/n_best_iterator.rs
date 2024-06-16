@@ -44,7 +44,7 @@ impl Iterator for NBestIterator {
 
 #[derive(Eq)]
 struct _Cap<'a> {
-    _tail_path: Vec<Node<'a>>,
+    tail_path: Vec<Node<'a>>,
     _tail_path_cost: i32,
     whole_path_cost: i32,
 }
@@ -52,11 +52,44 @@ struct _Cap<'a> {
 impl<'a> _Cap<'a> {
     fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         _Cap {
-            _tail_path: tail_path,
+            tail_path,
             _tail_path_cost: tail_path_cost,
             whole_path_cost,
         }
     }
+
+    fn _tail_path(&self) -> &[Node<'a>] {
+        self.tail_path.as_slice()
+    }
+
+    /*
+            /*!
+                \brief Returns the tail path cost.
+
+                \return The tail path cost.
+            */
+            [[nodiscard]] int tail_path_cost() const;
+    */
+    /*
+        int cap::tail_path_cost() const
+        {
+            return m_tail_path_cost;
+        }
+    */
+    /*
+            /*!
+                \brief Returns the whole path cost.
+
+                \return The whole path cost.
+            */
+            [[nodiscard]] int whole_path_cost() const;
+    */
+    /*
+        int cap::whole_path_cost() const
+        {
+            return m_whole_path_cost;
+        }
+    */
 }
 
 impl Ord for _Cap<'_> {
@@ -76,49 +109,6 @@ impl PartialOrd for _Cap<'_> {
         Some(self.whole_path_cost.cmp(&other.whole_path_cost))
     }
 }
-
-/*
-        /*!
-            \brief Returns the tail path.
-
-            \return The tail path.
-        */
-        [[nodiscard]] const std::vector<node>& tail_path() const;
-*/
-/*
-    const std::vector<node>& cap::tail_path() const
-    {
-        return m_tail_path;
-    }
-*/
-/*
-        /*!
-            \brief Returns the tail path cost.
-
-            \return The tail path cost.
-        */
-        [[nodiscard]] int tail_path_cost() const;
-*/
-/*
-    int cap::tail_path_cost() const
-    {
-        return m_tail_path_cost;
-    }
-*/
-/*
-        /*!
-            \brief Returns the whole path cost.
-
-            \return The whole path cost.
-        */
-        [[nodiscard]] int whole_path_cost() const;
-*/
-/*
-    int cap::whole_path_cost() const
-    {
-        return m_whole_path_cost;
-    }
-*/
 
 #[cfg(test)]
 mod tests {
@@ -165,20 +155,21 @@ mod tests {
             assert!(cap1 == cap2);
             assert!(cap1 < cap3);
         }
-        /*
-        BOOST_AUTO_TEST_CASE(tail_path)
-        {
-            BOOST_TEST_PASSPOINT();
 
-            const std::vector<int>              preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            auto                                node = tetengo::lattice::node::eos(1, &preceding_edge_costs, 5, 42);
-            std::vector<tetengo::lattice::node> nodes{ std::move(node) };
-            const tetengo::lattice::cap         cap_{ std::move(nodes), 24, 42 };
+        #[test]
+        fn tail_path() {
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node = Node::eos(1, preceding_edge_costs.clone(), 5, 42);
+            let nodes = vec![node];
+            let cap = _Cap::_new(nodes, 24, 42);
 
-            BOOST_TEST(std::size(cap_.tail_path()) == 1U);
-            BOOST_TEST(&cap_.tail_path()[0].preceding_edge_costs() == &preceding_edge_costs);
+            assert_eq!(cap._tail_path().len(), 1);
+            assert_eq!(
+                cap._tail_path()[0].preceding_edge_costs(),
+                preceding_edge_costs.as_slice()
+            );
         }
-        */
+
         /*
         BOOST_AUTO_TEST_CASE(tail_path_cost)
         {
