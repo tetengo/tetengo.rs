@@ -66,20 +66,9 @@ impl<'a> _Cap<'a> {
         self.tail_path_cost
     }
 
-    /*
-            /*!
-                \brief Returns the whole path cost.
-
-                \return The whole path cost.
-            */
-            [[nodiscard]] int whole_path_cost() const;
-    */
-    /*
-        int cap::whole_path_cost() const
-        {
-            return m_whole_path_cost;
-        }
-    */
+    fn _whole_path_cost(&self) -> i32 {
+        self.whole_path_cost
+    }
 }
 
 impl Ord for _Cap<'_> {
@@ -170,18 +159,14 @@ mod tests {
             assert_eq!(cap._tail_path_cost(), 24);
         }
 
-        /*
-        BOOST_AUTO_TEST_CASE(whole_path_cost)
-        {
-            BOOST_TEST_PASSPOINT();
+        #[test]
+        fn whole_path_cost() {
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node = Node::eos(1, preceding_edge_costs, 5, 42);
+            let nodes = vec![node];
+            let cap = _Cap::_new(nodes, 24, 42);
 
-            const std::vector<int>              preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            auto                                node = tetengo::lattice::node::eos(1, &preceding_edge_costs, 5, 42);
-            std::vector<tetengo::lattice::node> nodes{ std::move(node) };
-            const tetengo::lattice::cap         cap_{ std::move(nodes), 24, 42 };
-
-            BOOST_TEST(cap_.whole_path_cost() == 42);
+            assert_eq!(cap._whole_path_cost(), 42);
         }
-        */
     }
 }
