@@ -22,6 +22,7 @@ pub use hash_map_vocabulary::HashMapVocabulary;
 pub use input::Input;
 pub use input::InputError;
 pub use lattice::Lattice;
+pub use n_best_iterator::NBestIterator;
 pub use node::Node;
 pub use node::NodeError;
 pub use string_input::StringInput;
