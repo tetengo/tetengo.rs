@@ -5,28 +5,38 @@
  */
 
 use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 
+use crate::lattice::Lattice;
 use crate::node::Node;
 
 /**
  * An N-best lattice path iterator.
  */
 #[derive(Debug)]
-pub struct NBestIterator {
-    current: i32,
-    max: i32,
+pub struct NBestIterator<'a> {
+    _lattice: &'a Lattice<'a>,
+    _caps: BinaryHeap<_Cap<'a>>,
+    _eos_hash: u64,
+    // constraint: Rc<Constraint>,
+    // path: Path,
+    _index: usize,
+    /*
+       const lattice* m_p_lattice;
+
+       std::priority_queue<cap, std::vector<cap>, std::greater<cap>> m_caps;
+
+       std::size_t m_eos_hash;
+
+       std::shared_ptr<constraint> m_p_constraint;
+
+       path m_path;
+
+       std::size_t m_index;
+    */
 }
 
-impl NBestIterator {
-    /**
-     * Creates an N-best lattice path iterator.
-     *
-     * # Arguments
-     * * `max` - The maximum number of paths.
-     */
-    pub fn new(max: i32) -> Self {
-        NBestIterator { current: 0, max }
-    }
+impl NBestIterator<'_> {
     /*
         // constructors and destructor
 
@@ -326,41 +336,36 @@ impl NBestIterator {
      */
 }
 
-impl Iterator for NBestIterator {
+impl Iterator for NBestIterator<'_> {
     type Item = i32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current < self.max {
-            self.current += 1;
-            Some(self.current)
-        } else {
-            None
-        }
+        None
     }
 }
 
-#[derive(Eq)]
+#[derive(Debug, Eq)]
 struct _Cap<'a> {
-    tail_path: Vec<Node<'a>>,
-    tail_path_cost: i32,
+    _tail_path: Vec<Node<'a>>,
+    _tail_path_cost: i32,
     whole_path_cost: i32,
 }
 
 impl<'a> _Cap<'a> {
     fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         _Cap {
-            tail_path,
-            tail_path_cost,
+            _tail_path: tail_path,
+            _tail_path_cost: tail_path_cost,
             whole_path_cost,
         }
     }
 
     fn _tail_path(&self) -> &[Node<'a>] {
-        self.tail_path.as_slice()
+        self._tail_path.as_slice()
     }
 
     fn _tail_path_cost(&self) -> i32 {
-        self.tail_path_cost
+        self._tail_path_cost
     }
 
     fn _whole_path_cost(&self) -> i32 {
