@@ -9,6 +9,7 @@ pub mod entry;
 pub mod hash_map_vocabulary;
 pub mod input;
 pub mod lattice;
+pub mod n_best_iterator;
 pub mod node;
 pub mod string_input;
 pub mod vocabulary;
