@@ -41,45 +41,20 @@ impl Iterator for NBestIterator {
 }
 
 struct _Cap<'a> {
-    tail_path: Vec<Node<'a>>,
-    tail_path_cost: i32,
-    whole_path_cost: i32,
+    _tail_path: Vec<Node<'a>>,
+    _tail_path_cost: i32,
+    _whole_path_cost: i32,
 }
 
 impl<'a> _Cap<'a> {
     fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         _Cap {
-            tail_path,
-            tail_path_cost,
-            whole_path_cost,
+            _tail_path: tail_path,
+            _tail_path_cost: tail_path_cost,
+            _whole_path_cost: whole_path_cost,
         }
     }
 }
-/*
-     /*!
-        \brief A cap.
-    */
-    class cap : public boost::less_than_comparable<cap>
-    {
-    public:
-        // constructors and destructor
-
-        /*!
-            \brief Creates a cap.
-
-            \param tail_path       A tail path.
-            \param tail_path_cost  A tail path cost.
-            \param whole_path_cost A whole path cost.
-        */
-        cap(std::vector<node> tail_path, int tail_path_cost, int whole_path_cost);
-*/
-/*
-    cap::cap(std::vector<node> tail_path, const int tail_path_cost, const int whole_path_cost) :
-    m_tail_path{ std::move(tail_path) },
-    m_tail_path_cost{ tail_path_cost },
-    m_whole_path_cost{ whole_path_cost }
-    {}
-*/
 /*
         // functions
 
@@ -156,17 +131,17 @@ mod tests {
     }
 
     mod cap {
-        /*
-        BOOST_AUTO_TEST_CASE(construction)
-        {
-            BOOST_TEST_PASSPOINT();
+        use std::rc::Rc;
 
-            const std::vector<int>              preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            auto                                node = tetengo::lattice::node::eos(1, &preceding_edge_costs, 5, 42);
-            std::vector<tetengo::lattice::node> nodes{ std::move(node) };
-            const tetengo::lattice::cap         cap_{ std::move(nodes), 24, 42 };
+        use super::*;
+
+        #[test]
+        fn new() {
+            let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node = Node::eos(1, preceding_edge_costs, 5, 42);
+            let nodes = vec![node];
+            let _cap = _Cap::_new(nodes, 24, 42);
         }
-        */
         /*
         BOOST_AUTO_TEST_CASE(operator_less)
         {
