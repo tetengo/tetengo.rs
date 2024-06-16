@@ -4,6 +4,8 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::cmp::Ordering;
+
 use crate::node::Node;
 
 /**
@@ -40,10 +42,11 @@ impl Iterator for NBestIterator {
     }
 }
 
+#[derive(Eq)]
 struct _Cap<'a> {
     _tail_path: Vec<Node<'a>>,
     _tail_path_cost: i32,
-    _whole_path_cost: i32,
+    whole_path_cost: i32,
 }
 
 impl<'a> _Cap<'a> {
@@ -51,30 +54,29 @@ impl<'a> _Cap<'a> {
         _Cap {
             _tail_path: tail_path,
             _tail_path_cost: tail_path_cost,
-            _whole_path_cost: whole_path_cost,
+            whole_path_cost,
         }
     }
 }
-/*
-        // functions
 
-        /*!
-            \brief Returns true if one is less than another.
-
-            \param one One cap.
-            \param another Another cap.
-
-            \retval true  When one is less than another.
-            \retval false Otherwise.
-        */
-        friend bool operator<(const cap& one, const cap& another);
-*/
-/*
-    bool operator<(const cap& one, const cap& another)
-    {
-        return one.m_whole_path_cost < another.m_whole_path_cost;
+impl Ord for _Cap<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.whole_path_cost.cmp(&other.whole_path_cost)
     }
-*/
+}
+
+impl PartialEq for _Cap<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.whole_path_cost == other.whole_path_cost
+    }
+}
+
+impl PartialOrd for _Cap<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.whole_path_cost.cmp(&other.whole_path_cost))
+    }
+}
+
 /*
         /*!
             \brief Returns the tail path.
@@ -142,30 +144,27 @@ mod tests {
             let nodes = vec![node];
             let _cap = _Cap::_new(nodes, 24, 42);
         }
-        /*
-        BOOST_AUTO_TEST_CASE(operator_less)
-        {
-            BOOST_TEST_PASSPOINT();
 
-            const std::vector<int>              preceding_edge_costs1{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            auto                                node1 = tetengo::lattice::node::eos(1, &preceding_edge_costs1, 5, 42);
-            std::vector<tetengo::lattice::node> nodes1{ std::move(node1) };
-            const tetengo::lattice::cap         cap1{ std::move(nodes1), 24, 42 };
+        #[test]
+        fn ord() {
+            let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node1 = Node::eos(1, preceding_edge_costs1, 5, 42);
+            let nodes1 = vec![node1];
+            let cap1 = _Cap::_new(nodes1, 24, 42);
 
-            const std::vector<int>              preceding_edge_costs2{ 3, 1, 4, 1, 5, 9, 2, 6 };
-            auto                                node2 = tetengo::lattice::node::eos(1, &preceding_edge_costs2, 5, 42);
-            std::vector<tetengo::lattice::node> nodes2{ std::move(node2) };
-            const tetengo::lattice::cap         cap2{ std::move(nodes2), 24, 42 };
+            let preceding_edge_costs2 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+            let node2 = Node::eos(1, preceding_edge_costs2, 5, 42);
+            let nodes2 = vec![node2];
+            let cap2 = _Cap::_new(nodes2, 24, 42);
 
-            const std::vector<int>              preceding_edge_costs3{ 2, 7, 1, 8, 2, 8 };
-            auto                                node3 = tetengo::lattice::node::eos(2, &preceding_edge_costs3, 3, 31);
-            std::vector<tetengo::lattice::node> nodes3{ std::move(node3) };
-            const tetengo::lattice::cap         cap3{ std::move(nodes3), 12, 4242 };
+            let preceding_edge_costs3 = Rc::new(vec![2, 7, 1, 8, 2, 8]);
+            let node3 = Node::eos(2, preceding_edge_costs3, 3, 31);
+            let nodes3 = vec![node3];
+            let cap3 = _Cap::_new(nodes3, 12, 4242);
 
-            BOOST_CHECK(!(cap1 < cap2));
-            BOOST_CHECK(cap1 < cap3);
+            assert!(cap1 == cap2);
+            assert!(cap1 < cap3);
         }
-        */
         /*
         BOOST_AUTO_TEST_CASE(tail_path)
         {
