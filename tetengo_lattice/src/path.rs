@@ -15,7 +15,7 @@ pub struct Path<'a> {
     _cost: i32,
 }
 
-impl Path<'_> {
+impl<'a> Path<'a> {
     /**
      * Creates an empty path.
      */
@@ -26,18 +26,20 @@ impl Path<'_> {
         }
     }
 
-    /*
-           /*!
-               \brief Creates a path.
+    /**
+     * Creates a path.
+     *
+     * # Arguments
+     * * `nodes` - Nodes.
+     * * `cost`  - A cost.
+     */
+    pub fn new_with_nodes(nodes: Vec<Node<'a>>, cost: i32) -> Self {
+        Path {
+            _nodes: nodes,
+            _cost: cost,
+        }
+    }
 
-               \param nodes Nodes.
-               \param cost  A cost.
-           */
-           path(std::vector<node> nodes, int cost);
-    */
-    /*
-       path::path(std::vector<node> nodes, const int cost) : m_nodes{ std::move(nodes) }, m_cost{ cost } {}
-    */
     /*
            // functions
 
@@ -87,47 +89,62 @@ impl Path<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
+    use crate::string_input::StringInput;
+    use once_cell::sync::Lazy;
+
     use super::*;
 
-    /*
-    namespace
-    {
-        const std::any& node_value()
-        {
-            static const std::any singleton{ 42 };
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<int>& bos_preceding_edge_costs()
-        {
-            static const std::vector<int> singleton{};
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<int>& preceding_edge_costs()
-        {
-            static const std::vector<int> singleton{ 1 };
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<tetengo::lattice::node>& cpp_nodes()
-        {
-            static const tetengo::lattice::string_input      key_mizuho{ "mizuho" };
-            static const tetengo::lattice::string_input      key_sakura{ "sakura" };
-            static const tetengo::lattice::string_input      key_tsubame{ "tsubame" };
-            static const std::vector<tetengo::lattice::node> singleton{
-                tetengo::lattice::node::bos(&bos_preceding_edge_costs()),
-                tetengo::lattice::node{ &key_mizuho, &node_value(), 0, 0, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_sakura, &node_value(), 0, 1, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_tsubame, &node_value(), 0, 2, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node::eos(3, &preceding_edge_costs(), 0, 0)
-            };
-            return singleton;
-        }
-    */
+    const NODE_VALUE: i32 = 42;
+
+    const BOS_PRECEDING_EDGE_COSTS: Vec<i32> = vec![];
+
+    static PRECEDING_EDGE_COSTS: Lazy<Vec<i32>> = Lazy::new(|| vec![1]);
+
+    fn nodes() -> Vec<Node<'static>> {
+        static KEY_MIZUHO: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("mizuho")));
+        static KEY_SAKURA: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("sakura")));
+        static KEY_TSUBAME: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        vec![
+            Node::bos(Rc::new(BOS_PRECEDING_EDGE_COSTS)),
+            Node::new(
+                &*KEY_MIZUHO,
+                &NODE_VALUE,
+                0,
+                0,
+                Rc::new(PRECEDING_EDGE_COSTS.clone()),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_SAKURA,
+                &NODE_VALUE,
+                0,
+                1,
+                Rc::new(PRECEDING_EDGE_COSTS.clone()),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_TSUBAME,
+                &NODE_VALUE,
+                0,
+                2,
+                Rc::new(PRECEDING_EDGE_COSTS.clone()),
+                0,
+                0,
+                0,
+            ),
+            Node::eos(3, Rc::new(PRECEDING_EDGE_COSTS.clone()), 0, 0),
+        ]
+    }
+
     /*
         bool equal_nodes(const std::vector<tetengo_lattice_node_t>& one, const std::vector<tetengo_lattice_node_t>& another)
         {
@@ -155,24 +172,12 @@ mod tests {
     fn new() {
         let _path = Path::new();
     }
-    /*
-    BOOST_AUTO_TEST_SUITE(test_tetengo)
-    BOOST_AUTO_TEST_SUITE(lattice)
-    BOOST_AUTO_TEST_SUITE(path)
 
-
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const tetengo::lattice::path path_{};
-        }
-        {
-            const tetengo::lattice::path path_{ cpp_nodes(), 42 };
-        }
+    #[test]
+    fn new_with_nodes() {
+        let _path = Path::new_with_nodes(nodes(), 42);
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(empty)
     {
