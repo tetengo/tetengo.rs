@@ -5,6 +5,7 @@
 //#![doc = "```"]
 
 pub mod connection;
+pub mod constraint_element;
 pub mod entry;
 pub mod hash_map_vocabulary;
 pub mod input;
@@ -15,6 +16,7 @@ pub mod string_input;
 pub mod vocabulary;
 
 pub use connection::Connection;
+pub use constraint_element::ConstraintElement;
 pub use entry::AnyValue;
 pub use entry::Entry;
 pub use entry::EntryView;
