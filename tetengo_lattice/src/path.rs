@@ -11,7 +11,7 @@ use crate::node::Node;
  */
 #[derive(Debug, Default)]
 pub struct Path<'a> {
-    _nodes: Vec<Node<'a>>,
+    nodes: Vec<Node<'a>>,
     _cost: i32,
 }
 
@@ -21,7 +21,7 @@ impl<'a> Path<'a> {
      */
     pub fn new() -> Self {
         Path {
-            _nodes: Vec::new(),
+            nodes: Vec::new(),
             _cost: 0,
         }
     }
@@ -34,29 +34,19 @@ impl<'a> Path<'a> {
      * * `cost`  - A cost.
      */
     pub fn new_with_nodes(nodes: Vec<Node<'a>>, cost: i32) -> Self {
-        Path {
-            _nodes: nodes,
-            _cost: cost,
-        }
+        Path { nodes, _cost: cost }
     }
 
-    /*
-           // functions
+    /**
+     * Returns `true` if this path is empty.
+     *
+     * # Returns
+     * `true` if this path is empty.
+     */
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
 
-           /*!
-               \brief Returns true when this path is empty.
-
-               \retval true  When this path is empty.
-               \retval false Otherwise.
-           */
-           [[nodiscard]] bool empty() const;
-    */
-    /*
-       bool path::empty() const
-       {
-           return std::empty(m_nodes);
-       }
-    */
     /*
            /*!
                \brief Returns the nodes.
@@ -178,23 +168,18 @@ mod tests {
         let _path = Path::new_with_nodes(nodes(), 42);
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(empty)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn is_empty() {
         {
-            const tetengo::lattice::path path_{};
-
-            BOOST_TEST(std::empty(path_));
+            let path = Path::new();
+            assert!(path.is_empty());
         }
         {
-            const tetengo::lattice::path path_{ cpp_nodes(), 42 };
-
-            BOOST_TEST(!std::empty(path_));
+            let path = Path::new_with_nodes(nodes(), 42);
+            assert!(!path.is_empty());
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(nodes)
     {
