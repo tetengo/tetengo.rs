@@ -12,7 +12,7 @@ use crate::node::Node;
 #[derive(Debug, Default)]
 pub struct Path<'a> {
     nodes: Vec<Node<'a>>,
-    _cost: i32,
+    cost: i32,
 }
 
 impl<'a> Path<'a> {
@@ -22,7 +22,7 @@ impl<'a> Path<'a> {
     pub fn new() -> Self {
         Path {
             nodes: Vec::new(),
-            _cost: 0,
+            cost: 0,
         }
     }
 
@@ -34,7 +34,7 @@ impl<'a> Path<'a> {
      * * `cost`  - A cost.
      */
     pub fn new_with_nodes(nodes: Vec<Node<'a>>, cost: i32) -> Self {
-        Path { nodes, _cost: cost }
+        Path { nodes, cost }
     }
 
     /**
@@ -56,20 +56,16 @@ impl<'a> Path<'a> {
     pub fn nodes(&self) -> &[Node<'a>] {
         self.nodes.as_slice()
     }
-    /*
-           /*!
-               \brief Returns the cost.
 
-               \return The cost.
-           */
-           [[nodiscard]] int cost() const;
-    */
-    /*
-       int path::cost() const
-       {
-           return m_cost;
-       }
-    */
+    /**
+     * Returns the cost.
+     *
+     * # Returns
+     * The cost.
+     */
+    pub fn cost(&self) -> i32 {
+        self.cost
+    }
 }
 
 #[cfg(test)]
@@ -130,29 +126,6 @@ mod tests {
         ]
     }
 
-    /*
-        bool equal_nodes(const std::vector<tetengo_lattice_node_t>& one, const std::vector<tetengo_lattice_node_t>& another)
-        {
-            if (std::size(one) != std::size(another))
-            {
-                return false;
-            }
-
-            for (auto i = static_cast<std::size_t>(0); i < std::size(one); ++i)
-            {
-                if (!tetengo_lattice_node_equal(&one[i], &another[i]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-
-    }
-    */
-
     #[test]
     fn new() {
         let _path = Path::new();
@@ -187,21 +160,15 @@ mod tests {
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(cost)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn cost() {
         {
-            const tetengo::lattice::path path_{};
-
-            BOOST_TEST(path_.cost() == 0);
+            let path = Path::new();
+            assert_eq!(path.cost(), 0);
         }
         {
-            const tetengo::lattice::path path_{ cpp_nodes(), 42 };
-
-            BOOST_TEST(path_.cost() == 42);
+            let path = Path::new_with_nodes(make_nodes(), 42);
+            assert_eq!(path.cost(), 42);
         }
     }
-         */
 }
