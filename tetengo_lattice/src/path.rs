@@ -47,20 +47,15 @@ impl<'a> Path<'a> {
         self.nodes.is_empty()
     }
 
-    /*
-           /*!
-               \brief Returns the nodes.
-
-               \return The nodes.
-           */
-           [[nodiscard]] const std::vector<node>& nodes() const;
-    */
-    /*
-       const std::vector<node>& path::nodes() const
-       {
-           return m_nodes;
-       }
-    */
+    /**
+     * Returns the nodes.
+     *
+     * # Returns
+     * The nodes.
+     */
+    pub fn nodes(&self) -> &[Node<'a>] {
+        self.nodes.as_slice()
+    }
     /*
            /*!
                \brief Returns the cost.
@@ -92,7 +87,7 @@ mod tests {
 
     static PRECEDING_EDGE_COSTS: Lazy<Vec<i32>> = Lazy::new(|| vec![1]);
 
-    fn nodes() -> Vec<Node<'static>> {
+    fn make_nodes() -> Vec<Node<'static>> {
         static KEY_MIZUHO: Lazy<StringInput> =
             Lazy::new(|| StringInput::new(String::from("mizuho")));
         static KEY_SAKURA: Lazy<StringInput> =
@@ -165,7 +160,7 @@ mod tests {
 
     #[test]
     fn new_with_nodes() {
-        let _path = Path::new_with_nodes(nodes(), 42);
+        let _path = Path::new_with_nodes(make_nodes(), 42);
     }
 
     #[test]
@@ -175,28 +170,23 @@ mod tests {
             assert!(path.is_empty());
         }
         {
-            let path = Path::new_with_nodes(nodes(), 42);
+            let path = Path::new_with_nodes(make_nodes(), 42);
             assert!(!path.is_empty());
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(nodes)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn nodes() {
         {
-            const tetengo::lattice::path path_{};
-
-            BOOST_TEST(std::empty(path_.nodes()));
+            let path = Path::new();
+            assert!(path.nodes().is_empty());
         }
         {
-            const tetengo::lattice::path path_{ cpp_nodes(), 42 };
-
-            BOOST_CHECK(path_.nodes() == cpp_nodes());
+            let path = Path::new_with_nodes(make_nodes(), 42);
+            assert_eq!(path.nodes(), make_nodes().as_slice());
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(cost)
     {
