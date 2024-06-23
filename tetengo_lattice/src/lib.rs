@@ -5,6 +5,7 @@
 //#![doc = "```"]
 
 pub mod connection;
+pub mod constraint;
 pub mod constraint_element;
 pub mod entry;
 pub mod hash_map_vocabulary;
@@ -18,6 +19,7 @@ pub mod vocabulary;
 pub mod wildcard_constraint_element;
 
 pub use connection::Connection;
+pub use constraint::Constraint;
 pub use constraint_element::ConstraintElement;
 pub use entry::AnyValue;
 pub use entry::Entry;
