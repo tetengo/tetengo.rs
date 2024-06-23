@@ -4,12 +4,15 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use crate::constraint_element::ConstraintElement;
+use crate::node::Node;
+
 /**
  * A wildcard constraint element.
  */
 #[derive(Copy, Clone, Debug)]
 pub struct WildcardConstraintElement {
-    _preceding_step: usize,
+    preceding_step: usize,
 }
 
 impl WildcardConstraintElement {
@@ -20,101 +23,86 @@ impl WildcardConstraintElement {
      * * `preceding_step` - An index of a preceding step.
      */
     pub fn new(preceding_step: usize) -> Self {
-        Self {
-            _preceding_step: preceding_step,
+        Self { preceding_step }
+    }
+}
+
+impl ConstraintElement for WildcardConstraintElement {
+    fn matches(&self, node: &Node<'_>) -> i32 {
+        if self.preceding_step == usize::MAX {
+            if node.preceding_step() == usize::MAX {
+                0
+            } else {
+                1
+            }
+        } else if node.preceding_step() < self.preceding_step {
+            -1
+        } else {
+            (node.preceding_step() - self.preceding_step) as i32
         }
     }
-
-    /*
-           // functions
-
-           int matches_impl(const node& node_) const
-           {
-               if (m_preceding_step == std::numeric_limits<std::size_t>::max())
-               {
-                   if (node_.preceding_step() == std::numeric_limits<std::size_t>::max())
-                   {
-                       return 0;
-                   }
-                   else
-                   {
-                       return 1;
-                   }
-               }
-               else
-               {
-                   if (node_.preceding_step() < m_preceding_step)
-                   {
-                       return -1;
-                   }
-                   else
-                   {
-                       return static_cast<int>(node_.preceding_step() - m_preceding_step);
-                   }
-               }
-           }
-    */
 }
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
+    use crate::string_input::StringInput;
+
     use super::*;
 
     #[test]
     fn new() {
         let _ = WildcardConstraintElement::new(3);
     }
-    /*
-    BOOST_AUTO_TEST_CASE(matches)
-    {
-        BOOST_TEST_PASSPOINT();
 
+    #[test]
+    fn matches() {
         {
-            const tetengo::lattice::wildcard_constraint_element element{ 3 };
+            let element = WildcardConstraintElement::new(3);
 
             {
-                const tetengo::lattice::string_input key{ "mizuho" };
-                const std::any                       value{ 42 };
-                const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-                const tetengo::lattice::node         node_{ &key, &value, 0, 1, &preceding_edge_costs, 5, 24, 2424 };
+                let key = StringInput::new(String::from("mizuho"));
+                let value = 42;
+                let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+                let node = Node::new(&key, &value, 0, 1, preceding_edge_costs, 5, 24, 2424);
 
-                BOOST_TEST(element.matches(node_) < 0);
+                assert!(element.matches(&node) < 0);
             }
             {
-                const tetengo::lattice::string_input key{ "sakura" };
-                const std::any                       value{ 42 };
-                const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-                const tetengo::lattice::node         node_{ &key, &value, 0, 3, &preceding_edge_costs, 5, 24, 2424 };
+                let key = StringInput::new(String::from("sakura"));
+                let value = 42;
+                let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+                let node = Node::new(&key, &value, 0, 3, preceding_edge_costs, 5, 24, 2424);
 
-                BOOST_TEST(element.matches(node_) == 0);
+                assert_eq!(element.matches(&node), 0);
             }
             {
-                const tetengo::lattice::string_input key{ "tsubame" };
-                const std::any                       value{ 42 };
-                const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-                const tetengo::lattice::node         node_{ &key, &value, 0, 5, &preceding_edge_costs, 5, 24, 2424 };
+                let key = StringInput::new(String::from("tsubame"));
+                let value = 42;
+                let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+                let node = Node::new(&key, &value, 0, 5, preceding_edge_costs, 5, 24, 2424);
 
-                BOOST_TEST(element.matches(node_) > 0);
+                assert!(element.matches(&node) > 0);
             }
         }
         {
-            const tetengo::lattice::wildcard_constraint_element element{ std::numeric_limits<std::size_t>::max() };
+            let element = WildcardConstraintElement::new(usize::MAX);
 
             {
-                const std::vector<int>       preceding_edge_costs{};
-                const tetengo::lattice::node node_ = tetengo::lattice::node::bos(&preceding_edge_costs);
+                let preceding_edge_costs = Rc::new(Vec::new());
+                let node = Node::bos(preceding_edge_costs);
 
-                BOOST_TEST(element.matches(node_) == 0);
+                assert_eq!(element.matches(&node), 0);
             }
             {
-                const tetengo::lattice::string_input key{ "mizuho" };
-                const std::any                       value{ 42 };
-                const std::vector<int>               preceding_edge_costs{ 3, 1, 4, 1, 5, 9, 2, 6 };
-                const tetengo::lattice::node         node_{ &key, &value, 0, 1, &preceding_edge_costs, 5, 24, 2424 };
+                let key = StringInput::new(String::from("mizuho"));
+                let value = 42;
+                let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
+                let node = Node::new(&key, &value, 0, 1, preceding_edge_costs, 5, 24, 2424);
 
-                BOOST_TEST(element.matches(node_) > 0);
+                assert!(element.matches(&node) > 0);
             }
         }
     }
-     */
 }
