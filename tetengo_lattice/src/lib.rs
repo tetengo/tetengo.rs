@@ -15,6 +15,7 @@ pub mod node_constraint_element;
 pub mod path;
 pub mod string_input;
 pub mod vocabulary;
+pub mod wildcard_constraint_element;
 
 pub use connection::Connection;
 pub use constraint_element::ConstraintElement;
@@ -31,3 +32,4 @@ pub use node_constraint_element::NodeConstraintElement;
 pub use path::Path;
 pub use string_input::StringInput;
 pub use vocabulary::Vocabulary;
+pub use wildcard_constraint_element::WildcardConstraintElement;
