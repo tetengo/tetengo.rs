@@ -52,23 +52,18 @@ impl Constraint {
         self.matches_impl(reverse_path) == 0
     }
 
-    /*
-           /*!
-               \brief Returns true when the tail path matches the tail of the pattern.
-
-               \param reverse_tail_path A tail path in reverse order.
-
-               \retval true  When the tail path matches the tail of the pattern.
-               \retval false Otherwise.
-           */
-           [[nodiscard]] bool matches_tail(const std::vector<node>& reverse_tail_path) const;
-    */
-    /*
-           bool matches_tail(const std::vector<node>& reverse_tail_path) const
-           {
-               return matches_impl(reverse_tail_path) != std::numeric_limits<std::size_t>::max();
-           }
-    */
+    /**
+     * Returns `true`` if the tail path matches the tail of the pattern.
+     *
+     * # Arguments
+     * * `reverse_tail_path` - A tail path in reverse order.
+     *
+     * # Returns
+     * `true` if the tail path matches the tail of the pattern.
+     */
+    pub fn matches_tail(&self, reverse_tail_path: &[Node<'_>]) -> bool {
+        self.matches_impl(reverse_tail_path) != usize::MAX
+    }
 
     fn matches_impl(&self, reverse_path: &[Node<'_>]) -> usize {
         if self.pattern.is_empty() {
@@ -174,7 +169,7 @@ mod tests {
                 0,
                 0,
             ),
-            Node::eos(0, preceding_edge_costs(), 0, 0),
+            Node::eos(3, preceding_edge_costs(), 0, 0),
         ]
     }
 
@@ -217,7 +212,7 @@ mod tests {
                 0,
                 0,
             ),
-            Node::eos(0, preceding_edge_costs(), 0, 0),
+            Node::eos(3, preceding_edge_costs(), 0, 0),
         ]
     }
 
@@ -248,7 +243,7 @@ mod tests {
                 0,
                 0,
             ),
-            Node::eos(0, preceding_edge_costs(), 0, 0),
+            Node::eos(3, preceding_edge_costs(), 0, 0),
         ]
     }
 
@@ -291,7 +286,7 @@ mod tests {
                 0,
                 0,
             ),
-            Node::eos(0, preceding_edge_costs(), 0, 0),
+            Node::eos(3, preceding_edge_costs(), 0, 0),
         ]
     }
 
@@ -363,18 +358,10 @@ mod tests {
         vec![Box::new(WildcardConstraintElement::new(usize::MAX))]
     }
 
-    /*
-        std::vector<tetengo::lattice::node>
-        make_tail(const std::vector<tetengo::lattice::node>& path, const std::size_t node_count)
-        {
-            assert(0 < node_count && node_count <= std::size(path));
-            return std::vector<tetengo::lattice::node>{ std::next(std::begin(path), std::size(path) - node_count),
-                                                        std::end(path) };
-        }
-
-
+    fn make_tail(path: Vec<Node<'_>>, node_count: usize) -> Vec<Node<'_>> {
+        assert!(0 < node_count && node_count <= path.len());
+        path[path.len() - node_count..].to_vec()
     }
-    */
 
     #[test]
     fn new() {
@@ -462,177 +449,171 @@ mod tests {
         }
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(matches_tail_cpp)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn matches_tail() {
         {
-            const tetengo::lattice::constraint constraint_{};
+            let constraint = Constraint::new();
 
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 5))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_e());
 
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 2))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_m_s_t_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_m_s_t_e());
 
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_m_w_t_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_m_w_t_e());
 
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_w_t_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_w_t_e());
 
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_w_s_w_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_w_s_w_e());
 
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 5))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 5))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_w_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_w_e());
 
-            BOOST_TEST(!constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 5))));
+            assert!(!constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 5))));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_w() };
+            let constraint = Constraint::new_with_pattern(make_pattern_w());
 
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_s_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_m_a_t_e(), 5))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_h_t_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 1))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 2))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 3))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 4))));
-            BOOST_TEST(constraint_.matches_tail(reverse_path(make_tail(path_b_k_s_k_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_s_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_m_a_t_e(), 5))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_h_t_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 1))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 2))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 3))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 4))));
+            assert!(constraint.matches_tail(&reverse_path(make_tail(make_path_b_k_s_k_e(), 5))));
         }
     }
-
-    */
 }
