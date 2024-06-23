@@ -4,17 +4,15 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::fmt::{self, Debug, Formatter};
+
+use crate::constraint_element::ConstraintElement;
+
 /**
  * A constraint.
  */
-#[derive(Clone, Copy, Debug)]
 pub struct Constraint {
-    /*
-       private:
-           // variables
-
-           const std::vector<std::unique_ptr<constraint_element>> m_pattern;
-    */
+    _pattern: Vec<Box<dyn ConstraintElement>>,
 }
 
 impl Constraint {
@@ -111,6 +109,14 @@ impl Constraint {
                return pattern_index;
            }
     */
+}
+
+impl Debug for Constraint {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Constraint")
+            .field("pattern", &"Vec<Box<dyn ConstraintElement>>")
+            .finish()
+    }
 }
 
 #[cfg(test)]
