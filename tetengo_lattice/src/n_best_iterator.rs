@@ -6,6 +6,7 @@
 
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::rc::Rc;
 
 use crate::constraint::Constraint;
@@ -18,35 +19,44 @@ use crate::path::Path;
  */
 #[derive(Debug)]
 pub struct NBestIterator<'a> {
-    _lattice: &'a Lattice<'a>,
-    _caps: BinaryHeap<_Cap<'a>>,
+    lattice: &'a Lattice<'a>,
+    caps: BinaryHeap<Cap<'a>>,
     _eos_hash: u64,
-    _constraint: Rc<Constraint>,
+    constraint: Rc<Constraint>,
     _path: Path<'a>,
     _index: usize,
 }
 
-impl NBestIterator<'_> {
-    /*
-        // constructors and destructor
+impl<'a> NBestIterator<'a> {
+    /**
+     * Creates an iterator.
+     *
+     * # Arguments
+     * * `lattice`    - A lattice.
+     * * `eos_node`   - An EOS node.
+     * * `constraint` - A constraint.
+     */
+    pub fn new(lattice: &'a Lattice<'a>, eos_node: Node<'a>, constraint: Rc<Constraint>) -> Self {
+        let mut self_ = Self {
+            lattice,
+            caps: BinaryHeap::new(),
+            _eos_hash: Self::calc_node_hash(&eos_node),
+            constraint,
+            _path: Path::new(),
+            _index: 0,
+        };
 
-        /*!
-            \brief Creates an iterator.
+        let tail_path_cost = eos_node.node_cost();
+        let whole_path_cost = eos_node.path_cost();
+        self_
+            .caps
+            .push(Cap::_new(vec![eos_node], tail_path_cost, whole_path_cost));
 
-            It points to the last of the paths.
-        */
-        n_best_iterator();
-    */
-    /*
-    n_best_iterator::n_best_iterator() :
-    m_p_lattice{},
-    m_caps{},
-    m_eos_hash{ 0 },
-    m_p_constraint{ std::make_shared<constraint>() },
-    m_path{},
-    m_index{ 0 }
-    {}
-    */
+        self_._path = Self::open_cap(self_.lattice, &mut self_.caps, self_.constraint.as_ref());
+
+        self_
+    }
+
     /*
         /*!
             \brief Creates an iterator.
@@ -83,6 +93,36 @@ impl NBestIterator<'_> {
         m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
     }
     */
+
+    fn calc_node_hash(node: &Node<'_>) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        match node.key() {
+            Some(key) => hasher.write_u64(key.hash_value()),
+            None => 0.hash(&mut hasher),
+        }
+        node.preceding_step().hash(&mut hasher);
+        node.preceding_edge_costs().hash(&mut hasher);
+        node.best_preceding_node().hash(&mut hasher);
+        node.node_cost().hash(&mut hasher);
+        node.path_cost().hash(&mut hasher);
+        hasher.finish()
+    }
+    /*
+    namespace
+    {
+        std::size_t calc_node_hash(const node& node_)
+        {
+            auto seed = static_cast<std::size_t>(0);
+            boost::hash_combine(seed, node_.p_key() ? node_.p_key()->hash_value() : 0);
+            boost::hash_combine(seed, boost::hash_value(node_.preceding_step()));
+            boost::hash_combine(seed, boost::hash_value(node_.preceding_edge_costs()));
+            boost::hash_combine(seed, boost::hash_value(node_.best_preceding_node()));
+            boost::hash_combine(seed, boost::hash_value(node_.node_cost()));
+            boost::hash_combine(seed, boost::hash_value(node_.path_cost()));
+            return seed;
+        }
+    */
+
     /*
         // functions
 
@@ -221,21 +261,6 @@ impl NBestIterator<'_> {
     }
      */
     /*
-    namespace
-    {
-        std::size_t calc_node_hash(const node& node_)
-        {
-            auto seed = static_cast<std::size_t>(0);
-            boost::hash_combine(seed, node_.p_key() ? node_.p_key()->hash_value() : 0);
-            boost::hash_combine(seed, boost::hash_value(node_.preceding_step()));
-            boost::hash_combine(seed, boost::hash_value(node_.preceding_edge_costs()));
-            boost::hash_combine(seed, boost::hash_value(node_.best_preceding_node()));
-            boost::hash_combine(seed, boost::hash_value(node_.node_cost()));
-            boost::hash_combine(seed, boost::hash_value(node_.path_cost()));
-            return seed;
-        }
-    */
-    /*
         int add_cost(const int one, const int another)
         {
             if (one == std::numeric_limits<int>::max() || another == std::numeric_limits<int>::max())
@@ -248,6 +273,15 @@ impl NBestIterator<'_> {
             }
         }
     */
+
+    fn open_cap(
+        _lattice: &Lattice<'a>,
+        _caps: &mut BinaryHeap<Cap<'a>>,
+        _constraint: &Constraint,
+    ) -> Path<'a> {
+        todo!()
+    }
+
     /*
         path open_cap(
             const lattice&                                                 lattice_,
@@ -335,15 +369,15 @@ impl Iterator for NBestIterator<'_> {
 }
 
 #[derive(Debug, Eq)]
-struct _Cap<'a> {
+struct Cap<'a> {
     _tail_path: Vec<Node<'a>>,
     _tail_path_cost: i32,
     whole_path_cost: i32,
 }
 
-impl<'a> _Cap<'a> {
+impl<'a> Cap<'a> {
     fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
-        _Cap {
+        Cap {
             _tail_path: tail_path,
             _tail_path_cost: tail_path_cost,
             whole_path_cost,
@@ -363,19 +397,19 @@ impl<'a> _Cap<'a> {
     }
 }
 
-impl Ord for _Cap<'_> {
+impl Ord for Cap<'_> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.whole_path_cost.cmp(&other.whole_path_cost)
     }
 }
 
-impl PartialEq for _Cap<'_> {
+impl PartialEq for Cap<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.whole_path_cost == other.whole_path_cost
     }
 }
 
-impl PartialOrd for _Cap<'_> {
+impl PartialOrd for Cap<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.whole_path_cost.cmp(&other.whole_path_cost))
     }
@@ -518,6 +552,10 @@ mod tests {
         return cost;
     }
      */
+
+    #[test]
+    fn new() {}
+
     /*
     BOOST_AUTO_TEST_CASE(construction)
     {
@@ -964,7 +1002,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs, 5, 42);
             let nodes = vec![node];
-            let _cap = _Cap::_new(nodes, 24, 42);
+            let _cap = Cap::_new(nodes, 24, 42);
         }
 
         #[test]
@@ -972,17 +1010,17 @@ mod tests {
             let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node1 = Node::eos(1, preceding_edge_costs1, 5, 42);
             let nodes1 = vec![node1];
-            let cap1 = _Cap::_new(nodes1, 24, 42);
+            let cap1 = Cap::_new(nodes1, 24, 42);
 
             let preceding_edge_costs2 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node2 = Node::eos(1, preceding_edge_costs2, 5, 42);
             let nodes2 = vec![node2];
-            let cap2 = _Cap::_new(nodes2, 24, 42);
+            let cap2 = Cap::_new(nodes2, 24, 42);
 
             let preceding_edge_costs3 = Rc::new(vec![2, 7, 1, 8, 2, 8]);
             let node3 = Node::eos(2, preceding_edge_costs3, 3, 31);
             let nodes3 = vec![node3];
-            let cap3 = _Cap::_new(nodes3, 12, 4242);
+            let cap3 = Cap::_new(nodes3, 12, 4242);
 
             assert!(cap1 == cap2);
             assert!(cap1 < cap3);
@@ -993,7 +1031,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs.clone(), 5, 42);
             let nodes = vec![node];
-            let cap = _Cap::_new(nodes, 24, 42);
+            let cap = Cap::_new(nodes, 24, 42);
 
             assert_eq!(cap._tail_path().len(), 1);
             assert_eq!(
@@ -1007,7 +1045,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs, 5, 42);
             let nodes = vec![node];
-            let cap = _Cap::_new(nodes, 24, 42);
+            let cap = Cap::_new(nodes, 24, 42);
 
             assert_eq!(cap._tail_path_cost(), 24);
         }
@@ -1017,7 +1055,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs, 5, 42);
             let nodes = vec![node];
-            let cap = _Cap::_new(nodes, 24, 42);
+            let cap = Cap::_new(nodes, 24, 42);
 
             assert_eq!(cap._whole_path_cost(), 42);
         }
