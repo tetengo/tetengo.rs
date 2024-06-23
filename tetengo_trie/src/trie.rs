@@ -273,10 +273,10 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
     }
 
     /**
-     * Returns `true` when the trie is empty.
+     * Returns `true` if the trie is empty.
      *
      * # Returns
-     * True when the trie is empty.
+     * `true` if the trie is empty.
      *
      * # Errors
      * * When it fails to access the storage.
@@ -305,7 +305,7 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
      * * `key` - A key.
      *
      * # Returns
-     * True when the trie contains the given key.
+     * `true` if the trie contains the given key.
      *
      * # Errors
      * * When it fails to access the storage.
