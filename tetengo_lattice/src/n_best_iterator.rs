@@ -23,7 +23,7 @@ pub struct NBestIterator<'a> {
     caps: BinaryHeap<Cap<'a>>,
     _eos_hash: u64,
     constraint: Rc<Constraint>,
-    _path: Path<'a>,
+    path: Path<'a>,
     _index: usize,
 }
 
@@ -42,7 +42,7 @@ impl<'a> NBestIterator<'a> {
             caps: BinaryHeap::new(),
             _eos_hash: Self::calc_node_hash(&eos_node),
             constraint,
-            _path: Path::new(),
+            path: Path::new(),
             _index: 0,
         };
 
@@ -52,47 +52,10 @@ impl<'a> NBestIterator<'a> {
             .caps
             .push(Cap::_new(vec![eos_node], tail_path_cost, whole_path_cost));
 
-        self_._path = Self::open_cap(self_.lattice, &mut self_.caps, self_.constraint.as_ref());
+        self_.path = Self::open_cap(self_.lattice, &mut self_.caps, self_.constraint.as_ref());
 
         self_
     }
-
-    /*
-        /*!
-            \brief Creates an iterator.
-
-            \param lattice_     A lattice.
-            \param eos_node     An EOS node.
-            \param p_constraint A unique pointer to a constraint.
-
-            \throw std::invalid_argument When p_constraint is nullptr.
-        */
-        n_best_iterator(const lattice& lattice_, node eos_node, std::unique_ptr<constraint>&& p_constraint);
-    */
-    /*
-    n_best_iterator::n_best_iterator(
-        const lattice&                lattice_,
-        node                          eos_node,
-        std::unique_ptr<constraint>&& p_constraint) :
-    m_p_lattice{ &lattice_ },
-    m_caps{},
-    m_eos_hash{ calc_node_hash(eos_node) },
-    m_p_constraint{ std::move(p_constraint) },
-    m_path{},
-    m_index{ 0 }
-    {
-        if (!m_p_constraint)
-        {
-            throw std::invalid_argument{ "p_constraint is nullptr." };
-        }
-
-        const int tail_path_cost = eos_node.node_cost();
-        const int whole_path_cost = eos_node.path_cost();
-        m_caps.emplace(std::vector<node>{ std::move(eos_node) }, tail_path_cost, whole_path_cost);
-
-        m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
-    }
-    */
 
     fn calc_node_hash(node: &Node<'_>) -> u64 {
         let mut hasher = DefaultHasher::new();
@@ -107,21 +70,6 @@ impl<'a> NBestIterator<'a> {
         node.path_cost().hash(&mut hasher);
         hasher.finish()
     }
-    /*
-    namespace
-    {
-        std::size_t calc_node_hash(const node& node_)
-        {
-            auto seed = static_cast<std::size_t>(0);
-            boost::hash_combine(seed, node_.p_key() ? node_.p_key()->hash_value() : 0);
-            boost::hash_combine(seed, boost::hash_value(node_.preceding_step()));
-            boost::hash_combine(seed, boost::hash_value(node_.preceding_edge_costs()));
-            boost::hash_combine(seed, boost::hash_value(node_.best_preceding_node()));
-            boost::hash_combine(seed, boost::hash_value(node_.node_cost()));
-            boost::hash_combine(seed, boost::hash_value(node_.path_cost()));
-            return seed;
-        }
-    */
 
     /*
         // functions
@@ -260,104 +208,93 @@ impl<'a> NBestIterator<'a> {
         return original;
     }
      */
-    /*
-        int add_cost(const int one, const int another)
-        {
-            if (one == std::numeric_limits<int>::max() || another == std::numeric_limits<int>::max())
-            {
-                return std::numeric_limits<int>::max();
-            }
-            else
-            {
-                return one + another;
-            }
-        }
-    */
 
     fn open_cap(
-        _lattice: &Lattice<'a>,
-        _caps: &mut BinaryHeap<Cap<'a>>,
-        _constraint: &Constraint,
+        lattice: &Lattice<'a>,
+        caps: &mut BinaryHeap<Cap<'a>>,
+        constraint: &Constraint,
     ) -> Path<'a> {
-        todo!()
-    }
+        let mut path = Path::new();
+        while !caps.is_empty() {
+            let Some(opened) = caps.pop() else {
+                unreachable!("caps must not be empty.");
+            };
 
-    /*
-        path open_cap(
-            const lattice&                                                 lattice_,
-            std::priority_queue<cap, std::vector<cap>, std::greater<cap>>& caps,
-            const constraint&                                              constraint_)
-        {
-            path path_{};
-            while (!std::empty(caps))
-            {
-                const auto opened = caps.top();
-                caps.pop();
-
-                auto next_path = opened.tail_path();
-                auto tail_path_cost = opened.tail_path_cost();
-                bool nonconforming_path = false;
-                for (const auto* p_node = &opened.tail_path().back(); !p_node->is_bos();)
-                {
-                    const auto& preceding_nodes = lattice_.nodes_at(p_node->preceding_step());
-                    for (auto i = static_cast<std::size_t>(0); i < std::size(preceding_nodes); ++i)
-                    {
-                        if (i == p_node->best_preceding_node())
-                        {
-                            continue;
-                        }
-                        const auto&       preceding_node = preceding_nodes[i];
-                        std::vector<node> cap_tail_path{ next_path };
-                        cap_tail_path.push_back(preceding_node);
-                        if (!constraint_.matches_tail(cap_tail_path))
-                        {
-                            continue;
-                        }
-                        const auto preceding_edge_cost = p_node->preceding_edge_costs()[i];
-                        const auto cap_tail_path_cost =
-                            add_cost(add_cost(tail_path_cost, preceding_edge_cost), preceding_node.node_cost());
-                        if (cap_tail_path_cost == std::numeric_limits<int>::max())
-                        {
-                            continue;
-                        }
-                        const auto cap_whole_path_cost =
-                            add_cost(add_cost(tail_path_cost, preceding_edge_cost), preceding_node.path_cost());
-                        if (cap_whole_path_cost == std::numeric_limits<int>::max())
-                        {
-                            continue;
-                        }
-                        caps.emplace(std::move(cap_tail_path), cap_tail_path_cost, cap_whole_path_cost);
+            let mut next_path = opened.tail_path().to_vec();
+            let mut tail_path_cost = opened.tail_path_cost();
+            let mut nonconforming_path = false;
+            let Some(mut node) = opened.tail_path().last() else {
+                unreachable!("tail_path must not be empty.");
+            };
+            while !node.is_bos() {
+                let Ok(preceding_nodes) = lattice.nodes_at(node.preceding_step()) else {
+                    unreachable!("preceding_step must be within the preceding steps in lattice.");
+                };
+                for (i, preceding_node) in preceding_nodes.iter().enumerate() {
+                    if i == node.best_preceding_node() {
+                        continue;
                     }
-
-                    const auto best_preceding_edge_cost = p_node->preceding_edge_costs()[p_node->best_preceding_node()];
-                    const auto& best_preceding_node = preceding_nodes[p_node->best_preceding_node()];
-                    next_path.push_back(best_preceding_node);
-                    if (!constraint_.matches_tail(next_path))
-                    {
-                        nonconforming_path = true;
-                        break;
+                    let mut cap_tail_path = next_path.clone();
+                    cap_tail_path.push(preceding_node.clone());
+                    if !constraint.matches_tail(&cap_tail_path) {
+                        continue;
                     }
-                    tail_path_cost =
-                        add_cost(tail_path_cost, add_cost(best_preceding_edge_cost, best_preceding_node.node_cost()));
-
-                    p_node = &best_preceding_node;
+                    let preceding_edge_cost = node.preceding_edge_costs()[i];
+                    let cap_tail_path_cost = Self::add_cost(
+                        Self::add_cost(tail_path_cost, preceding_edge_cost),
+                        preceding_node.node_cost(),
+                    );
+                    if cap_tail_path_cost == i32::MAX {
+                        continue;
+                    }
+                    let cap_whole_path_cost = Self::add_cost(
+                        Self::add_cost(tail_path_cost, preceding_edge_cost),
+                        preceding_node.path_cost(),
+                    );
+                    if cap_whole_path_cost == i32::MAX {
+                        continue;
+                    }
+                    caps.push(Cap::_new(
+                        cap_tail_path,
+                        cap_tail_path_cost,
+                        cap_whole_path_cost,
+                    ));
                 }
 
-                if (!nonconforming_path)
-                {
-                    assert(constraint_.matches(next_path));
-                    path_ = path{ std::vector<node>{ std::rbegin(next_path), std::rend(next_path) },
-                                  opened.whole_path_cost() };
+                let best_preceding_edge_cost =
+                    node.preceding_edge_costs()[node.best_preceding_node()];
+                let best_preceding_node = &preceding_nodes[node.best_preceding_node()];
+                next_path.push(best_preceding_node.clone());
+                if !constraint.matches_tail(&next_path) {
+                    nonconforming_path = true;
                     break;
                 }
+                tail_path_cost = Self::add_cost(
+                    tail_path_cost,
+                    Self::add_cost(best_preceding_edge_cost, best_preceding_node.node_cost()),
+                );
+
+                node = best_preceding_node;
             }
 
-            return path_;
+            if !nonconforming_path {
+                assert!(constraint.matches(&next_path));
+                let reversed_next_path = next_path.iter().rev().cloned().collect();
+                path = Path::new_with_nodes(reversed_next_path, opened.whole_path_cost());
+                break;
+            }
         }
 
-
+        path
     }
-    */
+
+    fn add_cost(one: i32, another: i32) -> i32 {
+        if one == i32::MAX || another == i32::MAX {
+            i32::MAX
+        } else {
+            one + another
+        }
+    }
 }
 
 impl Iterator for NBestIterator<'_> {
@@ -370,29 +307,29 @@ impl Iterator for NBestIterator<'_> {
 
 #[derive(Debug, Eq)]
 struct Cap<'a> {
-    _tail_path: Vec<Node<'a>>,
-    _tail_path_cost: i32,
+    tail_path: Vec<Node<'a>>,
+    tail_path_cost: i32,
     whole_path_cost: i32,
 }
 
 impl<'a> Cap<'a> {
     fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         Cap {
-            _tail_path: tail_path,
-            _tail_path_cost: tail_path_cost,
+            tail_path,
+            tail_path_cost,
             whole_path_cost,
         }
     }
 
-    fn _tail_path(&self) -> &[Node<'a>] {
-        self._tail_path.as_slice()
+    fn tail_path(&self) -> &[Node<'a>] {
+        self.tail_path.as_slice()
     }
 
-    fn _tail_path_cost(&self) -> i32 {
-        self._tail_path_cost
+    fn tail_path_cost(&self) -> i32 {
+        self.tail_path_cost
     }
 
-    fn _whole_path_cost(&self) -> i32 {
+    fn whole_path_cost(&self) -> i32 {
         self.whole_path_cost
     }
 }
@@ -417,15 +354,17 @@ impl PartialOrd for Cap<'_> {
 
 #[cfg(test)]
 mod tests {
+    use crate::entry::{Entry, EntryView};
+    use crate::hash_map_vocabulary::HashMapVocabulary;
+    use crate::input::Input;
+    use crate::vocabulary::Vocabulary;
+
     use super::*;
 
-    /*
-    std::unique_ptr<tetengo::lattice::input> to_input(const char* const string)
-    {
-        return std::make_unique<tetengo::lattice::string_input>(string);
+    fn to_input(string: &str) -> Box<dyn Input> {
+        Box::new(crate::string_input::StringInput::new(string.to_string()))
     }
-    */
-    /*
+
     /*
                    +------------------mizuho/sakura/tsubame-------------------+
                    |                path cost: 4270/3220/2990                 |
@@ -460,75 +399,191 @@ mod tests {
         (9) ----  -
             [                                                                ]
     */
-    const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entries{
-        { "[HakataTosu][TosuOmuta][OmutaKumamoto]",
-          {
-              { to_input("Hakata-Tosu-Omuta-Kumamoto"), std::string{ "mizuho" }, 3670 },
-              { to_input("Hakata-Tosu-Omuta-Kumamoto"), std::string{ "sakura" }, 2620 },
-              { to_input("Hakata-Tosu-Omuta-Kumamoto"), std::string{ "tsubame" }, 2390 },
-          } },
-        { "[HakataTosu][TosuOmuta]",
-          {
-              { to_input("Hakata-Tosu-Omuta"), std::string{ "ariake" }, 2150 },
-              { to_input("Hakata-Tosu-Omuta"), std::string{ "rapid811" }, 1310 },
-          } },
-        { "[HakataTosu]",
-          {
-              { to_input("Hakata-Tosu"), std::string{ "kamome" }, 840 },
-              { to_input("Hakata-Tosu"), std::string{ "local415" }, 570 },
-          } },
-        { "[TosuOmuta]",
-          {
-              { to_input("Tosu-Omuta"), std::string{ "local813" }, 860 },
-          } },
-        { "[TosuOmuta][OmutaKumamoto]",
-          {
-              { to_input("Tosu-Omuta-Kumamoto"), std::string{ "local815" }, 1680 },
-          } },
-        { "[OmutaKumamoto]",
-          {
-              { to_input("Omuta-Kumamoto"), std::string{ "local817" }, 950 },
-          } },
-    };
-    */
-    /*
-    const std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{
-        { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu-Omuta-Kumamoto"), {}, 0 } }, 600 },
-        { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu-Omuta"), {}, 0 } }, 700 },
-        { { tetengo::lattice::entry::bos_eos(), { to_input("Hakata-Tosu"), {}, 0 } }, 800 },
-        { { tetengo::lattice::entry::bos_eos(), tetengo::lattice::entry::bos_eos() }, 8000 },
-        { { { to_input("Hakata-Tosu"), {}, 0 }, { to_input("Tosu-Omuta-Kumamoto"), {}, 0 } }, 500 },
-        { { { to_input("Hakata-Tosu"), {}, 0 }, { to_input("Tosu-Omuta"), {}, 0 } }, 600 },
-        { { { to_input("Hakata-Tosu"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 6000 },
-        { { { to_input("Hakata-Tosu-Omuta"), {}, 0 }, { to_input("Omuta-Kumamoto"), {}, 0 } }, 200 },
-        { { { to_input("Hakata-Tosu-Omuta"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 2000 },
-        { { { to_input("Tosu-Omuta"), {}, 0 }, { to_input("Omuta-Kumamoto"), {}, 0 } }, 300 },
-        { { { to_input("Tosu-Omuta"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 3000 },
-        { { { to_input("Hakata-Tosu-Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 400 },
-        { { { to_input("Tosu-Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 500 },
-        { { { to_input("Omuta-Kumamoto"), {}, 0 }, tetengo::lattice::entry::bos_eos() }, 600 },
-    };
-    */
-    /*
-    std::size_t cpp_entry_hash(const tetengo::lattice::entry_view& entry)
-    {
-        return entry.p_key() ? entry.p_key()->hash_value() : 0;
+    fn entries() -> Vec<(String, Vec<Entry>)> {
+        vec![
+            (
+                String::from("[HakataTosu][TosuOmuta][OmutaKumamoto]"),
+                vec![
+                    Entry::new(
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("mizuho"),
+                        3670,
+                    ),
+                    Entry::new(
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("sakura"),
+                        2620,
+                    ),
+                    Entry::new(
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("tsubame"),
+                        2390,
+                    ),
+                ],
+            ),
+            (
+                String::from("[HakataTosu][TosuOmuta]"),
+                vec![
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("ariake"), 2150),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("rapid811"), 1310),
+                ],
+            ),
+            (
+                String::from("[HakataTosu]"),
+                vec![
+                    Entry::new(to_input("Hakata-Tosu"), Box::new("kamome"), 840),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new("local415"), 570),
+                ],
+            ),
+            (
+                String::from("[TosuOmuta]"),
+                vec![Entry::new(
+                    to_input("Tosu-Omuta"),
+                    Box::new("local813"),
+                    860,
+                )],
+            ),
+            (
+                String::from("[TosuOmuta][OmutaKumamoto]"),
+                vec![Entry::new(
+                    to_input("Tosu-Omuta-Kumamoto"),
+                    Box::new("local815"),
+                    1680,
+                )],
+            ),
+            (
+                String::from("[OmutaKumamoto]"),
+                vec![Entry::new(
+                    to_input("Omuta-Kumamoto"),
+                    Box::new("local817"),
+                    950,
+                )],
+            ),
+        ]
     }
-    */
-    /*
-    bool cpp_entry_equal_to(const tetengo::lattice::entry_view& one, const tetengo::lattice::entry_view& another)
-    {
-        return (!one.p_key() && !another.p_key()) ||
-               (one.p_key() && another.p_key() && *one.p_key() == *another.p_key());
+
+    fn connections() -> Vec<((Entry, Entry), i32)> {
+        vec![
+            (
+                (
+                    Entry::BosEos,
+                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                600,
+            ),
+            (
+                (
+                    Entry::BosEos,
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                ),
+                700,
+            ),
+            (
+                (
+                    Entry::BosEos,
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                ),
+                800,
+            ),
+            ((Entry::BosEos, Entry::BosEos), 8000),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                500,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                ),
+                600,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                6000,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                200,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                2000,
+            ),
+            (
+                (
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                ),
+                300,
+            ),
+            (
+                (
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                3000,
+            ),
+            (
+                (
+                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                400,
+            ),
+            (
+                (
+                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                500,
+            ),
+            (
+                (
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::BosEos,
+                ),
+                600,
+            ),
+        ]
     }
-    */
-    /*
-    std::unique_ptr<tetengo::lattice::vocabulary> create_cpp_vocabulary()
-    {
-        return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
-            entries, connections, cpp_entry_hash, cpp_entry_equal_to);
+
+    fn entry_hash(entry: &EntryView<'_>) -> u64 {
+        entry.key().map_or(0, |key| key.hash_value())
     }
-    */
+
+    fn entry_equal_to(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+        if one.key().is_none() && other.key().is_none() {
+            return true;
+        }
+        if let Some(one_key) = one.key() {
+            if let Some(other_key) = other.key() {
+                return one_key.equal_to(other_key);
+            }
+        }
+        false
+    }
+
+    fn create_vocabulary() -> Box<dyn Vocabulary> {
+        Box::new(HashMapVocabulary::new(
+            entries(),
+            connections(),
+            &entry_hash,
+            &entry_equal_to,
+        ))
+    }
+
     /*
     int preceding_edge_cost(const tetengo::lattice::path& path_, const std::size_t node_index)
     {
@@ -554,45 +609,17 @@ mod tests {
      */
 
     #[test]
-    fn new() {}
+    fn new() {
+        let vocabulary = create_vocabulary();
+        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let _result = lattice.push_back(to_input("[HakataTosu]"));
+        let _result = lattice.push_back(to_input("[TosuOmuta]"));
+        let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-    /*
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const tetengo::lattice::n_best_iterator iterator{};
-        }
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto                                    eos_node_and_preceding_edge_costs = lattice_.settle();
-            const tetengo::lattice::n_best_iterator iterator{ lattice_,
-                                                              std::move(eos_node_and_preceding_edge_costs.first),
-                                                              std::make_unique<tetengo::lattice::constraint>() };
-        }
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto eos_node_and_preceding_edge_costs = lattice_.settle();
-            BOOST_CHECK_THROW(
-                const tetengo::lattice::n_best_iterator iterator(
-                    lattice_,
-                    std::move(eos_node_and_preceding_edge_costs.first),
-                    std::unique_ptr<tetengo::lattice::constraint>()),
-                std::invalid_argument);
-        }
+        let (eos_node, _) = lattice.settle().unwrap();
+        let _iterator = NBestIterator::new(&lattice, eos_node, Rc::new(Constraint::new()));
     }
-        */
+
     /*
     BOOST_AUTO_TEST_CASE(operator_dereference)
     {
@@ -1033,9 +1060,9 @@ mod tests {
             let nodes = vec![node];
             let cap = Cap::_new(nodes, 24, 42);
 
-            assert_eq!(cap._tail_path().len(), 1);
+            assert_eq!(cap.tail_path().len(), 1);
             assert_eq!(
-                cap._tail_path()[0].preceding_edge_costs(),
+                cap.tail_path()[0].preceding_edge_costs(),
                 preceding_edge_costs.as_slice()
             );
         }
@@ -1047,7 +1074,7 @@ mod tests {
             let nodes = vec![node];
             let cap = Cap::_new(nodes, 24, 42);
 
-            assert_eq!(cap._tail_path_cost(), 24);
+            assert_eq!(cap.tail_path_cost(), 24);
         }
 
         #[test]
@@ -1057,7 +1084,7 @@ mod tests {
             let nodes = vec![node];
             let cap = Cap::_new(nodes, 24, 42);
 
-            assert_eq!(cap._whole_path_cost(), 42);
+            assert_eq!(cap.whole_path_cost(), 42);
         }
     }
 }
