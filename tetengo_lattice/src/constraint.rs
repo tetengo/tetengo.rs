@@ -7,13 +7,14 @@
 use std::fmt::{self, Debug, Formatter};
 
 use crate::constraint_element::ConstraintElement;
+use crate::Node;
 
 /**
  * A constraint.
  */
 #[derive(Default)]
 pub struct Constraint {
-    _pattern: Vec<Box<dyn ConstraintElement>>,
+    pattern: Vec<Box<dyn ConstraintElement>>,
 }
 
 impl Constraint {
@@ -24,7 +25,7 @@ impl Constraint {
      */
     pub fn new() -> Self {
         Self {
-            _pattern: Vec::new(),
+            pattern: Vec::new(),
         }
     }
 
@@ -35,30 +36,22 @@ impl Constraint {
      * * `pattern` - A pattern.
      */
     pub fn new_with_pattern(pattern: Vec<Box<dyn ConstraintElement>>) -> Self {
-        Self { _pattern: pattern }
+        Self { pattern }
     }
 
-    /*
-           // functions
+    /**
+     * Returns `true`` if the path matches the pattern.
+     *
+     * # Arguments
+     * * `reverse_path` - A path in reverse order.
+     *
+     * # Returns
+     * `true` if the path matches the pattern.
+     */
+    pub fn matches(&self, reverse_path: &[Node<'_>]) -> bool {
+        self.matches_impl(reverse_path) == 0
+    }
 
-           /*!
-               \brief Returns true when the path matches the pattern.
-
-               \param reverse_path A path in reverse order.
-
-               \retval true  When the path matches the pattern.
-               \retval false Otherwise.
-           */
-           [[nodiscard]] bool matches(const std::vector<node>& reverse_path) const;
-    */
-    /*
-           // functions
-
-           bool matches(const std::vector<node>& reverse_path) const
-           {
-               return matches_impl(reverse_path) == 0;
-           }
-    */
     /*
            /*!
                \brief Returns true when the tail path matches the tail of the pattern.
@@ -76,39 +69,33 @@ impl Constraint {
                return matches_impl(reverse_tail_path) != std::numeric_limits<std::size_t>::max();
            }
     */
-    /*
-           // functions
 
-           std::size_t matches_impl(const std::vector<node>& reverse_path) const
-           {
-               if (std::empty(m_pattern))
-               {
-                   return 0;
-               }
+    fn matches_impl(&self, reverse_path: &[Node<'_>]) -> usize {
+        if self.pattern.is_empty() {
+            return 0;
+        }
 
-               auto pattern_index = std::size(m_pattern);
-               for (auto path_index = static_cast<std::size_t>(0);
-                    path_index < std::size(reverse_path) && pattern_index > 0;
-                    ++path_index)
-               {
-                   const auto element_match = m_pattern[pattern_index - 1]->matches(reverse_path[path_index]);
-                   if (element_match < 0)
-                   {
-                       return std::numeric_limits<std::size_t>::max();
-                   }
-                   else if (element_match == 0)
-                   {
-                       if (pattern_index == 0)
-                       {
-                           return std::numeric_limits<std::size_t>::max();
-                       }
-                       --pattern_index;
-                   }
-               }
+        let mut pattern_index = self.pattern.len();
+        for node in reverse_path {
+            if pattern_index == 0 {
+                break;
+            }
 
-               return pattern_index;
-           }
-    */
+            let element_match = self.pattern[pattern_index - 1].matches(node);
+            match element_match {
+                m if m < 0 => return usize::MAX,
+                0 => {
+                    if pattern_index == 0 {
+                        return usize::MAX;
+                    }
+                    pattern_index -= 1;
+                }
+                _ => {}
+            }
+        }
+
+        pattern_index
+    }
 }
 
 impl Debug for Constraint {
@@ -123,20 +110,15 @@ impl Debug for Constraint {
 mod tests {
     use std::rc::Rc;
 
-    use crate::node::Node;
+    use once_cell::sync::Lazy;
+
     use crate::node_constraint_element::NodeConstraintElement;
+    use crate::string_input::StringInput;
+    use crate::wildcard_constraint_element::WildcardConstraintElement;
 
     use super::*;
 
-    /*
-     namespace
-    {
-        const std::any& node_value()
-        {
-            static const std::any singleton{ 42 };
-            return singleton;
-        }
-    */
+    const NODE_VALUE: i32 = 42;
 
     fn bos_preceding_edge_costs() -> Rc<Vec<i32>> {
         Rc::new(Vec::new())
@@ -153,149 +135,234 @@ mod tests {
         ]
     }
 
-    /*
-        const std::vector<tetengo::lattice::node>& path_b_m_s_t_e()
-        {
-            static const tetengo::lattice::string_input      key_mizuho{ "mizuho" };
-            static const tetengo::lattice::string_input      key_sakura{ "sakura" };
-            static const tetengo::lattice::string_input      key_tsubame{ "tsubame" };
-            static const std::vector<tetengo::lattice::node> singleton{
-                tetengo::lattice::node::bos(&bos_preceding_edge_costs()),
-                tetengo::lattice::node{ &key_mizuho, &node_value(), 0, 0, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_sakura, &node_value(), 0, 1, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_tsubame, &node_value(), 0, 2, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node::eos(3, &preceding_edge_costs(), 0, 0)
-            };
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<tetengo::lattice::node>& path_b_m_a_t_e()
-        {
-            static const tetengo::lattice::string_input      key_mizuho{ "mizuho" };
-            static const tetengo::lattice::string_input      key_ariake{ "ariake" };
-            static const tetengo::lattice::string_input      key_tsubame{ "tsubame" };
-            static const std::vector<tetengo::lattice::node> singleton{
-                tetengo::lattice::node::bos(&bos_preceding_edge_costs()),
-                tetengo::lattice::node{ &key_mizuho, &node_value(), 0, 0, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_ariake, &node_value(), 0, 1, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_tsubame, &node_value(), 0, 2, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node::eos(3, &preceding_edge_costs(), 0, 0)
-            };
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<tetengo::lattice::node>& path_b_h_t_e()
-        {
-            static const tetengo::lattice::string_input      key_hinokuni{ "hinokuni" };
-            static const tetengo::lattice::string_input      key_tsubame{ "tsubame" };
-            static const std::vector<tetengo::lattice::node> singleton{
-                tetengo::lattice::node::bos(&bos_preceding_edge_costs()),
-                tetengo::lattice::node{ &key_hinokuni, &node_value(), 0, 0, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_tsubame, &node_value(), 0, 2, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node::eos(3, &preceding_edge_costs(), 0, 0)
-            };
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<tetengo::lattice::node>& path_b_k_s_k_e()
-        {
-            static const tetengo::lattice::string_input      key_kamome{ "kamome" };
-            static const tetengo::lattice::string_input      key_sakura{ "sakura" };
-            static const tetengo::lattice::string_input      key_kumagawa{ "kumagawa" };
-            static const std::vector<tetengo::lattice::node> singleton{
-                tetengo::lattice::node::bos(&bos_preceding_edge_costs()),
-                tetengo::lattice::node{ &key_kamome, &node_value(), 0, 0, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_sakura, &node_value(), 0, 1, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node{ &key_kumagawa, &node_value(), 0, 2, &preceding_edge_costs(), 0, 0, 0 },
-                tetengo::lattice::node::eos(3, &preceding_edge_costs(), 0, 0)
-            };
-            return singleton;
-        }
-    */
-    /*
-        std::vector<tetengo::lattice::node> reverse_path(const std::vector<tetengo::lattice::node>& path)
-        {
-            return std::vector<tetengo::lattice::node>{ std::rbegin(path), std::rend(path) };
-        }
-    */
-
-    fn make_pattern_b_e() -> Vec<Box<dyn ConstraintElement>> {
-        let path_b_e = make_path_b_e();
+    fn make_path_b_m_s_t_e() -> Vec<Node<'static>> {
+        static KEY_MIZUHO: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("mizuho")));
+        static KEY_SAKURA: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("sakura")));
+        static KEY_TSUBAME: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("tsubame")));
         vec![
-            Box::new(NodeConstraintElement::new(path_b_e[0].clone())),
-            Box::new(NodeConstraintElement::new(path_b_e[1].clone())),
+            Node::bos(bos_preceding_edge_costs()),
+            Node::new(
+                &*KEY_MIZUHO,
+                &NODE_VALUE,
+                0,
+                0,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_SAKURA,
+                &NODE_VALUE,
+                0,
+                1,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_TSUBAME,
+                &NODE_VALUE,
+                0,
+                2,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::eos(0, preceding_edge_costs(), 0, 0),
         ]
     }
 
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_m_s_t_e()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[0]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[1]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[2]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[3]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
-            return pattern;
-        }
-    */
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_m_w_t_e()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[0]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[1]));
-            pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(1));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[3]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
-            return pattern;
-        }
-    */
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_w_t_e()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[0]));
-            pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(0));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[3]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
-            return pattern;
-        }
-    */
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_w_s_w_e()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[0]));
-            pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(0));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[2]));
-            pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(2));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
-            return pattern;
-        }
-    */
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_w_e()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[0]));
-            pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(0));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
-            return pattern;
-        }
-    */
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_w()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(
-                std::make_unique<tetengo::lattice::wildcard_constraint_element>(std::numeric_limits<std::size_t>::max()));
-            return pattern;
-        }
-    */
+    fn make_path_b_m_a_t_e() -> Vec<Node<'static>> {
+        static KEY_MIZUHO: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("mizuho")));
+        static KEY_ARIAKE: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("ariake")));
+        static KEY_TSUBAME: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        vec![
+            Node::bos(bos_preceding_edge_costs()),
+            Node::new(
+                &*KEY_MIZUHO,
+                &NODE_VALUE,
+                0,
+                0,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_ARIAKE,
+                &NODE_VALUE,
+                0,
+                1,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_TSUBAME,
+                &NODE_VALUE,
+                0,
+                2,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::eos(0, preceding_edge_costs(), 0, 0),
+        ]
+    }
+
+    fn make_path_b_h_t_e() -> Vec<Node<'static>> {
+        static KEY_HINOKUNI: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("hinokuni")));
+        static KEY_TSUBAME: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        vec![
+            Node::bos(bos_preceding_edge_costs()),
+            Node::new(
+                &*KEY_HINOKUNI,
+                &NODE_VALUE,
+                0,
+                0,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_TSUBAME,
+                &NODE_VALUE,
+                0,
+                2,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::eos(0, preceding_edge_costs(), 0, 0),
+        ]
+    }
+
+    fn make_path_b_k_s_k_e() -> Vec<Node<'static>> {
+        static KEY_KAMOME: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("kamome")));
+        static KEY_SAKURA: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("sakura")));
+        static KEY_KUMAGAWA: Lazy<StringInput> =
+            Lazy::new(|| StringInput::new(String::from("kumagawa")));
+        vec![
+            Node::bos(bos_preceding_edge_costs()),
+            Node::new(
+                &*KEY_KAMOME,
+                &NODE_VALUE,
+                0,
+                0,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_SAKURA,
+                &NODE_VALUE,
+                0,
+                1,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::new(
+                &*KEY_KUMAGAWA,
+                &NODE_VALUE,
+                0,
+                2,
+                preceding_edge_costs(),
+                0,
+                0,
+                0,
+            ),
+            Node::eos(0, preceding_edge_costs(), 0, 0),
+        ]
+    }
+
+    fn reverse_path(path: Vec<Node<'_>>) -> Vec<Node<'_>> {
+        path.into_iter().rev().collect()
+    }
+
+    fn make_pattern_b_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path = make_path_b_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path[0].clone())),
+            Box::new(NodeConstraintElement::new(path[1].clone())),
+        ]
+    }
+
+    fn make_pattern_b_m_s_t_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path = make_path_b_m_s_t_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path[0].clone())),
+            Box::new(NodeConstraintElement::new(path[1].clone())),
+            Box::new(NodeConstraintElement::new(path[2].clone())),
+            Box::new(NodeConstraintElement::new(path[3].clone())),
+            Box::new(NodeConstraintElement::new(path[4].clone())),
+        ]
+    }
+
+    fn make_pattern_b_m_w_t_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path = make_path_b_m_s_t_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path[0].clone())),
+            Box::new(NodeConstraintElement::new(path[1].clone())),
+            Box::new(WildcardConstraintElement::new(1)),
+            Box::new(NodeConstraintElement::new(path[3].clone())),
+            Box::new(NodeConstraintElement::new(path[4].clone())),
+        ]
+    }
+
+    fn make_pattern_b_w_t_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path = make_path_b_m_s_t_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path[0].clone())),
+            Box::new(WildcardConstraintElement::new(0)),
+            Box::new(NodeConstraintElement::new(path[3].clone())),
+            Box::new(NodeConstraintElement::new(path[4].clone())),
+        ]
+    }
+
+    fn make_pattern_b_w_s_w_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path = make_path_b_m_s_t_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path[0].clone())),
+            Box::new(WildcardConstraintElement::new(0)),
+            Box::new(NodeConstraintElement::new(path[2].clone())),
+            Box::new(WildcardConstraintElement::new(2)),
+            Box::new(NodeConstraintElement::new(path[4].clone())),
+        ]
+    }
+
+    fn make_pattern_b_w_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path = make_path_b_m_s_t_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path[0].clone())),
+            Box::new(WildcardConstraintElement::new(0)),
+            Box::new(NodeConstraintElement::new(path[4].clone())),
+        ]
+    }
+
+    fn make_pattern_w() -> Vec<Box<dyn ConstraintElement>> {
+        vec![Box::new(WildcardConstraintElement::new(usize::MAX))]
+    }
+
     /*
         std::vector<tetengo::lattice::node>
         make_tail(const std::vector<tetengo::lattice::node>& path, const std::size_t node_count)
@@ -319,85 +386,82 @@ mod tests {
         let _constraint = Constraint::new_with_pattern(make_pattern_b_e());
     }
 
-    /*
-    BOOST_AUTO_TEST_CASE(matches)
-    {
-        BOOST_TEST_PASSPOINT();
-
+    #[test]
+    fn matches() {
         {
-            const tetengo::lattice::constraint constraint_{};
+            let constraint = Constraint::new();
 
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_e());
 
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_m_s_t_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_m_s_t_e());
 
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_m_w_t_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_m_w_t_e());
 
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_w_t_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_w_t_e());
 
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_w_s_w_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_w_s_w_e());
 
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_w_e() };
+            let constraint = Constraint::new_with_pattern(make_pattern_b_w_e());
 
-            BOOST_TEST(!constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(!constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
         {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_w() };
+            let constraint = Constraint::new_with_pattern(make_pattern_w());
 
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_s_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_m_a_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_h_t_e())));
-            BOOST_TEST(constraint_.matches(reverse_path(path_b_k_s_k_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_s_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_m_a_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_h_t_e())));
+            assert!(constraint.matches(&reverse_path(make_path_b_k_s_k_e())));
         }
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(matches_tail_cpp)
     {
