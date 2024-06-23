@@ -6,9 +6,12 @@
 
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use std::rc::Rc;
 
+use crate::constraint::Constraint;
 use crate::lattice::Lattice;
 use crate::node::Node;
+use crate::path::Path;
 
 /**
  * An N-best lattice path iterator.
@@ -18,22 +21,9 @@ pub struct NBestIterator<'a> {
     _lattice: &'a Lattice<'a>,
     _caps: BinaryHeap<_Cap<'a>>,
     _eos_hash: u64,
-    // constraint: Rc<Constraint>,
-    // path: Path,
+    _constraint: Rc<Constraint>,
+    _path: Path<'a>,
     _index: usize,
-    /*
-       const lattice* m_p_lattice;
-
-       std::priority_queue<cap, std::vector<cap>, std::greater<cap>> m_caps;
-
-       std::size_t m_eos_hash;
-
-       std::shared_ptr<constraint> m_p_constraint;
-
-       path m_path;
-
-       std::size_t m_index;
-    */
 }
 
 impl NBestIterator<'_> {
@@ -967,8 +957,6 @@ mod tests {
          */
 
     mod cap {
-        use std::rc::Rc;
-
         use super::*;
 
         #[test]
