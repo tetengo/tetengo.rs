@@ -28,28 +28,16 @@ impl Constraint {
         }
     }
 
-    /*
-           /*!
-               \brief Creates an empty constraint.
+    /**
+     * Creates a constraint.
+     *
+     * # Arguments
+     * * `pattern` - A pattern.
+     */
+    pub fn new_with_pattern(pattern: Vec<Box<dyn ConstraintElement>>) -> Self {
+        Self { _pattern: pattern }
+    }
 
-               It matches any path.
-           */
-           constraint();
-    */
-    /*
-           impl() : m_pattern{} {}
-    */
-    /*
-           /*!
-               \brief Creates a constraint.
-
-               \param pattern A pattern.
-           */
-           explicit constraint(std::vector<std::unique_ptr<constraint_element>>&& pattern);
-    */
-    /*
-           explicit impl(std::vector<std::unique_ptr<constraint_element>>&& pattern) : m_pattern{ std::move(pattern) } {}
-    */
     /*
            // functions
 
@@ -133,6 +121,11 @@ impl Debug for Constraint {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
+    use crate::node::Node;
+    use crate::node_constraint_element::NodeConstraintElement;
+
     use super::*;
 
     /*
@@ -144,30 +137,22 @@ mod tests {
             return singleton;
         }
     */
-    /*
-        const std::vector<int>& bos_preceding_edge_costs()
-        {
-            static const std::vector<int> singleton{};
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<int>& preceding_edge_costs()
-        {
-            static const std::vector<int> singleton{ 1 };
-            return singleton;
-        }
-    */
-    /*
-        const std::vector<tetengo::lattice::node>& path_b_e()
-        {
-            static const std::vector<tetengo::lattice::node> singleton{
-                tetengo::lattice::node::bos(&bos_preceding_edge_costs()),
-                tetengo::lattice::node::eos(0, &preceding_edge_costs(), 0, 0)
-            };
-            return singleton;
-        }
-    */
+
+    fn bos_preceding_edge_costs() -> Rc<Vec<i32>> {
+        Rc::new(Vec::new())
+    }
+
+    fn preceding_edge_costs() -> Rc<Vec<i32>> {
+        Rc::new(vec![1])
+    }
+
+    fn make_path_b_e() -> Vec<Node<'static>> {
+        vec![
+            Node::bos(bos_preceding_edge_costs()),
+            Node::eos(0, preceding_edge_costs(), 0, 0),
+        ]
+    }
+
     /*
         const std::vector<tetengo::lattice::node>& path_b_m_s_t_e()
         {
@@ -236,15 +221,15 @@ mod tests {
             return std::vector<tetengo::lattice::node>{ std::rbegin(path), std::rend(path) };
         }
     */
-    /*
-        std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_e()
-        {
-            std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_e()[0]));
-            pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_e()[1]));
-            return pattern;
-        }
-    */
+
+    fn make_pattern_b_e() -> Vec<Box<dyn ConstraintElement>> {
+        let path_b_e = make_path_b_e();
+        vec![
+            Box::new(NodeConstraintElement::new(path_b_e[0].clone())),
+            Box::new(NodeConstraintElement::new(path_b_e[1].clone())),
+        ]
+    }
+
     /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_m_s_t_e()
         {
@@ -329,24 +314,11 @@ mod tests {
         let _constraint = Constraint::new();
     }
 
-    /*
-    BOOST_AUTO_TEST_SUITE(test_tetengo)
-    BOOST_AUTO_TEST_SUITE(lattice)
-    BOOST_AUTO_TEST_SUITE(constraint)
-
-
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const tetengo::lattice::constraint constraint_{};
-        }
-        {
-            const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_e() };
-        }
+    #[test]
+    fn new_with_pattern() {
+        let _constraint = Constraint::new_with_pattern(make_pattern_b_e());
     }
-    */
+
     /*
     BOOST_AUTO_TEST_CASE(matches)
     {
