@@ -9,26 +9,22 @@
  */
 #[derive(Copy, Clone, Debug)]
 pub struct WildcardConstraintElement {
-    /*
-       private:
-           // variables
-
-           const std::size_t m_preceding_step;
-    */
+    _preceding_step: usize,
 }
 
 impl WildcardConstraintElement {
-    /*
-           /*!
-               \brief Creates a wildcard constraint element.
+    /**
+     * Creates a wildcard constraint element.
+     *
+     * # Arguments
+     * * `preceding_step` - An index of a preceding step.
+     */
+    pub fn new(preceding_step: usize) -> Self {
+        Self {
+            _preceding_step: preceding_step,
+        }
+    }
 
-               \param preceding_step An index of a preceding step.
-           */
-           explicit wildcard_constraint_element(std::size_t preceding_step);
-    */
-    /*
-           explicit impl(const std::size_t preceding_step) : m_preceding_step{ preceding_step } {}
-    */
     /*
            // functions
 
@@ -62,16 +58,12 @@ impl WildcardConstraintElement {
 
 #[cfg(test)]
 mod tests {
-    /*
-    BOOST_AUTO_TEST_CASE(construction)
-    {
-        BOOST_TEST_PASSPOINT();
+    use super::*;
 
-        {
-            const tetengo::lattice::wildcard_constraint_element element{ 3 };
-        }
+    #[test]
+    fn new() {
+        let _ = WildcardConstraintElement::new(3);
     }
-    */
     /*
     BOOST_AUTO_TEST_CASE(matches)
     {
