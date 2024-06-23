@@ -11,11 +11,23 @@ use crate::constraint_element::ConstraintElement;
 /**
  * A constraint.
  */
+#[derive(Default)]
 pub struct Constraint {
     _pattern: Vec<Box<dyn ConstraintElement>>,
 }
 
 impl Constraint {
+    /**
+     * Creates an empty constraint.
+     *
+     * It matches any path.
+     */
+    pub fn new() -> Self {
+        Self {
+            _pattern: Vec::new(),
+        }
+    }
+
     /*
            /*!
                \brief Creates an empty constraint.
@@ -25,12 +37,18 @@ impl Constraint {
            constraint();
     */
     /*
+           impl() : m_pattern{} {}
+    */
+    /*
            /*!
                \brief Creates a constraint.
 
                \param pattern A pattern.
            */
            explicit constraint(std::vector<std::unique_ptr<constraint_element>>&& pattern);
+    */
+    /*
+           explicit impl(std::vector<std::unique_ptr<constraint_element>>&& pattern) : m_pattern{ std::move(pattern) } {}
     */
     /*
            // functions
@@ -46,6 +64,14 @@ impl Constraint {
            [[nodiscard]] bool matches(const std::vector<node>& reverse_path) const;
     */
     /*
+           // functions
+
+           bool matches(const std::vector<node>& reverse_path) const
+           {
+               return matches_impl(reverse_path) == 0;
+           }
+    */
+    /*
            /*!
                \brief Returns true when the tail path matches the tail of the pattern.
 
@@ -55,20 +81,6 @@ impl Constraint {
                \retval false Otherwise.
            */
            [[nodiscard]] bool matches_tail(const std::vector<node>& reverse_tail_path) const;
-    */
-    /*
-           impl() : m_pattern{} {}
-    */
-    /*
-           explicit impl(std::vector<std::unique_ptr<constraint_element>>&& pattern) : m_pattern{ std::move(pattern) } {}
-    */
-    /*
-           // functions
-
-           bool matches(const std::vector<node>& reverse_path) const
-           {
-               return matches_impl(reverse_path) == 0;
-           }
     */
     /*
            bool matches_tail(const std::vector<node>& reverse_tail_path) const
@@ -121,6 +133,8 @@ impl Debug for Constraint {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     /*
      namespace
     {
@@ -129,19 +143,22 @@ mod tests {
             static const std::any singleton{ 42 };
             return singleton;
         }
-
+    */
+    /*
         const std::vector<int>& bos_preceding_edge_costs()
         {
             static const std::vector<int> singleton{};
             return singleton;
         }
-
+    */
+    /*
         const std::vector<int>& preceding_edge_costs()
         {
             static const std::vector<int> singleton{ 1 };
             return singleton;
         }
-
+    */
+    /*
         const std::vector<tetengo::lattice::node>& path_b_e()
         {
             static const std::vector<tetengo::lattice::node> singleton{
@@ -150,7 +167,8 @@ mod tests {
             };
             return singleton;
         }
-
+    */
+    /*
         const std::vector<tetengo::lattice::node>& path_b_m_s_t_e()
         {
             static const tetengo::lattice::string_input      key_mizuho{ "mizuho" };
@@ -165,7 +183,8 @@ mod tests {
             };
             return singleton;
         }
-
+    */
+    /*
         const std::vector<tetengo::lattice::node>& path_b_m_a_t_e()
         {
             static const tetengo::lattice::string_input      key_mizuho{ "mizuho" };
@@ -180,7 +199,8 @@ mod tests {
             };
             return singleton;
         }
-
+    */
+    /*
         const std::vector<tetengo::lattice::node>& path_b_h_t_e()
         {
             static const tetengo::lattice::string_input      key_hinokuni{ "hinokuni" };
@@ -193,7 +213,8 @@ mod tests {
             };
             return singleton;
         }
-
+    */
+    /*
         const std::vector<tetengo::lattice::node>& path_b_k_s_k_e()
         {
             static const tetengo::lattice::string_input      key_kamome{ "kamome" };
@@ -208,12 +229,14 @@ mod tests {
             };
             return singleton;
         }
-
+    */
+    /*
         std::vector<tetengo::lattice::node> reverse_path(const std::vector<tetengo::lattice::node>& path)
         {
             return std::vector<tetengo::lattice::node>{ std::rbegin(path), std::rend(path) };
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_e()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -221,7 +244,8 @@ mod tests {
             pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_e()[1]));
             return pattern;
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_m_s_t_e()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -232,7 +256,8 @@ mod tests {
             pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
             return pattern;
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_m_w_t_e()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -243,7 +268,8 @@ mod tests {
             pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
             return pattern;
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_w_t_e()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -253,7 +279,8 @@ mod tests {
             pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
             return pattern;
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_w_s_w_e()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -264,7 +291,8 @@ mod tests {
             pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
             return pattern;
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_b_w_e()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -273,7 +301,8 @@ mod tests {
             pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path_b_m_s_t_e()[4]));
             return pattern;
         }
-
+    */
+    /*
         std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> make_cpp_pattern_w()
         {
             std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
@@ -281,7 +310,8 @@ mod tests {
                 std::make_unique<tetengo::lattice::wildcard_constraint_element>(std::numeric_limits<std::size_t>::max()));
             return pattern;
         }
-
+    */
+    /*
         std::vector<tetengo::lattice::node>
         make_tail(const std::vector<tetengo::lattice::node>& path, const std::size_t node_count)
         {
@@ -292,8 +322,14 @@ mod tests {
 
 
     }
+    */
 
+    #[test]
+    fn new() {
+        let _constraint = Constraint::new();
+    }
 
+    /*
     BOOST_AUTO_TEST_SUITE(test_tetengo)
     BOOST_AUTO_TEST_SUITE(lattice)
     BOOST_AUTO_TEST_SUITE(constraint)
@@ -310,7 +346,8 @@ mod tests {
             const tetengo::lattice::constraint constraint_{ make_cpp_pattern_b_e() };
         }
     }
-
+    */
+    /*
     BOOST_AUTO_TEST_CASE(matches)
     {
         BOOST_TEST_PASSPOINT();
@@ -388,7 +425,8 @@ mod tests {
             BOOST_TEST(constraint_.matches(reverse_path(path_b_k_s_k_e())));
         }
     }
-
+    */
+    /*
     BOOST_AUTO_TEST_CASE(matches_tail_cpp)
     {
         BOOST_TEST_PASSPOINT();
