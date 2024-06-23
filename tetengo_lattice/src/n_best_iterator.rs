@@ -38,6 +38,16 @@ impl NBestIterator<'_> {
         n_best_iterator();
     */
     /*
+    n_best_iterator::n_best_iterator() :
+    m_p_lattice{},
+    m_caps{},
+    m_eos_hash{ 0 },
+    m_p_constraint{ std::make_shared<constraint>() },
+    m_path{},
+    m_index{ 0 }
+    {}
+    */
+    /*
         /*!
             \brief Creates an iterator.
 
@@ -50,6 +60,30 @@ impl NBestIterator<'_> {
         n_best_iterator(const lattice& lattice_, node eos_node, std::unique_ptr<constraint>&& p_constraint);
     */
     /*
+    n_best_iterator::n_best_iterator(
+        const lattice&                lattice_,
+        node                          eos_node,
+        std::unique_ptr<constraint>&& p_constraint) :
+    m_p_lattice{ &lattice_ },
+    m_caps{},
+    m_eos_hash{ calc_node_hash(eos_node) },
+    m_p_constraint{ std::move(p_constraint) },
+    m_path{},
+    m_index{ 0 }
+    {
+        if (!m_p_constraint)
+        {
+            throw std::invalid_argument{ "p_constraint is nullptr." };
+        }
+
+        const int tail_path_cost = eos_node.node_cost();
+        const int whole_path_cost = eos_node.path_cost();
+        m_caps.emplace(std::vector<node>{ std::move(eos_node) }, tail_path_cost, whole_path_cost);
+
+        m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
+    }
+    */
+    /*
         // functions
 
         /*!
@@ -60,12 +94,34 @@ impl NBestIterator<'_> {
         [[nodiscard]] const path& operator*() const;
     */
     /*
+    const path& n_best_iterator::operator*() const
+    {
+        if (std::empty(m_path))
+        {
+            throw std::logic_error{ "No more path." };
+        }
+
+        return m_path;
+    }
+    */
+    /*
         /*!
             \brief Dereferences the iterator.
 
             \return The dereferenced value.
         */
         [[nodiscard]] path& operator*();
+    */
+    /*
+    path& n_best_iterator::operator*()
+    {
+        if (std::empty(m_path))
+        {
+            throw std::logic_error{ "No more path." };
+        }
+
+        return m_path;
+    }
     */
     /*
         /*!
@@ -76,12 +132,24 @@ impl NBestIterator<'_> {
         [[nodiscard]] const path* operator->() const;
     */
     /*
+    const path* n_best_iterator::operator->() const
+    {
+        return &operator*();
+    }
+    */
+    /*
         /*!
             \brief Returns the pointer to the value.
 
             \return The pointer to the value.
         */
         [[nodiscard]] path* operator->();
+    */
+    /*
+    path* n_best_iterator::operator->()
+    {
+        return &operator*();
+    }
     */
     /*
         /*!
@@ -96,12 +164,45 @@ impl NBestIterator<'_> {
         friend bool operator==(const n_best_iterator& one, const n_best_iterator& another);
     */
     /*
+    bool operator==(const n_best_iterator& one, const n_best_iterator& another)
+    {
+        if (std::empty(one.m_path) && std::empty(another.m_path))
+        {
+            return true;
+        }
+
+        return one.m_p_lattice == another.m_p_lattice && one.m_eos_hash == another.m_eos_hash &&
+               one.m_index == another.m_index;
+    }
+    */
+    /*
         /*!
             \brief Increments the iterator.
 
             \return This iterator.
         */
         n_best_iterator& operator++();
+    */
+    /*
+    n_best_iterator& n_best_iterator::operator++()
+    {
+        if (std::empty(m_path))
+        {
+            throw std::logic_error{ "No more path." };
+        }
+
+        if (std::empty(m_caps))
+        {
+            m_path = path{};
+        }
+        else
+        {
+            m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
+        }
+        ++m_index;
+
+        return *this;
+    }
     */
     /*
        /*!
@@ -111,6 +212,14 @@ impl NBestIterator<'_> {
        */
        n_best_iterator operator++(int);
     */
+    /*
+    n_best_iterator n_best_iterator::operator++(int)
+    {
+        n_best_iterator original{ *this };
+        ++(*this);
+        return original;
+    }
+     */
     /*
     namespace
     {
@@ -215,115 +324,6 @@ impl NBestIterator<'_> {
 
     }
     */
-    /*
-    n_best_iterator::n_best_iterator() :
-    m_p_lattice{},
-    m_caps{},
-    m_eos_hash{ 0 },
-    m_p_constraint{ std::make_shared<constraint>() },
-    m_path{},
-    m_index{ 0 }
-    {}
-    */
-    /*
-    n_best_iterator::n_best_iterator(
-        const lattice&                lattice_,
-        node                          eos_node,
-        std::unique_ptr<constraint>&& p_constraint) :
-    m_p_lattice{ &lattice_ },
-    m_caps{},
-    m_eos_hash{ calc_node_hash(eos_node) },
-    m_p_constraint{ std::move(p_constraint) },
-    m_path{},
-    m_index{ 0 }
-    {
-        if (!m_p_constraint)
-        {
-            throw std::invalid_argument{ "p_constraint is nullptr." };
-        }
-
-        const int tail_path_cost = eos_node.node_cost();
-        const int whole_path_cost = eos_node.path_cost();
-        m_caps.emplace(std::vector<node>{ std::move(eos_node) }, tail_path_cost, whole_path_cost);
-
-        m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
-    }
-    */
-    /*
-    const path& n_best_iterator::operator*() const
-    {
-        if (std::empty(m_path))
-        {
-            throw std::logic_error{ "No more path." };
-        }
-
-        return m_path;
-    }
-    */
-    /*
-    path& n_best_iterator::operator*()
-    {
-        if (std::empty(m_path))
-        {
-            throw std::logic_error{ "No more path." };
-        }
-
-        return m_path;
-    }
-    */
-    /*
-    const path* n_best_iterator::operator->() const
-    {
-        return &operator*();
-    }
-    */
-    /*
-    path* n_best_iterator::operator->()
-    {
-        return &operator*();
-    }
-    */
-    /*
-    bool operator==(const n_best_iterator& one, const n_best_iterator& another)
-    {
-        if (std::empty(one.m_path) && std::empty(another.m_path))
-        {
-            return true;
-        }
-
-        return one.m_p_lattice == another.m_p_lattice && one.m_eos_hash == another.m_eos_hash &&
-               one.m_index == another.m_index;
-    }
-    */
-    /*
-    n_best_iterator& n_best_iterator::operator++()
-    {
-        if (std::empty(m_path))
-        {
-            throw std::logic_error{ "No more path." };
-        }
-
-        if (std::empty(m_caps))
-        {
-            m_path = path{};
-        }
-        else
-        {
-            m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
-        }
-        ++m_index;
-
-        return *this;
-    }
-    */
-    /*
-    n_best_iterator n_best_iterator::operator++(int)
-    {
-        n_best_iterator original{ *this };
-        ++(*this);
-        return original;
-    }
-     */
 }
 
 impl Iterator for NBestIterator<'_> {
