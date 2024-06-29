@@ -7,7 +7,6 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::hash::{DefaultHasher, Hash, Hasher};
-use std::rc::Rc;
 
 use crate::constraint::Constraint;
 use crate::lattice::Lattice;
@@ -22,7 +21,7 @@ pub struct NBestIterator<'a> {
     lattice: &'a Lattice<'a>,
     caps: BinaryHeap<Cap<'a>>,
     _eos_hash: u64,
-    constraint: Rc<Constraint>,
+    constraint: Box<Constraint>,
     path: Path<'a>,
     _index: usize,
 }
@@ -36,7 +35,7 @@ impl<'a> NBestIterator<'a> {
      * * `eos_node`   - An EOS node.
      * * `constraint` - A constraint.
      */
-    pub fn new(lattice: &'a Lattice<'a>, eos_node: Node<'a>, constraint: Rc<Constraint>) -> Self {
+    pub fn new(lattice: &'a Lattice<'a>, eos_node: Node<'a>, constraint: Box<Constraint>) -> Self {
         let mut self_ = Self {
             lattice,
             caps: BinaryHeap::new(),
@@ -69,6 +68,101 @@ impl<'a> NBestIterator<'a> {
         node.node_cost().hash(&mut hasher);
         node.path_cost().hash(&mut hasher);
         hasher.finish()
+    }
+
+    fn open_cap(
+        lattice: &Lattice<'a>,
+        caps: &mut BinaryHeap<Cap<'a>>,
+        constraint: &Constraint,
+    ) -> Path<'a> {
+        let mut path = Path::new();
+        while !caps.is_empty() {
+            let Some(opened) = caps.pop() else {
+                unreachable!("caps must not be empty.");
+            };
+
+            let mut next_path = opened.tail_path().to_vec();
+            let mut tail_path_cost = opened.tail_path_cost();
+            let mut nonconforming_path = false;
+            let Some(mut node) = opened.tail_path().last() else {
+                unreachable!("tail_path must not be empty.");
+            };
+            while !node.is_bos() {
+                let Ok(preceding_nodes) = lattice.nodes_at(node.preceding_step()) else {
+                    unreachable!("preceding_step must be within the preceding steps in lattice.");
+                };
+                for (i, preceding_node) in preceding_nodes.iter().enumerate() {
+                    if i == node.best_preceding_node() {
+                        continue;
+                    }
+                    let mut cap_tail_path = next_path.clone();
+                    cap_tail_path.push(preceding_node.clone());
+                    if !constraint.matches_tail(&cap_tail_path) {
+                        continue;
+                    }
+                    let preceding_edge_cost = node.preceding_edge_costs()[i];
+                    let cap_tail_path_cost = Self::add_cost(
+                        Self::add_cost(tail_path_cost, preceding_edge_cost),
+                        preceding_node.node_cost(),
+                    );
+                    if cap_tail_path_cost == i32::MAX {
+                        continue;
+                    }
+                    let cap_whole_path_cost = Self::add_cost(
+                        Self::add_cost(tail_path_cost, preceding_edge_cost),
+                        preceding_node.path_cost(),
+                    );
+                    if cap_whole_path_cost == i32::MAX {
+                        continue;
+                    }
+                    caps.push(Cap::_new(
+                        cap_tail_path,
+                        cap_tail_path_cost,
+                        cap_whole_path_cost,
+                    ));
+                }
+
+                let best_preceding_edge_cost =
+                    node.preceding_edge_costs()[node.best_preceding_node()];
+                let best_preceding_node = &preceding_nodes[node.best_preceding_node()];
+                next_path.push(best_preceding_node.clone());
+                if !constraint.matches_tail(&next_path) {
+                    nonconforming_path = true;
+                    break;
+                }
+                tail_path_cost = Self::add_cost(
+                    tail_path_cost,
+                    Self::add_cost(best_preceding_edge_cost, best_preceding_node.node_cost()),
+                );
+
+                node = best_preceding_node;
+            }
+
+            if !nonconforming_path {
+                assert!(constraint.matches(&next_path));
+                let reversed_next_path = next_path.iter().rev().cloned().collect();
+                path = Path::new_with_nodes(reversed_next_path, opened.whole_path_cost());
+                break;
+            }
+        }
+
+        path
+    }
+
+    fn add_cost(one: i32, another: i32) -> i32 {
+        if one == i32::MAX || another == i32::MAX {
+            i32::MAX
+        } else {
+            one + another
+        }
+    }
+}
+
+impl Iterator for NBestIterator<'_> {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        None
     }
 
     /*
@@ -208,101 +302,6 @@ impl<'a> NBestIterator<'a> {
         return original;
     }
      */
-
-    fn open_cap(
-        lattice: &Lattice<'a>,
-        caps: &mut BinaryHeap<Cap<'a>>,
-        constraint: &Constraint,
-    ) -> Path<'a> {
-        let mut path = Path::new();
-        while !caps.is_empty() {
-            let Some(opened) = caps.pop() else {
-                unreachable!("caps must not be empty.");
-            };
-
-            let mut next_path = opened.tail_path().to_vec();
-            let mut tail_path_cost = opened.tail_path_cost();
-            let mut nonconforming_path = false;
-            let Some(mut node) = opened.tail_path().last() else {
-                unreachable!("tail_path must not be empty.");
-            };
-            while !node.is_bos() {
-                let Ok(preceding_nodes) = lattice.nodes_at(node.preceding_step()) else {
-                    unreachable!("preceding_step must be within the preceding steps in lattice.");
-                };
-                for (i, preceding_node) in preceding_nodes.iter().enumerate() {
-                    if i == node.best_preceding_node() {
-                        continue;
-                    }
-                    let mut cap_tail_path = next_path.clone();
-                    cap_tail_path.push(preceding_node.clone());
-                    if !constraint.matches_tail(&cap_tail_path) {
-                        continue;
-                    }
-                    let preceding_edge_cost = node.preceding_edge_costs()[i];
-                    let cap_tail_path_cost = Self::add_cost(
-                        Self::add_cost(tail_path_cost, preceding_edge_cost),
-                        preceding_node.node_cost(),
-                    );
-                    if cap_tail_path_cost == i32::MAX {
-                        continue;
-                    }
-                    let cap_whole_path_cost = Self::add_cost(
-                        Self::add_cost(tail_path_cost, preceding_edge_cost),
-                        preceding_node.path_cost(),
-                    );
-                    if cap_whole_path_cost == i32::MAX {
-                        continue;
-                    }
-                    caps.push(Cap::_new(
-                        cap_tail_path,
-                        cap_tail_path_cost,
-                        cap_whole_path_cost,
-                    ));
-                }
-
-                let best_preceding_edge_cost =
-                    node.preceding_edge_costs()[node.best_preceding_node()];
-                let best_preceding_node = &preceding_nodes[node.best_preceding_node()];
-                next_path.push(best_preceding_node.clone());
-                if !constraint.matches_tail(&next_path) {
-                    nonconforming_path = true;
-                    break;
-                }
-                tail_path_cost = Self::add_cost(
-                    tail_path_cost,
-                    Self::add_cost(best_preceding_edge_cost, best_preceding_node.node_cost()),
-                );
-
-                node = best_preceding_node;
-            }
-
-            if !nonconforming_path {
-                assert!(constraint.matches(&next_path));
-                let reversed_next_path = next_path.iter().rev().cloned().collect();
-                path = Path::new_with_nodes(reversed_next_path, opened.whole_path_cost());
-                break;
-            }
-        }
-
-        path
-    }
-
-    fn add_cost(one: i32, another: i32) -> i32 {
-        if one == i32::MAX || another == i32::MAX {
-            i32::MAX
-        } else {
-            one + another
-        }
-    }
-}
-
-impl Iterator for NBestIterator<'_> {
-    type Item = i32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        None
-    }
 }
 
 #[derive(Debug, Eq)]
@@ -354,6 +353,8 @@ impl PartialOrd for Cap<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use crate::entry::{Entry, EntryView};
     use crate::hash_map_vocabulary::HashMapVocabulary;
     use crate::input::Input;
@@ -617,9 +618,20 @@ mod tests {
         let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
         let (eos_node, _) = lattice.settle().unwrap();
-        let _iterator = NBestIterator::new(&lattice, eos_node, Rc::new(Constraint::new()));
+        let _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
     }
 
+    #[test]
+    fn next() {
+        let vocabulary = create_vocabulary();
+        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let _result = lattice.push_back(to_input("[HakataTosu]"));
+        let _result = lattice.push_back(to_input("[TosuOmuta]"));
+        let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
+
+        let (eos_node, _) = lattice.settle().unwrap();
+        let _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
+    }
     /*
     BOOST_AUTO_TEST_CASE(operator_dereference)
     {
