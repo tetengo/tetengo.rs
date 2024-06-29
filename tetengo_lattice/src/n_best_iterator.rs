@@ -6,7 +6,6 @@
 
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::constraint::Constraint;
 use crate::lattice::Lattice;
@@ -20,10 +19,10 @@ use crate::path::Path;
 pub struct NBestIterator<'a> {
     lattice: &'a Lattice<'a>,
     caps: BinaryHeap<Cap<'a>>,
-    _eos_hash: u64,
+    // _eos_hash: u64,
     constraint: Box<Constraint>,
-    path: Path<'a>,
-    _index: usize,
+    // _path: Path<'a>,
+    // _index: usize,
 }
 
 impl<'a> NBestIterator<'a> {
@@ -39,10 +38,10 @@ impl<'a> NBestIterator<'a> {
         let mut self_ = Self {
             lattice,
             caps: BinaryHeap::new(),
-            _eos_hash: Self::calc_node_hash(&eos_node),
+            // _eos_hash: Self::calc_node_hash(&eos_node),
             constraint,
-            path: Path::new(),
-            _index: 0,
+            // _path: Path::new(),
+            // _index: 0,
         };
 
         let tail_path_cost = eos_node.node_cost();
@@ -51,24 +50,24 @@ impl<'a> NBestIterator<'a> {
             .caps
             .push(Cap::new(vec![eos_node], tail_path_cost, whole_path_cost));
 
-        self_.path = Path::new();
+        // self_._path = Path::new();
 
         self_
     }
 
-    fn calc_node_hash(node: &Node<'_>) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        match node.key() {
-            Some(key) => hasher.write_u64(key.hash_value()),
-            None => 0.hash(&mut hasher),
-        }
-        node.preceding_step().hash(&mut hasher);
-        node.preceding_edge_costs().hash(&mut hasher);
-        node.best_preceding_node().hash(&mut hasher);
-        node.node_cost().hash(&mut hasher);
-        node.path_cost().hash(&mut hasher);
-        hasher.finish()
-    }
+    // fn calc_node_hash(node: &Node<'_>) -> u64 {
+    //     let mut hasher = DefaultHasher::new();
+    //     match node.key() {
+    //         Some(key) => hasher.write_u64(key.hash_value()),
+    //         None => 0.hash(&mut hasher),
+    //     }
+    //     node.preceding_step().hash(&mut hasher);
+    //     node.preceding_edge_costs().hash(&mut hasher);
+    //     node.best_preceding_node().hash(&mut hasher);
+    //     node.node_cost().hash(&mut hasher);
+    //     node.path_cost().hash(&mut hasher);
+    //     hasher.finish()
+    // }
 
     fn open_cap(
         lattice: &Lattice<'a>,
@@ -159,15 +158,19 @@ impl<'a> NBestIterator<'a> {
 }
 
 impl<'a> Iterator for NBestIterator<'a> {
-    type Item = &'a Path<'a>;
+    type Item = Path<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.path = Self::open_cap(self.lattice, &mut self.caps, self.constraint.as_ref());
-        if self.path.is_empty() {
-            return None;
+        if self.caps.is_empty() {
+            None
+        } else {
+            let path = Self::open_cap(self.lattice, &mut self.caps, self.constraint.as_ref());
+            if path.is_empty() {
+                None
+            } else {
+                Some(path)
+            }
         }
-        // Some(&self.path)
-        None
     }
 
     /*
@@ -636,9 +639,21 @@ mod tests {
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
             let (eos_node, _) = lattice.settle().unwrap();
-            let mut _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
+            let mut iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
 
-            // let _path = iterator.next().unwrap();
+            let path = iterator.next().unwrap();
+            assert_eq!(path.nodes().len(), 3);
+            assert!(path.nodes()[0].value().is_none());
+            assert_eq!(
+                path.nodes()[1]
+                    .value()
+                    .unwrap()
+                    .as_any()
+                    .downcast_ref::<&str>()
+                    .unwrap(),
+                &"tsubame"
+            );
+            assert!(path.nodes()[2].value().is_none());
         }
     }
     /*
