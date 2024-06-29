@@ -49,9 +49,9 @@ impl<'a> NBestIterator<'a> {
         let whole_path_cost = eos_node.path_cost();
         self_
             .caps
-            .push(Cap::_new(vec![eos_node], tail_path_cost, whole_path_cost));
+            .push(Cap::new(vec![eos_node], tail_path_cost, whole_path_cost));
 
-        self_.path = Self::open_cap(self_.lattice, &mut self_.caps, self_.constraint.as_ref());
+        self_.path = Path::new();
 
         self_
     }
@@ -115,7 +115,7 @@ impl<'a> NBestIterator<'a> {
                     if cap_whole_path_cost == i32::MAX {
                         continue;
                     }
-                    caps.push(Cap::_new(
+                    caps.push(Cap::new(
                         cap_tail_path,
                         cap_tail_path_cost,
                         cap_whole_path_cost,
@@ -158,10 +158,15 @@ impl<'a> NBestIterator<'a> {
     }
 }
 
-impl Iterator for NBestIterator<'_> {
-    type Item = i32;
+impl<'a> Iterator for NBestIterator<'a> {
+    type Item = &'a Path<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        self.path = Self::open_cap(self.lattice, &mut self.caps, self.constraint.as_ref());
+        if self.path.is_empty() {
+            return None;
+        }
+        // Some(&self.path)
         None
     }
 
@@ -312,7 +317,7 @@ struct Cap<'a> {
 }
 
 impl<'a> Cap<'a> {
-    fn _new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
+    fn new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         Cap {
             tail_path,
             tail_path_cost,
@@ -623,14 +628,18 @@ mod tests {
 
     #[test]
     fn next() {
-        let vocabulary = create_vocabulary();
-        let mut lattice = Lattice::new(vocabulary.as_ref());
-        let _result = lattice.push_back(to_input("[HakataTosu]"));
-        let _result = lattice.push_back(to_input("[TosuOmuta]"));
-        let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
+        {
+            let vocabulary = create_vocabulary();
+            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let _result = lattice.push_back(to_input("[HakataTosu]"));
+            let _result = lattice.push_back(to_input("[TosuOmuta]"));
+            let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-        let (eos_node, _) = lattice.settle().unwrap();
-        let _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
+            let (eos_node, _) = lattice.settle().unwrap();
+            let mut _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
+
+            // let _path = iterator.next().unwrap();
+        }
     }
     /*
     BOOST_AUTO_TEST_CASE(operator_dereference)
@@ -1041,7 +1050,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs, 5, 42);
             let nodes = vec![node];
-            let _cap = Cap::_new(nodes, 24, 42);
+            let _cap = Cap::new(nodes, 24, 42);
         }
 
         #[test]
@@ -1049,17 +1058,17 @@ mod tests {
             let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node1 = Node::eos(1, preceding_edge_costs1, 5, 42);
             let nodes1 = vec![node1];
-            let cap1 = Cap::_new(nodes1, 24, 42);
+            let cap1 = Cap::new(nodes1, 24, 42);
 
             let preceding_edge_costs2 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node2 = Node::eos(1, preceding_edge_costs2, 5, 42);
             let nodes2 = vec![node2];
-            let cap2 = Cap::_new(nodes2, 24, 42);
+            let cap2 = Cap::new(nodes2, 24, 42);
 
             let preceding_edge_costs3 = Rc::new(vec![2, 7, 1, 8, 2, 8]);
             let node3 = Node::eos(2, preceding_edge_costs3, 3, 31);
             let nodes3 = vec![node3];
-            let cap3 = Cap::_new(nodes3, 12, 4242);
+            let cap3 = Cap::new(nodes3, 12, 4242);
 
             assert!(cap1 == cap2);
             assert!(cap1 < cap3);
@@ -1070,7 +1079,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs.clone(), 5, 42);
             let nodes = vec![node];
-            let cap = Cap::_new(nodes, 24, 42);
+            let cap = Cap::new(nodes, 24, 42);
 
             assert_eq!(cap.tail_path().len(), 1);
             assert_eq!(
@@ -1084,7 +1093,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs, 5, 42);
             let nodes = vec![node];
-            let cap = Cap::_new(nodes, 24, 42);
+            let cap = Cap::new(nodes, 24, 42);
 
             assert_eq!(cap.tail_path_cost(), 24);
         }
@@ -1094,7 +1103,7 @@ mod tests {
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::eos(1, preceding_edge_costs, 5, 42);
             let nodes = vec![node];
-            let cap = Cap::_new(nodes, 24, 42);
+            let cap = Cap::new(nodes, 24, 42);
 
             assert_eq!(cap.whole_path_cost(), 42);
         }
