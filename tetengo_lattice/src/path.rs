@@ -17,16 +17,6 @@ pub struct Path<'a> {
 
 impl<'a> Path<'a> {
     /**
-     * Creates an empty path.
-     */
-    pub fn new() -> Self {
-        Path {
-            nodes: Vec::new(),
-            cost: 0,
-        }
-    }
-
-    /**
      * Creates a path.
      *
      * # Arguments
@@ -127,11 +117,6 @@ mod tests {
     }
 
     #[test]
-    fn new() {
-        let _path = Path::new();
-    }
-
-    #[test]
     fn new_with_nodes() {
         let _path = Path::new_with_nodes(make_nodes(), 42);
     }
@@ -139,7 +124,7 @@ mod tests {
     #[test]
     fn is_empty() {
         {
-            let path = Path::new();
+            let path = Path::new_with_nodes(Vec::new(), 0);
             assert!(path.is_empty());
         }
         {
@@ -151,7 +136,7 @@ mod tests {
     #[test]
     fn nodes() {
         {
-            let path = Path::new();
+            let path = Path::new_with_nodes(Vec::new(), 0);
             assert!(path.nodes().is_empty());
         }
         {
@@ -162,13 +147,7 @@ mod tests {
 
     #[test]
     fn cost() {
-        {
-            let path = Path::new();
-            assert_eq!(path.cost(), 0);
-        }
-        {
-            let path = Path::new_with_nodes(make_nodes(), 42);
-            assert_eq!(path.cost(), 42);
-        }
+        let path = Path::new_with_nodes(make_nodes(), 42);
+        assert_eq!(path.cost(), 42);
     }
 }

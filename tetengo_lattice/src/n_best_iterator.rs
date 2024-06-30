@@ -36,31 +36,27 @@ impl<'a> NBestIterator<'a> {
         eos_node: Node<'a>,
         constraint: Box<Constraint<'a>>,
     ) -> Self {
-        let mut self_ = Self {
-            lattice,
-            caps: BinaryHeap::new(),
-            constraint,
-        };
-
+        let mut caps = BinaryHeap::new();
         let tail_path_cost = eos_node.node_cost();
         let whole_path_cost = eos_node.path_cost();
-        self_.caps.push(Reverse(Cap::new(
+        caps.push(Reverse(Cap::new(
             vec![eos_node],
             tail_path_cost,
             whole_path_cost,
         )));
-
-        // self_._path = Path::new();
-
-        self_
+        Self {
+            lattice,
+            caps,
+            constraint,
+        }
     }
 
     fn open_cap(
         lattice: &Lattice<'a>,
         caps: &mut BinaryHeap<Reverse<Cap<'a>>>,
         constraint: &Constraint<'a>,
-    ) -> Path<'a> {
-        let mut path = Path::new();
+    ) -> Option<Path<'a>> {
+        let mut path = None;
         while !caps.is_empty() {
             let Some(opened) = caps.pop() else {
                 unreachable!("caps must not be empty.");
@@ -127,7 +123,10 @@ impl<'a> NBestIterator<'a> {
             if !nonconforming_path {
                 assert!(constraint.matches(&next_path));
                 let reversed_next_path = next_path.iter().rev().cloned().collect();
-                path = Path::new_with_nodes(reversed_next_path, opened.whole_path_cost());
+                path = Some(Path::new_with_nodes(
+                    reversed_next_path,
+                    opened.whole_path_cost(),
+                ));
                 break;
             }
         }
@@ -151,12 +150,7 @@ impl<'a> Iterator for NBestIterator<'a> {
         if self.caps.is_empty() {
             None
         } else {
-            let path = Self::open_cap(self.lattice, &mut self.caps, self.constraint.as_ref());
-            if path.is_empty() {
-                None
-            } else {
-                Some(path)
-            }
+            Self::open_cap(self.lattice, &mut self.caps, self.constraint.as_ref())
         }
     }
 }
