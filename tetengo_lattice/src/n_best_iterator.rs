@@ -123,10 +123,7 @@ impl<'a> NBestIterator<'a> {
             if !nonconforming_path {
                 assert!(constraint.matches(&next_path));
                 let reversed_next_path = next_path.iter().rev().cloned().collect();
-                path = Some(Path::new_with_nodes(
-                    reversed_next_path,
-                    opened.whole_path_cost(),
-                ));
+                path = Some(Path::new(reversed_next_path, opened.whole_path_cost()));
                 break;
             }
         }

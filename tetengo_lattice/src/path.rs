@@ -23,7 +23,7 @@ impl<'a> Path<'a> {
      * * `nodes` - Nodes.
      * * `cost`  - A cost.
      */
-    pub fn new_with_nodes(nodes: Vec<Node<'a>>, cost: i32) -> Self {
+    pub fn new(nodes: Vec<Node<'a>>, cost: i32) -> Self {
         Path { nodes, cost }
     }
 
@@ -117,18 +117,18 @@ mod tests {
     }
 
     #[test]
-    fn new_with_nodes() {
-        let _path = Path::new_with_nodes(make_nodes(), 42);
+    fn new() {
+        let _path = Path::new(make_nodes(), 42);
     }
 
     #[test]
     fn is_empty() {
         {
-            let path = Path::new_with_nodes(Vec::new(), 0);
+            let path = Path::new(Vec::new(), 0);
             assert!(path.is_empty());
         }
         {
-            let path = Path::new_with_nodes(make_nodes(), 42);
+            let path = Path::new(make_nodes(), 42);
             assert!(!path.is_empty());
         }
     }
@@ -136,18 +136,18 @@ mod tests {
     #[test]
     fn nodes() {
         {
-            let path = Path::new_with_nodes(Vec::new(), 0);
+            let path = Path::new(Vec::new(), 0);
             assert!(path.nodes().is_empty());
         }
         {
-            let path = Path::new_with_nodes(make_nodes(), 42);
+            let path = Path::new(make_nodes(), 42);
             assert_eq!(path.nodes(), make_nodes().as_slice());
         }
     }
 
     #[test]
     fn cost() {
-        let path = Path::new_with_nodes(make_nodes(), 42);
+        let path = Path::new(make_nodes(), 42);
         assert_eq!(path.cost(), 42);
     }
 }
