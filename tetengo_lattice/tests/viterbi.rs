@@ -1,158 +1,184 @@
 mod usage {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
+    use tetengo_lattice::{
+        Constraint, Entry, EntryView, HashMapVocabulary, NBestIterator, Node, Path, StringInput,
+        Vocabulary,
+    };
+
     #[test]
-    fn viterbi() {}
+    fn viterbi() {
+        /*
+            Makes the following lattice and searches it.
 
-    /*
-        void viterbi()
-        {
-            /*
-                Makes the following lattice and searches it.
+                    /-----[ab:AwaBizan]-----\
+                   /  (7)      (9)      (1)  \
+                  /                           \
+                 /       (2)   (4)   (7)       \
+            [BOS]-----[a:Alpha]---[b:Bravo]-----[EOS]
+                 \ (3)         \ /(1)      (2) /
+                  \(1)          X             /(6)
+                   \           / \(5)        /
+                    `-[a:Alice]---[b:Bob]---'
+                         (1)   (9)  (8)
+            Path                         Cost
+            [BOS]-[Alice]-[Bravo]-[EOS]  1+1+1+7+2=12
+            [BOS]---[AwaBizan]----[EOS]  7+9+1    =17
+            [BOS]-[Alpha]-[Bravo]-[EOS]  3+2+4+7+2=18
+            [BOS]-[Alpha]-[Bob]---[EOS]  3+2+5+8+6=24
+            [BOS]-[Alice]-[Bob]---[EOS]  1+1+9+8+6=25
+        */
 
-                        /-----[ab:AwaBizan]-----\
-                       /  (7)      (9)      (1)  \
-                      /                           \
-                     /       (2)   (4)   (7)       \
-                [BOS]-----[a:Alpha]---[b:Bravo]-----[EOS]
-                     \ (3)         \ /(1)      (2) /
-                      \(1)          X             /(6)
-                       \           / \(5)        /
-                        `-[a:Alice]---[b:Bob]---'
-                             (1)   (9)  (8)
-                Path                         Cost
-                [BOS]-[Alice]-[Bravo]-[EOS]  1+1+1+7+2=12
-                [BOS]---[AwaBizan]----[EOS]  7+9+1    =17
-                [BOS]-[Alpha]-[Bravo]-[EOS]  3+2+4+7+2=18
-                [BOS]-[Alpha]-[Bob]---[EOS]  3+2+5+8+6=24
-                [BOS]-[Alice]-[Bob]---[EOS]  1+1+9+8+6=25
-            */
+        // Builds a vocabulary.
+        let vocabulary = build_vocabulary();
 
-            // Builds a vocabulary.
-            const auto p_vocabulary = build_vocabulary();
+        // Creates an object for a lattice.
+        let mut lattice = tetengo_lattice::lattice::Lattice::new(vocabulary.as_ref());
 
-            // Creates an object for a lattice.
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
+        // Enters key characters to construct the lattice.
+        let _ignored = lattice.push_back(Box::new(StringInput::new(String::from("a"))));
+        let _ignored = lattice.push_back(Box::new(StringInput::new(String::from("b"))));
 
-            // Enters key characters to construct the lattice.
-            lattice_.push_back(std::make_unique<tetengo::lattice::string_input>("a"));
-            lattice_.push_back(std::make_unique<tetengo::lattice::string_input>("b"));
+        // Finishes the lattice construction.
+        let eos = match lattice.settle() {
+            Ok((eos, _)) => eos,
+            Err(e) => unreachable!("Error: {}", e),
+        };
 
-            // Finishes the lattice construction.
-            const auto eos_and_preceding_costs = lattice_.settle();
+        // Creates an iterator to enumerate the paths in the lattice.
+        let iterator = NBestIterator::new(&lattice, eos, Box::new(Constraint::new()));
 
-            // Creates an iterator to enumerate the paths in the lattice.
-            tetengo::lattice::n_best_iterator first{ lattice_,
-                                                     eos_and_preceding_costs.first,
-                                                     std::make_unique<tetengo::lattice::constraint>() };
+        // Enumerates the paths.
+        let paths = iterator.map(|path| to_string(&path)).collect::<Vec<_>>();
+        let expected = vec![
+            String::from("[BOS]-[Alice]-[Bravo]-[EOS] (12)"),
+            String::from("[BOS]-[AwaBizan]-[EOS] (17)"),
+            String::from("[BOS]-[Alpha]-[Bravo]-[EOS] (18)"),
+            String::from("[BOS]-[Alpha]-[Bob]-[EOS] (24)"),
+            String::from("[BOS]-[Alice]-[Bob]-[EOS] (25)"),
+        ];
+        assert_eq!(paths, expected);
+    }
 
-            // Enumerates the paths.
-            std::vector<std::string> paths{};
-            std::for_each(
-                std::move(first), tetengo::lattice::n_best_iterator{}, [&paths](const tetengo::lattice::path& path_) {
-                    paths.push_back(to_string(path_));
+    fn build_vocabulary() -> Box<dyn Vocabulary> {
+        // The contents of the vocabulary.
+        let entries = [
+            Entry::new(
+                Box::new(StringInput::new(String::from("a"))),
+                Box::new(String::from("Alpha")),
+                2,
+            ),
+            Entry::new(
+                Box::new(StringInput::new(String::from("b"))),
+                Box::new(String::from("Bravo")),
+                7,
+            ),
+            Entry::new(
+                Box::new(StringInput::new(String::from("a"))),
+                Box::new(String::from("Alice")),
+                1,
+            ),
+            Entry::new(
+                Box::new(StringInput::new(String::from("b"))),
+                Box::new(String::from("Bob")),
+                8,
+            ),
+            Entry::new(
+                Box::new(StringInput::new(String::from("ab"))),
+                Box::new(String::from("AwaBizan")),
+                9,
+            ),
+        ];
+        let entry_mappings = vec![
+            (
+                String::from("a"),
+                vec![entries[0].clone(), entries[2].clone()],
+            ),
+            (
+                String::from("b"),
+                vec![entries[1].clone(), entries[3].clone()],
+            ),
+            (String::from("ab"), vec![entries[4].clone()]),
+        ];
+        let connections = vec![
+            ((Entry::BosEos, entries[0].clone()), 3),
+            ((Entry::BosEos, entries[2].clone()), 1),
+            ((entries[0].clone(), entries[1].clone()), 4),
+            ((entries[2].clone(), entries[1].clone()), 1),
+            ((entries[0].clone(), entries[3].clone()), 5),
+            ((entries[2].clone(), entries[3].clone()), 9),
+            ((entries[1].clone(), Entry::BosEos), 2),
+            ((entries[3].clone(), Entry::BosEos), 6),
+            ((Entry::BosEos, entries[4].clone()), 7),
+            ((entries[4].clone(), Entry::BosEos), 1),
+        ];
+
+        // Returns a vocabulary implemented with hash tables.
+        Box::new(HashMapVocabulary::new(
+            entry_mappings,
+            connections,
+            &|entry| {
+                let mut hasher = DefaultHasher::new();
+                hasher.write_u64(if let Some(key) = entry.key() {
+                    key.hash_value()
+                } else {
+                    0
                 });
+                value_of_entry(entry).hash(&mut hasher);
+                hasher.finish()
+            },
+            &|entry1, entry2| {
+                let equal_keys = if let (Some(key1), Some(key2)) = (entry1.key(), entry2.key()) {
+                    key1.equal_to(key2)
+                } else {
+                    entry1.key().is_none() && entry2.key().is_none()
+                };
+                if !equal_keys {
+                    return false;
+                }
+                value_of_entry(entry1) == value_of_entry(entry2)
+            },
+        ))
+    }
 
-            static const std::vector<std::string> expected{
-                // clang-format off
-                "[BOS]-[Alice]-[Bravo]-[EOS] (12)",
-                "[BOS]-[AwaBizan]-[EOS] (17)",
-                "[BOS]-[Alpha]-[Bravo]-[EOS] (18)",
-                "[BOS]-[Alpha]-[Bob]-[EOS] (24)",
-                "[BOS]-[Alice]-[Bob]-[EOS] (25)",
-                // clang-format on
-            };
-            assert(paths == expected);
-        }
-    */
-    /*
-        std::string value_of(const tetengo::lattice::entry_view& entry)
-        {
-            // The value is stored in the std::any object.
-            return entry.value()->has_value() ? std::any_cast<std::string>(*entry.value()) : std::string{};
-        }
-    */
-    /*
-        std::unique_ptr<tetengo::lattice::vocabulary> build_vocabulary()
-        {
-            // The contents of the vocabulary.
-            static const std::vector<tetengo::lattice::entry> entries{
-                // clang-format off
-                { std::make_unique<tetengo::lattice::string_input>("a"), std::string{ "Alpha" }, 2 },
-                { std::make_unique<tetengo::lattice::string_input>("b"), std::string{ "Bravo" }, 7 },
-                { std::make_unique<tetengo::lattice::string_input>("a"), std::string{ "Alice" }, 1 },
-                { std::make_unique<tetengo::lattice::string_input>("b"), std::string{ "Bob" }, 8 },
-                { std::make_unique<tetengo::lattice::string_input>("ab"), std::string{ "AwaBizan" }, 9 },
-                // clang-format on
-            };
-            std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entry_mappings{
-                // clang-format off
-                { "a", { entries[0], entries[2] } },
-                { "b", { entries[1], entries[3] } },
-                { "ab", { entries[4] }},
-                // clang-format on
-            };
-            std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{
-                // clang-format off
-                { { tetengo::lattice::entry::bos_eos(), entries[0] }, 3 },
-                { { tetengo::lattice::entry::bos_eos(), entries[2] }, 1 },
-                { { entries[0], entries[1] }, 4 },
-                { { entries[2], entries[1] }, 1 },
-                { { entries[0], entries[3] }, 5 },
-                { { entries[2], entries[3] }, 9 },
-                { { entries[1], tetengo::lattice::entry::bos_eos() }, 2 },
-                { { entries[3], tetengo::lattice::entry::bos_eos() }, 6 },
-                { { tetengo::lattice::entry::bos_eos(), entries[4] }, 7 },
-                { { entries[4], tetengo::lattice::entry::bos_eos() }, 1 },
-                // clang-format on
-            };
-    */
-    /*
-            // Returns a vocabulary implemented with hash tables.
-            return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
-                std::move(entry_mappings),
-                std::move(connections),
-                [](const tetengo::lattice::entry_view& entry) {
-                    return (entry.p_key() ? entry.p_key()->hash_value() : 0) ^ std::hash<std::string>{}(value_of(entry));
-                },
-                [](const tetengo::lattice::entry_view& entry1, const tetengo::lattice::entry_view& entry2) {
-                    return ((!entry1.p_key() && !entry2.p_key()) ||
-                            (entry1.p_key() && entry2.p_key() && *entry1.p_key() == *entry2.p_key())) &&
-                           (value_of(entry1) == value_of(entry2));
-                });
-        }
-    */
-    /*
-        std::string value_of(const tetengo::lattice::node& node_, const bool first)
-        {
-            if (node_.value().has_value())
-            {
-                // The value is stored in the std::any object.
-                return std::any_cast<std::string>(node_.value());
+    fn to_string(path: &Path<'_>) -> String {
+        // Each path object holds the nodes that make up itself, and the whole cost.
+        let mut result = String::new();
+        for node in path.nodes() {
+            if !result.is_empty() {
+                result += "-";
             }
-            else if (first)
-            {
-                return "BOS";
-            }
-            else
-            {
-                return "EOS";
-            }
+            result += format!("[{}]", value_of_node(node, result.is_empty())).as_str();
         }
-    */
-    /*
-       std::string to_string(const tetengo::lattice::path& path_)
-       {
-           // Each path object holds the nodes that make up itself, and the whole cost.
-           std::string result{};
-           for (const auto& node: path_.nodes())
-           {
-               if (!std::empty(result))
-               {
-                   result += "-";
-               }
-               result += "[" + value_of(node, std::empty(result)) + "]";
-           }
-           result += " (" + std::to_string(path_.cost()) + ")";
-           return result;
-       }
-    */
+        result += format!(" ({})", path.cost()).as_str();
+        result
+    }
+
+    fn value_of_node(node: &Node<'_>, first: bool) -> String {
+        if let Some(value) = node.value() {
+            // The value is stored in the Any object.
+            value
+                .as_any()
+                .downcast_ref::<String>()
+                .expect("The value must have a String value.")
+                .clone()
+        } else if first {
+            String::from("BOS")
+        } else {
+            String::from("EOS")
+        }
+    }
+
+    fn value_of_entry(entry: &EntryView<'_>) -> String {
+        // The value is stored in the Any object.
+        if let Some(value) = entry.value() {
+            value
+                .as_any()
+                .downcast_ref::<String>()
+                .expect("The value must have a String value.")
+                .clone()
+        } else {
+            String::new()
+        }
+    }
 }
