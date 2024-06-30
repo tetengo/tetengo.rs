@@ -19,10 +19,7 @@ use crate::path::Path;
 pub struct NBestIterator<'a> {
     lattice: &'a Lattice<'a>,
     caps: BinaryHeap<Reverse<Cap<'a>>>,
-    // _eos_hash: u64,
-    constraint: Box<Constraint>,
-    // _path: Path<'a>,
-    // _index: usize,
+    constraint: Box<Constraint<'a>>,
 }
 
 impl<'a> NBestIterator<'a> {
@@ -34,14 +31,15 @@ impl<'a> NBestIterator<'a> {
      * * `eos_node`   - An EOS node.
      * * `constraint` - A constraint.
      */
-    pub fn new(lattice: &'a Lattice<'a>, eos_node: Node<'a>, constraint: Box<Constraint>) -> Self {
+    pub fn new(
+        lattice: &'a Lattice<'a>,
+        eos_node: Node<'a>,
+        constraint: Box<Constraint<'a>>,
+    ) -> Self {
         let mut self_ = Self {
             lattice,
             caps: BinaryHeap::new(),
-            // _eos_hash: Self::calc_node_hash(&eos_node),
             constraint,
-            // _path: Path::new(),
-            // _index: 0,
         };
 
         let tail_path_cost = eos_node.node_cost();
@@ -57,24 +55,10 @@ impl<'a> NBestIterator<'a> {
         self_
     }
 
-    // fn calc_node_hash(node: &Node<'_>) -> u64 {
-    //     let mut hasher = DefaultHasher::new();
-    //     match node.key() {
-    //         Some(key) => hasher.write_u64(key.hash_value()),
-    //         None => 0.hash(&mut hasher),
-    //     }
-    //     node.preceding_step().hash(&mut hasher);
-    //     node.preceding_edge_costs().hash(&mut hasher);
-    //     node.best_preceding_node().hash(&mut hasher);
-    //     node.node_cost().hash(&mut hasher);
-    //     node.path_cost().hash(&mut hasher);
-    //     hasher.finish()
-    // }
-
     fn open_cap(
         lattice: &Lattice<'a>,
         caps: &mut BinaryHeap<Reverse<Cap<'a>>>,
-        constraint: &Constraint,
+        constraint: &Constraint<'a>,
     ) -> Path<'a> {
         let mut path = Path::new();
         while !caps.is_empty() {
@@ -175,144 +159,6 @@ impl<'a> Iterator for NBestIterator<'a> {
             }
         }
     }
-
-    /*
-        // functions
-
-        /*!
-            \brief Dereferences the iterator.
-
-            \return The dereferenced value.
-        */
-        [[nodiscard]] const path& operator*() const;
-    */
-    /*
-    const path& n_best_iterator::operator*() const
-    {
-        if (std::empty(m_path))
-        {
-            throw std::logic_error{ "No more path." };
-        }
-
-        return m_path;
-    }
-    */
-    /*
-        /*!
-            \brief Dereferences the iterator.
-
-            \return The dereferenced value.
-        */
-        [[nodiscard]] path& operator*();
-    */
-    /*
-    path& n_best_iterator::operator*()
-    {
-        if (std::empty(m_path))
-        {
-            throw std::logic_error{ "No more path." };
-        }
-
-        return m_path;
-    }
-    */
-    /*
-        /*!
-            \brief Returns the pointer to the value.
-
-            \return The pointer to the value.
-        */
-        [[nodiscard]] const path* operator->() const;
-    */
-    /*
-    const path* n_best_iterator::operator->() const
-    {
-        return &operator*();
-    }
-    */
-    /*
-        /*!
-            \brief Returns the pointer to the value.
-
-            \return The pointer to the value.
-        */
-        [[nodiscard]] path* operator->();
-    */
-    /*
-    path* n_best_iterator::operator->()
-    {
-        return &operator*();
-    }
-    */
-    /*
-        /*!
-            \brief Returns true when one iterator is equal to another.
-
-            \param one   One iterator.
-            \param another Another iterator.
-
-            \retval true  When one is equal to another.
-            \retval false Otherwise.
-        */
-        friend bool operator==(const n_best_iterator& one, const n_best_iterator& another);
-    */
-    /*
-    bool operator==(const n_best_iterator& one, const n_best_iterator& another)
-    {
-        if (std::empty(one.m_path) && std::empty(another.m_path))
-        {
-            return true;
-        }
-
-        return one.m_p_lattice == another.m_p_lattice && one.m_eos_hash == another.m_eos_hash &&
-               one.m_index == another.m_index;
-    }
-    */
-    /*
-        /*!
-            \brief Increments the iterator.
-
-            \return This iterator.
-        */
-        n_best_iterator& operator++();
-    */
-    /*
-    n_best_iterator& n_best_iterator::operator++()
-    {
-        if (std::empty(m_path))
-        {
-            throw std::logic_error{ "No more path." };
-        }
-
-        if (std::empty(m_caps))
-        {
-            m_path = path{};
-        }
-        else
-        {
-            m_path = open_cap(*m_p_lattice, m_caps, *m_p_constraint);
-        }
-        ++m_index;
-
-        return *this;
-    }
-    */
-    /*
-       /*!
-           \brief Postincrements the iterator.
-
-           \return The iterator before the incrementation.
-       */
-       n_best_iterator operator++(int);
-    */
-    /*
-    n_best_iterator n_best_iterator::operator++(int)
-    {
-        n_best_iterator original{ *this };
-        ++(*this);
-        return original;
-    }
-     */
 }
 
 #[derive(Debug, Eq)]
@@ -366,17 +212,19 @@ impl PartialOrd for Cap<'_> {
 mod tests {
     use std::rc::Rc;
 
-    // use crate::constraint_element::ConstraintElement;
+    use crate::constraint_element::ConstraintElement;
     use crate::entry::{Entry, EntryView};
     use crate::hash_map_vocabulary::HashMapVocabulary;
     use crate::input::Input;
-    // use crate::node_constraint_element::NodeConstraintElement;
+    use crate::node_constraint_element::NodeConstraintElement;
+    use crate::string_input::StringInput;
     use crate::vocabulary::Vocabulary;
+    use crate::wildcard_constraint_element::WildcardConstraintElement;
 
     use super::*;
 
     fn to_input(string: &str) -> Box<dyn Input> {
-        Box::new(crate::string_input::StringInput::new(string.to_string()))
+        Box::new(StringInput::new(string.to_string()))
     }
 
     /*
@@ -892,193 +740,159 @@ mod tests {
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
             let (eos_node, _) = lattice.settle().unwrap();
-            let mut _iterator =
+            let mut iterator =
                 NBestIterator::new(&lattice, eos_node.clone(), Box::new(Constraint::new()));
 
-            // {
-            //     let path = iterator.next().unwrap();
-            //     assert_eq!(path.nodes().len(), 3);
-
-            //     let pattern: Vec<Box<dyn ConstraintElement>> = vec![
-            //         Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
-            //         Box::new(NodeConstraintElement::new(path.nodes()[1].clone())),
-            //         Box::new(NodeConstraintElement::new(path.nodes()[2].clone())),
-            //     ];
-            //     let constraint = Box::new(Constraint::new_with_pattern(pattern));
-
-            //     let mut _constrained_iterator =
-            //         NBestIterator::new(&lattice, eos_node.clone(), constraint);
-            // }
-        }
-    }
-    /*
-    BOOST_AUTO_TEST_CASE(operator_increment)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto                              eos_node_and_preceding_edge_costs = lattice_.settle();
-            tetengo::lattice::n_best_iterator iterator{ lattice_,
-                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                        std::make_unique<tetengo::lattice::constraint>() };
-
             {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 3U);
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 3);
 
-                std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-                pattern.reserve(3);
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[0]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[1]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[2]));
-                auto p_constraint = std::make_unique<tetengo::lattice::constraint>(std::move(pattern));
+                let pattern: Vec<Box<dyn ConstraintElement>> = vec![
+                    Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
+                    Box::new(NodeConstraintElement::new(path.nodes()[1].clone())),
+                    Box::new(NodeConstraintElement::new(path.nodes()[2].clone())),
+                ];
+                let constraint = Box::new(Constraint::new_with_pattern(pattern));
 
-                tetengo::lattice::n_best_iterator constrained_iterator{ lattice_,
-                                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                                        std::move(p_constraint) };
+                let mut constrained_iterator =
+                    NBestIterator::new(&lattice, eos_node.clone(), constraint);
 
-                BOOST_REQUIRE(constrained_iterator != tetengo::lattice::n_best_iterator{});
-                const auto& constrained_path = *iterator;
-                BOOST_TEST(constrained_path.nodes() == path.nodes());
-
-                ++constrained_iterator;
-                BOOST_CHECK(constrained_iterator == tetengo::lattice::n_best_iterator{});
-            }
-
-            ++iterator;
-            iterator++;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
-
-                std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-                pattern.reserve(4);
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[0]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[1]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[2]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[3]));
-                auto p_constraint = std::make_unique<tetengo::lattice::constraint>(std::move(pattern));
-
-                tetengo::lattice::n_best_iterator constrained_iterator{ lattice_,
-                                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                                        std::move(p_constraint) };
-
-                BOOST_REQUIRE(constrained_iterator != tetengo::lattice::n_best_iterator{});
-                const auto& constrained_path = *constrained_iterator;
-                BOOST_TEST(constrained_path.nodes() == path.nodes());
-
-                constrained_iterator++;
-                BOOST_CHECK(constrained_iterator == tetengo::lattice::n_best_iterator{});
-            }
-
-            ++iterator;
-            iterator++;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
-
-                std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-                pattern.reserve(4);
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[0]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[1]));
-                pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(1));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[3]));
-                auto p_constraint = std::make_unique<tetengo::lattice::constraint>(std::move(pattern));
-
-                tetengo::lattice::n_best_iterator constrained_iterator{ lattice_,
-                                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                                        std::move(p_constraint) };
-
-                {
-                    BOOST_REQUIRE(constrained_iterator != tetengo::lattice::n_best_iterator{});
-                    const auto& constrained_path = *constrained_iterator;
-                    BOOST_TEST(constrained_path.nodes() == path.nodes());
-                }
-                ++constrained_iterator;
-                {
-                    BOOST_REQUIRE(constrained_iterator != tetengo::lattice::n_best_iterator{});
-                    const auto& constrained_path = *constrained_iterator;
-                    BOOST_TEST_REQUIRE(std::size(constrained_path.nodes()) == 5U);
-                    BOOST_CHECK(constrained_path.nodes()[0] == path.nodes()[0]);
-                    BOOST_CHECK(constrained_path.nodes()[1] == path.nodes()[1]);
-                    BOOST_TEST_REQUIRE(constrained_path.nodes()[2].p_key());
-                    BOOST_TEST_REQUIRE(constrained_path.nodes()[2].p_key()->is<tetengo::lattice::string_input>());
-                    BOOST_TEST(
-                        constrained_path.nodes()[2].p_key()->as<tetengo::lattice::string_input>().value() == "Tosu-Omuta");
-                    BOOST_TEST_REQUIRE(constrained_path.nodes()[3].p_key());
-                    BOOST_TEST_REQUIRE(constrained_path.nodes()[3].p_key()->is<tetengo::lattice::string_input>());
-                    BOOST_TEST(
-                        constrained_path.nodes()[3].p_key()->as<tetengo::lattice::string_input>().value() ==
-                        "Omuta-Kumamoto");
-                    BOOST_CHECK(constrained_path.nodes()[4] == path.nodes()[3]);
-                }
-                constrained_iterator++;
-                {
-                    BOOST_CHECK(constrained_iterator == tetengo::lattice::n_best_iterator{});
-                }
+                let constrained_path = constrained_iterator.next().unwrap();
+                assert_eq!(constrained_path.nodes(), path.nodes());
             }
             {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
+                let _skipped = iterator.next().unwrap();
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 4);
 
-                std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-                pattern.reserve(4);
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[0]));
-                pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(0));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[2]));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[3]));
-                auto p_constraint = std::make_unique<tetengo::lattice::constraint>(std::move(pattern));
+                let pattern: Vec<Box<dyn ConstraintElement>> = vec![
+                    Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
+                    Box::new(NodeConstraintElement::new(path.nodes()[1].clone())),
+                    Box::new(NodeConstraintElement::new(path.nodes()[2].clone())),
+                    Box::new(NodeConstraintElement::new(path.nodes()[3].clone())),
+                ];
+                let constraint = Box::new(Constraint::new_with_pattern(pattern));
 
-                tetengo::lattice::n_best_iterator constrained_iterator{ lattice_,
-                                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                                        std::move(p_constraint) };
+                let mut constrained_iterator =
+                    NBestIterator::new(&lattice, eos_node.clone(), constraint);
 
-                {
-                    BOOST_REQUIRE(constrained_iterator != tetengo::lattice::n_best_iterator{});
-                    const auto& constrained_path = *constrained_iterator;
-                    BOOST_TEST_REQUIRE(std::size(constrained_path.nodes()) == 4U);
-                    BOOST_CHECK(constrained_path.nodes()[0] == path.nodes()[0]);
-                    BOOST_CHECK(std::any_cast<std::string>(constrained_path.nodes()[1].value()) == "local415");
-                    BOOST_CHECK(constrained_path.nodes()[2] == path.nodes()[2]);
-                    BOOST_CHECK(constrained_path.nodes()[3] == path.nodes()[3]);
-                }
-                ++constrained_iterator;
-                {
-                    BOOST_REQUIRE(constrained_iterator != tetengo::lattice::n_best_iterator{});
-                    const auto& constrained_path = *constrained_iterator;
-                    BOOST_TEST(constrained_path.nodes() == path.nodes());
-                }
-                constrained_iterator++;
-                {
-                    BOOST_CHECK(constrained_iterator == tetengo::lattice::n_best_iterator{});
-                }
+                let constrained_path = constrained_iterator.next().unwrap();
+                assert_eq!(constrained_path.nodes(), path.nodes());
             }
             {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
+                let _skipped = iterator.next().unwrap();
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 4);
 
-                std::vector<std::unique_ptr<tetengo::lattice::constraint_element>> pattern{};
-                pattern.reserve(4);
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[0]));
-                pattern.push_back(std::make_unique<tetengo::lattice::wildcard_constraint_element>(0));
-                pattern.push_back(std::make_unique<tetengo::lattice::node_constraint_element>(path.nodes()[3]));
-                auto p_constraint = std::make_unique<tetengo::lattice::constraint>(std::move(pattern));
+                {
+                    let pattern: Vec<Box<dyn ConstraintElement>> = vec![
+                        Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
+                        Box::new(NodeConstraintElement::new(path.nodes()[1].clone())),
+                        Box::new(WildcardConstraintElement::new(1)),
+                        Box::new(NodeConstraintElement::new(path.nodes()[3].clone())),
+                    ];
+                    let constraint = Box::new(Constraint::new_with_pattern(pattern));
 
-                tetengo::lattice::n_best_iterator constrained_iterator{ lattice_,
-                                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                                        std::move(p_constraint) };
+                    let mut constrained_iterator =
+                        NBestIterator::new(&lattice, eos_node.clone(), constraint);
 
-                BOOST_TEST(std::distance(constrained_iterator, tetengo::lattice::n_best_iterator{}) == 9);
+                    {
+                        let constrained_path = constrained_iterator.next().unwrap();
+                        assert_eq!(constrained_path.nodes(), path.nodes());
+                    }
+                    {
+                        let constrained_path = constrained_iterator.next().unwrap();
+                        assert_eq!(constrained_path.nodes().len(), 5);
+                        assert_eq!(constrained_path.nodes()[0], path.nodes()[0]);
+                        assert_eq!(constrained_path.nodes()[1], path.nodes()[1]);
+                        assert!(constrained_path.nodes()[2].key().is_some());
+                        assert!(constrained_path.nodes()[2]
+                            .key()
+                            .unwrap()
+                            .as_any()
+                            .downcast_ref::<StringInput>()
+                            .is_some());
+                        assert_eq!(
+                            constrained_path.nodes()[2]
+                                .key()
+                                .unwrap()
+                                .as_any()
+                                .downcast_ref::<StringInput>()
+                                .unwrap()
+                                .value(),
+                            "Tosu-Omuta"
+                        );
+                        assert!(constrained_path.nodes()[3].key().is_some());
+                        assert!(constrained_path.nodes()[3]
+                            .key()
+                            .unwrap()
+                            .as_any()
+                            .downcast_ref::<StringInput>()
+                            .is_some());
+                        assert_eq!(
+                            constrained_path.nodes()[3]
+                                .key()
+                                .unwrap()
+                                .as_any()
+                                .downcast_ref::<StringInput>()
+                                .unwrap()
+                                .value(),
+                            "Omuta-Kumamoto"
+                        );
+                        assert_eq!(constrained_path.nodes()[4], path.nodes()[3]);
+                    }
+                    assert!(constrained_iterator.next().is_none());
+                }
+                {
+                    let pattern: Vec<Box<dyn ConstraintElement>> = vec![
+                        Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
+                        Box::new(WildcardConstraintElement::new(0)),
+                        Box::new(NodeConstraintElement::new(path.nodes()[2].clone())),
+                        Box::new(NodeConstraintElement::new(path.nodes()[3].clone())),
+                    ];
+                    let constraint = Box::new(Constraint::new_with_pattern(pattern));
+
+                    let mut constrained_iterator =
+                        NBestIterator::new(&lattice, eos_node.clone(), constraint);
+
+                    {
+                        let constraint_path = constrained_iterator.next().unwrap();
+                        assert_eq!(constraint_path.nodes().len(), 4);
+                        assert_eq!(constraint_path.nodes()[0], path.nodes()[0]);
+                        assert_eq!(
+                            constraint_path.nodes()[1]
+                                .value()
+                                .unwrap()
+                                .as_any()
+                                .downcast_ref::<&str>()
+                                .unwrap(),
+                            &"local415"
+                        );
+                        assert_eq!(constraint_path.nodes()[2], path.nodes()[2]);
+                        assert_eq!(constraint_path.nodes()[3], path.nodes()[3]);
+                    }
+                    {
+                        let constraint_path = constrained_iterator.next().unwrap();
+                        assert_eq!(constraint_path.nodes(), path.nodes());
+                    }
+                    assert!(constrained_iterator.next().is_none());
+                }
+                {
+                    let pattern: Vec<Box<dyn ConstraintElement>> = vec![
+                        Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
+                        Box::new(WildcardConstraintElement::new(0)),
+                        Box::new(NodeConstraintElement::new(path.nodes()[3].clone())),
+                    ];
+                    let constraint = Box::new(Constraint::new_with_pattern(pattern));
+
+                    let constrained_iterator =
+                        NBestIterator::new(&lattice, eos_node.clone(), constraint);
+
+                    assert_eq!(constrained_iterator.collect::<Vec<_>>().len(), 9);
+                }
             }
         }
     }
-         */
 
     mod cap {
         use super::*;
