@@ -13,11 +13,11 @@ use crate::Node;
  * A constraint.
  */
 #[derive(Default)]
-pub struct Constraint {
-    pattern: Vec<Box<dyn ConstraintElement>>,
+pub struct Constraint<'a> {
+    pattern: Vec<Box<dyn ConstraintElement + 'a>>,
 }
 
-impl Constraint {
+impl<'a> Constraint<'a> {
     /**
      * Creates an empty constraint.
      *
@@ -35,7 +35,7 @@ impl Constraint {
      * # Arguments
      * * `pattern` - A pattern.
      */
-    pub fn new_with_pattern(pattern: Vec<Box<dyn ConstraintElement>>) -> Self {
+    pub fn new_with_pattern(pattern: Vec<Box<dyn ConstraintElement + 'a>>) -> Self {
         Self { pattern }
     }
 
@@ -93,7 +93,7 @@ impl Constraint {
     }
 }
 
-impl Debug for Constraint {
+impl Debug for Constraint<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Constraint")
             .field("pattern", &"Vec<Box<dyn ConstraintElement>>")

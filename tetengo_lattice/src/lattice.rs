@@ -42,20 +42,11 @@ pub enum LatticeError {
 struct GraphStep<'a> {
     input_tail: usize,
     nodes: Vec<Node<'a>>,
-    _preceding_edge_costs: Vec<Rc<Vec<i32>>>,
 }
 
 impl<'a> GraphStep<'a> {
-    fn new(
-        input_tail: usize,
-        nodes: Vec<Node<'a>>,
-        preceding_edge_costs: Vec<Rc<Vec<i32>>>,
-    ) -> Self {
-        Self {
-            input_tail,
-            nodes,
-            _preceding_edge_costs: preceding_edge_costs,
-        }
+    fn new(input_tail: usize, nodes: Vec<Node<'a>>) -> Self {
+        Self { input_tail, nodes }
     }
 
     fn input_tail(&self) -> usize {
@@ -64,11 +55,6 @@ impl<'a> GraphStep<'a> {
 
     fn nodes(&self) -> &[Node<'a>] {
         &self.nodes
-    }
-
-    fn _preceding_edge_costs(&self, index: usize) -> &[i32] {
-        assert!(index < self._preceding_edge_costs.len());
-        &self._preceding_edge_costs[index]
     }
 }
 
@@ -109,9 +95,8 @@ impl<'a> Lattice<'a> {
     }
 
     fn bos_step() -> GraphStep<'a> {
-        let node_preceding_edge_costs = vec![Rc::new(Vec::new())];
-        let nodes = vec![Node::bos(node_preceding_edge_costs[0].clone())];
-        GraphStep::new(0, nodes, node_preceding_edge_costs)
+        let nodes = vec![Node::bos(Rc::new(Vec::new()))];
+        GraphStep::new(0, nodes)
     }
 
     /**
@@ -212,11 +197,7 @@ impl<'a> Lattice<'a> {
             return Err(LatticeError::NoNodeIsFoundForTheInput.into());
         }
 
-        self.graph.push(GraphStep::new(
-            self_input.length(),
-            nodes,
-            node_preceding_edge_costs,
-        ));
+        self.graph.push(GraphStep::new(self_input.length(), nodes));
 
         Ok(())
     }

@@ -10,7 +10,7 @@ use crate::node::Node;
 /**
  * A wildcard constraint element.
  */
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct WildcardConstraintElement {
     preceding_step: usize,
 }

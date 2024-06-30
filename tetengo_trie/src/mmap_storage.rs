@@ -27,7 +27,6 @@ use crate::value_serializer::{ValueDeserializer, ValueSerializer};
  */
 #[derive(Debug)]
 pub struct FileMapping {
-    _file: File,
     mmap: Mmap,
 }
 
@@ -41,9 +40,9 @@ impl FileMapping {
      * # Errors
      * * When it fails to memory-map the file.
      */
-    pub fn new(file: File) -> Result<Self> {
-        let mmap = unsafe { Mmap::map(&file)? };
-        Ok(Self { _file: file, mmap })
+    pub fn new(file: &File) -> Result<Self> {
+        let mmap = unsafe { Mmap::map(file)? };
+        Ok(Self { mmap })
     }
 
     fn mmap(&self) -> &Mmap {
@@ -434,7 +433,7 @@ mod tests {
         #[test]
         fn new() {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-            let file_mapping = FileMapping::new(file);
+            let file_mapping = FileMapping::new(&file);
             assert!(file_mapping.is_ok());
         }
 
@@ -442,7 +441,7 @@ mod tests {
         fn mmap() {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let mmap = file_mapping.mmap();
             assert_eq!(&mmap[..], &SERIALIZED_FIXED_VALUE_SIZE);
         }
@@ -468,7 +467,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -482,7 +481,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -496,7 +495,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -510,7 +509,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_BROKEN);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -524,7 +523,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -539,7 +538,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -558,7 +557,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -574,7 +573,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -594,7 +593,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -611,7 +610,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -632,7 +631,7 @@ mod tests {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
@@ -651,7 +650,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -668,7 +667,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -689,7 +688,7 @@ mod tests {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
@@ -708,7 +707,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -724,7 +723,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -744,7 +743,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -764,7 +763,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -788,7 +787,7 @@ mod tests {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
@@ -807,7 +806,7 @@ mod tests {
                 make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
@@ -826,7 +825,7 @@ mod tests {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
@@ -855,7 +854,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -876,7 +875,7 @@ mod tests {
                 let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                    Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
                 let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                     static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                         Lazy::new(|| IntegerDeserializer::new(false));
@@ -901,7 +900,7 @@ mod tests {
                 make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
@@ -920,7 +919,7 @@ mod tests {
                 make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
             let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
             let deserializer = ValueDeserializer::<u32>::new(|serialized| {
                 static INTEGER_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
                     Lazy::new(|| IntegerDeserializer::new(false));
