@@ -1,8 +1,8 @@
 #![doc = include_str!("../README.md")]
-//#![doc = "# Examples"]
-//#![doc = "```rust"]
-//#![doc = include_str!("../tests/usage.rs")]
-//#![doc = "```"]
+#![doc = "# Examples"]
+#![doc = "```rust"]
+#![doc = include_str!("../tests/viterbi.rs")]
+#![doc = "```"]
 
 pub mod connection;
 pub mod constraint;
