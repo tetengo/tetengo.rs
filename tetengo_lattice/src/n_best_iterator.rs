@@ -4,7 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
 use std::collections::BinaryHeap;
 
 use crate::constraint::Constraint;
@@ -18,7 +18,7 @@ use crate::path::Path;
 #[derive(Debug)]
 pub struct NBestIterator<'a> {
     lattice: &'a Lattice<'a>,
-    caps: BinaryHeap<Cap<'a>>,
+    caps: BinaryHeap<Reverse<Cap<'a>>>,
     // _eos_hash: u64,
     constraint: Box<Constraint>,
     // _path: Path<'a>,
@@ -46,9 +46,11 @@ impl<'a> NBestIterator<'a> {
 
         let tail_path_cost = eos_node.node_cost();
         let whole_path_cost = eos_node.path_cost();
-        self_
-            .caps
-            .push(Cap::new(vec![eos_node], tail_path_cost, whole_path_cost));
+        self_.caps.push(Reverse(Cap::new(
+            vec![eos_node],
+            tail_path_cost,
+            whole_path_cost,
+        )));
 
         // self_._path = Path::new();
 
@@ -71,7 +73,7 @@ impl<'a> NBestIterator<'a> {
 
     fn open_cap(
         lattice: &Lattice<'a>,
-        caps: &mut BinaryHeap<Cap<'a>>,
+        caps: &mut BinaryHeap<Reverse<Cap<'a>>>,
         constraint: &Constraint,
     ) -> Path<'a> {
         let mut path = Path::new();
@@ -79,6 +81,7 @@ impl<'a> NBestIterator<'a> {
             let Some(opened) = caps.pop() else {
                 unreachable!("caps must not be empty.");
             };
+            let opened = opened.0;
 
             let mut next_path = opened.tail_path().to_vec();
             let mut tail_path_cost = opened.tail_path_cost();
@@ -114,11 +117,11 @@ impl<'a> NBestIterator<'a> {
                     if cap_whole_path_cost == i32::MAX {
                         continue;
                     }
-                    caps.push(Cap::new(
+                    caps.push(Reverse(Cap::new(
                         cap_tail_path,
                         cap_tail_path_cost,
                         cap_whole_path_cost,
-                    ));
+                    )));
                 }
 
                 let best_preceding_edge_cost =
@@ -363,9 +366,11 @@ impl PartialOrd for Cap<'_> {
 mod tests {
     use std::rc::Rc;
 
+    // use crate::constraint_element::ConstraintElement;
     use crate::entry::{Entry, EntryView};
     use crate::hash_map_vocabulary::HashMapVocabulary;
     use crate::input::Input;
+    // use crate::node_constraint_element::NodeConstraintElement;
     use crate::vocabulary::Vocabulary;
 
     use super::*;
@@ -593,29 +598,23 @@ mod tests {
         ))
     }
 
-    /*
-    int preceding_edge_cost(const tetengo::lattice::path& path_, const std::size_t node_index)
-    {
-        const auto& nodes = path_.nodes();
-        assert(!std::empty(nodes));
-        assert(0 < node_index && node_index < std::size(nodes));
-        return nodes[node_index].preceding_edge_costs()[nodes[node_index - 1].index_in_step()];
+    fn preceding_edge_cost(path: &Path<'_>, node_index: usize) -> i32 {
+        let nodes = path.nodes();
+        assert!(!nodes.is_empty());
+        assert!(0 < node_index && node_index < nodes.len());
+        nodes[node_index].preceding_edge_costs()[nodes[node_index - 1].index_in_step()]
     }
-    */
-    /*
-    int recalc_path_cost(const tetengo::lattice::path& path_)
-    {
-        const auto& nodes = path_.nodes();
-        assert(!std::empty(nodes));
-        auto cost = nodes[0].node_cost();
-        for (std::size_t i = 1; i < std::size(nodes); ++i)
-        {
-            cost += preceding_edge_cost(path_, i);
-            cost += nodes[i].node_cost();
+
+    fn recalc_path_cost(path: &Path<'_>) -> i32 {
+        let nodes = path.nodes();
+        assert!(!nodes.is_empty());
+        let mut cost = nodes[0].node_cost();
+        for (i, node) in nodes.iter().enumerate().skip(1) {
+            cost += preceding_edge_cost(path, i);
+            cost += node.node_cost();
         }
-        return cost;
+        cost
     }
-     */
 
     #[test]
     fn new() {
@@ -641,258 +640,282 @@ mod tests {
             let (eos_node, _) = lattice.settle().unwrap();
             let mut iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
 
-            let path = iterator.next().unwrap();
-            assert_eq!(path.nodes().len(), 3);
-            assert!(path.nodes()[0].value().is_none());
-            assert_eq!(
-                path.nodes()[1]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
-                &"tsubame"
-            );
-            assert!(path.nodes()[2].value().is_none());
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 3);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"tsubame"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 600);
+                assert!(path.nodes()[2].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 2), 400);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 3);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"sakura"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 600);
+                assert!(path.nodes()[2].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 2), 400);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 4);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"rapid811"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 700);
+                assert_eq!(
+                    path.nodes()[2]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local817"
+                );
+                assert_eq!(preceding_edge_cost(&path, 2), 200);
+                assert!(path.nodes()[3].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 3), 600);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 4);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local415"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 800);
+                assert_eq!(
+                    path.nodes()[2]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local815"
+                );
+                assert_eq!(preceding_edge_cost(&path, 2), 500);
+                assert!(path.nodes()[3].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 3), 500);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 4);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"kamome"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 800);
+                assert_eq!(
+                    path.nodes()[2]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local815"
+                );
+                assert_eq!(preceding_edge_cost(&path, 2), 500);
+                assert!(path.nodes()[3].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 3), 500);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 4);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"ariake"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 700);
+                assert_eq!(
+                    path.nodes()[2]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local817"
+                );
+                assert_eq!(preceding_edge_cost(&path, 2), 200);
+                assert!(path.nodes()[3].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 3), 600);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 3);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"mizuho"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 600);
+                assert!(path.nodes()[2].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 2), 400);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 5);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local415"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 800);
+                assert_eq!(
+                    path.nodes()[2]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local813"
+                );
+                assert_eq!(preceding_edge_cost(&path, 2), 600);
+                assert_eq!(
+                    path.nodes()[3]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local817"
+                );
+                assert_eq!(preceding_edge_cost(&path, 3), 300);
+                assert!(path.nodes()[4].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 4), 600);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            {
+                let path = iterator.next().unwrap();
+                assert_eq!(path.nodes().len(), 5);
+                assert!(path.nodes()[0].value().is_none());
+                assert_eq!(
+                    path.nodes()[1]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"kamome"
+                );
+                assert_eq!(preceding_edge_cost(&path, 1), 800);
+                assert_eq!(
+                    path.nodes()[2]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local813"
+                );
+                assert_eq!(preceding_edge_cost(&path, 2), 600);
+                assert_eq!(
+                    path.nodes()[3]
+                        .value()
+                        .unwrap()
+                        .as_any()
+                        .downcast_ref::<&str>()
+                        .unwrap(),
+                    &"local817"
+                );
+                assert_eq!(preceding_edge_cost(&path, 3), 300);
+                assert!(path.nodes()[4].value().is_none());
+                assert_eq!(preceding_edge_cost(&path, 4), 600);
+                assert_eq!(recalc_path_cost(&path), path.cost());
+            }
+            assert!(iterator.next().is_none());
+        }
+        {
+            let vocabulary = create_vocabulary();
+            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let _result = lattice.push_back(to_input("[HakataTosu]"));
+            let _result = lattice.push_back(to_input("[TosuOmuta]"));
+            let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
+
+            let (eos_node, _) = lattice.settle().unwrap();
+            let mut _iterator =
+                NBestIterator::new(&lattice, eos_node.clone(), Box::new(Constraint::new()));
+
+            // {
+            //     let path = iterator.next().unwrap();
+            //     assert_eq!(path.nodes().len(), 3);
+
+            //     let pattern: Vec<Box<dyn ConstraintElement>> = vec![
+            //         Box::new(NodeConstraintElement::new(path.nodes()[0].clone())),
+            //         Box::new(NodeConstraintElement::new(path.nodes()[1].clone())),
+            //         Box::new(NodeConstraintElement::new(path.nodes()[2].clone())),
+            //     ];
+            //     let constraint = Box::new(Constraint::new_with_pattern(pattern));
+
+            //     let mut _constrained_iterator =
+            //         NBestIterator::new(&lattice, eos_node.clone(), constraint);
+            // }
         }
     }
-    /*
-    BOOST_AUTO_TEST_CASE(operator_dereference)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto                                    eos_node_and_preceding_edge_costs = lattice_.settle();
-            const tetengo::lattice::n_best_iterator iterator{ lattice_,
-                                                              std::move(eos_node_and_preceding_edge_costs.first),
-                                                              std::make_unique<tetengo::lattice::constraint>() };
-
-            const auto& path = *iterator;
-            BOOST_TEST_REQUIRE(std::size(path.nodes()) == 3U);
-            BOOST_TEST(!path.nodes()[0].value().has_value());
-            BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "tsubame");
-            BOOST_TEST(!path.nodes()[2].value().has_value());
-        }
-        {
-            const tetengo::lattice::n_best_iterator iterator{};
-
-            BOOST_CHECK_THROW([[maybe_unused]] const auto& dereferenced = *iterator, std::logic_error);
-        }
-    }
-        */
-    /*
-    BOOST_AUTO_TEST_CASE(operator_equal)
-    {
-        BOOST_TEST_PASSPOINT();
-
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto                                    eos_node_and_preceding_edge_costs1 = lattice_.settle();
-            const tetengo::lattice::n_best_iterator iterator1{ lattice_,
-                                                               std::move(eos_node_and_preceding_edge_costs1.first),
-                                                               std::make_unique<tetengo::lattice::constraint>() };
-            auto                                    eos_node_and_preceding_edge_costs2 = lattice_.settle();
-            const tetengo::lattice::n_best_iterator iterator2{ lattice_,
-                                                               std::move(eos_node_and_preceding_edge_costs2.first),
-                                                               std::make_unique<tetengo::lattice::constraint>() };
-            auto                                    eos_node_and_preceding_edge_costs3 = lattice_.settle();
-            tetengo::lattice::n_best_iterator       iterator3{ lattice_,
-                                                         std::move(eos_node_and_preceding_edge_costs3.first),
-                                                         std::make_unique<tetengo::lattice::constraint>() };
-            ++iterator3;
-            const tetengo::lattice::n_best_iterator iterator_last{};
-
-            BOOST_CHECK(iterator1 == iterator1);
-            BOOST_CHECK(iterator1 == iterator2);
-            BOOST_CHECK(iterator1 != iterator3);
-            BOOST_CHECK(iterator1 != iterator_last);
-
-            ++iterator3;
-            ++iterator3;
-            ++iterator3;
-            ++iterator3;
-            ++iterator3;
-            ++iterator3;
-            ++iterator3;
-            ++iterator3;
-
-            BOOST_CHECK(iterator3 == iterator_last);
-        }
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-
-            auto                                    eos_node_and_preceding_edge_costs1 = lattice_.settle();
-            const tetengo::lattice::n_best_iterator iterator1{ lattice_,
-                                                               std::move(eos_node_and_preceding_edge_costs1.first),
-                                                               std::make_unique<tetengo::lattice::constraint>() };
-
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto                                    eos_node_and_preceding_edge_costs2 = lattice_.settle();
-            const tetengo::lattice::n_best_iterator iterator2{ lattice_,
-                                                               std::move(eos_node_and_preceding_edge_costs2.first),
-                                                               std::make_unique<tetengo::lattice::constraint>() };
-
-            BOOST_CHECK(iterator1 != iterator2);
-        }
-    }
-        */
     /*
     BOOST_AUTO_TEST_CASE(operator_increment)
     {
         BOOST_TEST_PASSPOINT();
 
-        {
-            const auto                p_vocabulary = create_cpp_vocabulary();
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            lattice_.push_back(to_input("[HakataTosu]"));
-            lattice_.push_back(to_input("[TosuOmuta]"));
-            lattice_.push_back(to_input("[OmutaKumamoto]"));
-
-            auto                              eos_node_and_preceding_edge_costs = lattice_.settle();
-            tetengo::lattice::n_best_iterator iterator{ lattice_,
-                                                        std::move(eos_node_and_preceding_edge_costs.first),
-                                                        std::make_unique<tetengo::lattice::constraint>() };
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 3U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "tsubame");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 600);
-                BOOST_TEST(!path.nodes()[2].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 2) == 400);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            ++iterator;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 3U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "sakura");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 600);
-                BOOST_TEST(!path.nodes()[2].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 2) == 400);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            iterator++;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "rapid811");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 700);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[2].value()) == "local817");
-                BOOST_TEST(preceding_edge_cost(path, 2) == 200);
-                BOOST_TEST(!path.nodes()[3].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 3) == 600);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            ++iterator;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "local415");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 800);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[2].value()) == "local815");
-                BOOST_TEST(preceding_edge_cost(path, 2) == 500);
-                BOOST_TEST(!path.nodes()[3].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 3) == 500);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            iterator++;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "kamome");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 800);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[2].value()) == "local815");
-                BOOST_TEST(preceding_edge_cost(path, 2) == 500);
-                BOOST_TEST(!path.nodes()[3].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 3) == 500);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            ++iterator;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 4U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "ariake");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 700);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[2].value()) == "local817");
-                BOOST_TEST(preceding_edge_cost(path, 2) == 200);
-                BOOST_TEST(!path.nodes()[3].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 3) == 600);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            iterator++;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 3U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "mizuho");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 600);
-                BOOST_TEST(!path.nodes()[2].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 2) == 400);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            ++iterator;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 5U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "local415");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 800);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[2].value()) == "local813");
-                BOOST_TEST(preceding_edge_cost(path, 2) == 600);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[3].value()) == "local817");
-                BOOST_TEST(preceding_edge_cost(path, 3) == 300);
-                BOOST_TEST(!path.nodes()[4].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 4) == 600);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            iterator++;
-            {
-                const auto& path = *iterator;
-                BOOST_TEST_REQUIRE(std::size(path.nodes()) == 5U);
-                BOOST_TEST(!path.nodes()[0].value().has_value());
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[1].value()) == "kamome");
-                BOOST_TEST(preceding_edge_cost(path, 1) == 800);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[2].value()) == "local813");
-                BOOST_TEST(preceding_edge_cost(path, 2) == 600);
-                BOOST_TEST(std::any_cast<std::string>(path.nodes()[3].value()) == "local817");
-                BOOST_TEST(preceding_edge_cost(path, 3) == 300);
-                BOOST_TEST(!path.nodes()[4].value().has_value());
-                BOOST_TEST(preceding_edge_cost(path, 4) == 600);
-                BOOST_TEST(recalc_path_cost(path) == path.cost());
-            }
-
-            ++iterator;
-            BOOST_CHECK_THROW([[maybe_unused]] const auto& dereferenced = *iterator, std::logic_error);
-        }
         {
             const auto                p_vocabulary = create_cpp_vocabulary();
             tetengo::lattice::lattice lattice_{ *p_vocabulary };
