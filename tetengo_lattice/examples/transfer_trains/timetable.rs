@@ -4,68 +4,49 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-/*
- /*!
-    \brief A station.
-*/
-class station
-{
-public:
-    // constructors and destructor
-
-    /*!
-        \brief Creates a station.
-
-        \param name          A name.
-        \param telegram_code A telegram code.
-    */
-    station(std::string name, std::string telegram_code);
-*/
-/*
-    // functions
-
-    /*!
-        \brief Returns the name.
-
-        \return The name.
-    */
-    [[nodiscard]] const std::string& name() const;
-*/
-/*
-    /*!
-        \brief Returns the telegram code.
-
-        \return The telegram code.
-    */
-    [[nodiscard]] const std::string& telegram_code() const;
-*/
-/*
-private:
-    // variables
-
-    std::string m_name;
-
-    std::string m_telegram_code;
-};
-*/
-/*
-station::station(std::string name, std::string telegram_code) :
-m_name{ std::move(name) },
-m_telegram_code{ std::move(telegram_code) }
-{}
-*/
-/*
-const std::string& station::name() const
-{
-    return m_name;
+/**
+ * A station.
+ */
+pub(crate) struct _Station {
+    name: String,
+    telegram_code: String,
 }
-*/
-/*
-const std::string& station::telegram_code() const
-{
-    return m_telegram_code;
+
+impl _Station {
+    /**
+     * Creates a station.
+     *
+     * # Arguments
+     * * `name`          - A name.
+     * * `telegram_code` - A telegram code.
+     */
+    pub(crate) fn _new(name: String, telegram_code: String) -> Self {
+        Self {
+            name,
+            telegram_code,
+        }
+    }
+
+    /**
+     * Returns the name.
+     *
+     * # Returns
+     * The name.
+     */
+    pub(crate) fn _name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    /**
+     * Returns the telegram code.
+     *
+     * # Returns
+     * The telegram code.
+     */
+    pub(crate) fn _telegram_code(&self) -> &str {
+        self.telegram_code.as_str()
+    }
 }
-*/
 
 /*
 /*!
