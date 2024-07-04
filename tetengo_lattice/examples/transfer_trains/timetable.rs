@@ -48,96 +48,69 @@ impl _Station {
     }
 }
 
-/*
-/*!
-    \brief A stop.
-*/
-class stop
-{
-public:
-    // constructors and destructor
-
-    /*!
-        \brief Creates a stop.
-
-        \param arrival_time   An arrival time.
-        \param departure_time A departure time.
-    */
-    stop(std::optional<std::size_t> arrival_time, std::optional<std::size_t> departure_time);
-*/
-/*
-    // functions
-
-    /*!
-        \brief Returns the arrival time.
-
-        \return The arrival time.
-    */
-    [[nodiscard]] std::optional<std::size_t> arrival_time() const;
-*/
-/*
-    /*!
-        \brief Sets an arrival time.
-
-        \param time An arrival time.
-    */
-    void set_arrival_time(std::size_t time);
-*/
-/*
-    /*!
-        \brief Returns the departure time.
-
-        \return The departure time.
-    */
-    [[nodiscard]] std::optional<std::size_t> departure_time() const;
-*/
-/*
-    /*!
-        \brief Sets a departure time.
-
-        \param time A departure time.
-    */
-    void set_departure_time(std::size_t time);
-*/
-/*
-private:
-    // variables
-
-    std::optional<std::size_t> m_arrival_time;
-
-    std::optional<std::size_t> m_departure_time;
-};
-*/
-/*
-stop::stop(std::optional<std::size_t> arrival_time, std::optional<std::size_t> departure_time) :
-m_arrival_time{ std::move(arrival_time) },
-m_departure_time{ std::move(departure_time) }
-{}
-*/
-/*
-std::optional<std::size_t> stop::arrival_time() const
-{
-    return m_arrival_time;
+/**
+ * A stop.
+ */
+struct _Stop {
+    arrival_time: Option<usize>,
+    departure_time: Option<usize>,
 }
-*/
-/*
-void stop::set_arrival_time(const std::size_t time)
-{
-    m_arrival_time = time;
+
+impl _Stop {
+    /**
+     * Creates a stop.
+     *
+     * # Arguments
+     * * `arrival_time`   - An arrival time.
+     * * `departure_time` - A departure time.
+     */
+    pub(crate) fn _new(arrival_time: Option<usize>, departure_time: Option<usize>) -> Self {
+        Self {
+            arrival_time,
+            departure_time,
+        }
+    }
+
+    /**
+     * Returns the arrival time.
+     *
+     * # Returns
+     * The arrival time.
+     */
+    pub(crate) fn _arrival_time(&self) -> Option<usize> {
+        self.arrival_time
+    }
+
+    /**
+     * Sets an arrival time.
+     *
+     * # Arguments
+     * * `time` - An arrival time.
+     */
+    pub(crate) fn _set_arrival_time(&mut self, time: usize) {
+        self.arrival_time = Some(time);
+    }
+
+    /**
+     * Returns the departure time.
+     *
+     * # Returns
+     * The departure time.
+     */
+    pub(crate) fn _departure_time(&self) -> Option<usize> {
+        self.departure_time
+    }
+
+    /**
+     * Sets a departure time.
+     *
+     * # Arguments
+     * * `time` - A departure time.
+     */
+    pub(crate) fn _set_departure_time(&mut self, time: usize) {
+        self.departure_time = Some(time);
+    }
 }
-*/
-/*
-std::optional<std::size_t> stop::departure_time() const
-{
-    return m_departure_time;
-}
-*/
-/*
-void stop::set_departure_time(std::size_t time)
-{
-    m_departure_time = time;
-}
-*/
 
 /*
 /*!
