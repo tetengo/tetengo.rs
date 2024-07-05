@@ -51,7 +51,7 @@ impl _Station {
 /**
  * A stop.
  */
-struct _Stop {
+pub(crate) struct _Stop {
     arrival_time: Option<usize>,
     departure_time: Option<usize>,
 }
@@ -112,100 +112,72 @@ impl _Stop {
     }
 }
 
-/*
-/*!
-    \brief A train.
-*/
-class train
-{
-public:
-    // constructors and destructor
-
-    /*!
-        \brief Creates a train.
-
-        \param number A number.
-        \param name   A name.
-        \param stops  Stops.
-    */
-    train(std::string number, std::string name, std::vector<stop> stops);
-*/
-/*
-    // functions
-
-    /*!
-        \brief Returns the number.
-
-        \return The number.
-    */
-    [[nodiscard]] const std::string& number() const;
-*/
-/*
-    /*!
-        \brief Returns the name.
-
-        \return The name.
-    */
-    [[nodiscard]] const std::string& name() const;
-*/
-/*
-    /*!
-        \brief Returns the stops.
-
-        \return The stops.
-    */
-    [[nodiscard]] const std::vector<stop>& stops() const;
-*/
-/*
-    /*!
-        \brief Returns the stops.
-
-        \return The stops.
-    */
-    [[nodiscard]] std::vector<stop>& stops();
-*/
-/*
-private:
-    // variables
-
-    std::string m_number;
-
-    std::string m_name;
-
-    std::vector<stop> m_stops;
-};
-*/
-/*
-train::train(std::string number, std::string name, std::vector<stop> stops) :
-m_number{ std::move(number) },
-m_name{ std::move(name) },
-m_stops{ std::move(stops) }
-{}
-*/
-/*
-const std::string& train::number() const
-{
-    return m_number;
+/**
+ * A train.
+ */
+pub(crate) struct _Train {
+    number: String,
+    name: String,
+    stops: Vec<_Stop>,
 }
-*/
-/*
-const std::string& train::name() const
-{
-    return m_name;
+
+impl _Train {
+    /**
+     * Creates a train.
+     *
+     * # Arguments
+     * * `number` - A number.
+     * * `name`   - A name.
+     * * `stops`  - Stops.
+     */
+    pub(crate) fn _new(number: String, name: String, stops: Vec<_Stop>) -> Self {
+        Self {
+            number,
+            name,
+            stops,
+        }
+    }
+
+    /**
+     * Returns the number.
+     *
+     * # Returns
+     * The number.
+     */
+    pub(crate) fn _number(&self) -> &str {
+        self.number.as_str()
+    }
+
+    /**
+     * Returns the name.
+     *
+     * # Returns
+     * The name.
+     */
+    pub(crate) fn _name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    /**
+     * Returns the stops.
+     *
+     * # Returns
+     * The stops.
+     */
+    pub(crate) fn _stops(&self) -> &[_Stop] {
+        self.stops.as_slice()
+    }
+
+    /**
+     * Returns the stops.
+     *
+     * # Returns
+     * The stops.
+     */
+    pub(crate) fn _stops_mut(&mut self) -> &Vec<_Stop> {
+        &self.stops
+    }
 }
-*/
-/*
-const std::vector<stop>& train::stops() const
-{
-    return m_stops;
-}
-*/
-/*
-std::vector<stop>& train::stops()
-{
-    return m_stops;
-}
-*/
 
 /*
 /*!
