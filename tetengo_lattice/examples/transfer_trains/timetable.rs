@@ -20,7 +20,7 @@ impl _Station {
      * * `name`          - A name.
      * * `telegram_code` - A telegram code.
      */
-    pub(crate) fn _new(name: String, telegram_code: String) -> Self {
+    pub(crate) const fn _new(name: String, telegram_code: String) -> Self {
         Self {
             name,
             telegram_code,
@@ -64,7 +64,7 @@ impl _Stop {
      * * `arrival_time`   - An arrival time.
      * * `departure_time` - A departure time.
      */
-    pub(crate) fn _new(arrival_time: Option<usize>, departure_time: Option<usize>) -> Self {
+    pub(crate) const fn _new(arrival_time: Option<usize>, departure_time: Option<usize>) -> Self {
         Self {
             arrival_time,
             departure_time,
@@ -77,7 +77,7 @@ impl _Stop {
      * # Returns
      * The arrival time.
      */
-    pub(crate) fn _arrival_time(&self) -> Option<usize> {
+    pub(crate) const fn _arrival_time(&self) -> Option<usize> {
         self.arrival_time
     }
 
@@ -97,7 +97,7 @@ impl _Stop {
      * # Returns
      * The departure time.
      */
-    pub(crate) fn _departure_time(&self) -> Option<usize> {
+    pub(crate) const fn _departure_time(&self) -> Option<usize> {
         self.departure_time
     }
 
@@ -130,7 +130,7 @@ impl _Train {
      * * `name`   - A name.
      * * `stops`  - Stops.
      */
-    pub(crate) fn _new(number: String, name: String, stops: Vec<_Stop>) -> Self {
+    pub(crate) const fn _new(number: String, name: String, stops: Vec<_Stop>) -> Self {
         Self {
             number,
             name,
@@ -179,74 +179,58 @@ impl _Train {
     }
 }
 
-/*
-/*!
-    \brief A section.
-*/
-class section
-{
-public:
-    // constructors and destructor
+/**
+ * A section.
+ */
+pub(crate) struct _Section<'a> {
+    train: &'a _Train,
+    from: usize,
+    to: usize,
+}
 
-    /*!
-        \brief Creates a section.
-
-        \param p_train A pointer to a train.
-        \param from    A departure station index.
-        \param to      An arrival station index.
-    */
-    constexpr section(const train* p_train, std::size_t from, std::size_t to) :
-    m_p_train{ p_train },
-    m_from{ from },
-    m_to{ to }
-    {}
-*/
-/*
-    // functions
-
-    /*!
-        \brief Returns a pointer to the train.
-
-        \return A pointer to the train.
-    */
-    [[nodiscard]] constexpr const train* p_train() const
-    {
-        return m_p_train;
+impl<'a> _Section<'a> {
+    /**
+     * Creates a section.
+     *
+     * # Arguments
+     * * `train` - A train.
+     * * `from`  - A departure station index.
+     * * `to`    - An arrival station index.
+     */
+    pub(crate) const fn _new(train: &'a _Train, from: usize, to: usize) -> Self {
+        Self { train, from, to }
     }
-*/
-/*
-    /*!
-        \brief Returns the departure station index.
 
-        \return The departure station index.
-    */
-    [[nodiscard]] constexpr std::size_t from() const
-    {
-        return m_from;
+    /**
+     * Returns the train.
+     *
+     * # Returns
+     * The train.
+     */
+    pub(crate) const fn _train(&self) -> &_Train {
+        self.train
     }
-*/
-/*
-    /*!
-        \brief Returns the arrival station index.
 
-        \return The arrival station index.
-    */
-    [[nodiscard]] constexpr std::size_t to() const
-    {
-        return m_to;
+    /**
+     * Returns the departure station index.
+     *
+     * # Returns
+     * The departure station index.
+     */
+    pub(crate) const fn _from(&self) -> usize {
+        self.from
     }
-*/
-/*
-private:
-    // variables
 
-    const train* m_p_train;
-
-    std::size_t m_from;
-
-    std::size_t m_to;
-};
-*/
+    /**
+     * Returns the arrival station index.
+     *
+     * # Returns
+     * The arrival station index.
+     */
+    pub(crate) const fn _to(&self) -> usize {
+        self.to
+    }
+}
 
 /*
 /*!
