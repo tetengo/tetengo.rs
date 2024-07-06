@@ -237,10 +237,16 @@ impl<'a> _Section<'a> {
 /**
  * A timetable vocabulary.
  */
-pub(crate) struct _Timetable {}
+pub(crate) struct Timetable {}
 
-impl _Timetable {
-    pub(crate) fn _new(_reader: &mut dyn BufRead) -> Self {
+impl Timetable {
+    /**
+     * Creates a timetable vocabulary.
+     *
+     * # Arguments
+     * * `reader` - A reader.
+     */
+    pub(crate) fn new(_reader: Box<dyn BufRead>) -> Self {
         Self {}
     }
 }
