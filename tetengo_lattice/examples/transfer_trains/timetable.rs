@@ -4,9 +4,27 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::io::BufRead;
+use std::io::{BufRead, Lines};
 
 use anyhow::Result;
+
+/**
+ * A timetable error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub(crate) enum TimetableError {
+    /**
+     * Unexpected end of file.
+     */
+    #[error("unexpected end of file")]
+    UnexpectedEndOfFile,
+
+    /**
+     * Station names and telegram codes unmatch.
+     */
+    #[error("station names and telegram codes unmatch")]
+    StationNamesAndTelegramCodesUnmatch,
+}
 
 /**
  * A station.
@@ -24,7 +42,7 @@ impl Station {
      * * `name`          - A name.
      * * `telegram_code` - A telegram code.
      */
-    pub(crate) const fn _new(name: String, telegram_code: String) -> Self {
+    pub(crate) const fn new(name: String, telegram_code: String) -> Self {
         Self {
             _name: name,
             _telegram_code: telegram_code,
@@ -270,8 +288,8 @@ impl Timetable {
         })
     }
 
-    fn build_timetable(reader: Box<dyn BufRead>) -> Result<TimetableValue> {
-        let value = Self::parse_input(&reader)?;
+    fn build_timetable(mut reader: Box<dyn BufRead>) -> Result<TimetableValue> {
+        let value = Self::parse_input(reader.as_mut())?;
         //guess_arrival_times(&mut value);
         Ok(value)
     }
@@ -288,8 +306,14 @@ impl Timetable {
         }
     */
 
-    fn parse_input(_reader: &dyn BufRead) -> Result<TimetableValue> {
-        let stations = Vec::new();
+    fn parse_input(reader: &mut dyn BufRead) -> Result<TimetableValue> {
+        let mut lines = reader.lines();
+
+        let stations = {
+            let line1 = Self::read_line(&mut lines)?;
+            let line2 = Self::read_line(&mut lines)?;
+            Self::parse_stations(line1, line2)?
+        };
 
         let trains = Vec::new();
 
@@ -324,37 +348,35 @@ impl Timetable {
             return timetable_value{ std::move(stations), std::move(trains) };
         }
     */
-    /*
-        static std::vector<std::string> read_line(std::istream& input_stream)
-        {
-            std::string line;
-            std::getline(input_stream, line);
 
-            std::vector<std::string> elements;
-            boost::algorithm::split(elements, std::move(line), boost::is_any_of(","));
-            std::for_each(
-                std::begin(elements), std::end(elements), [](auto& element) { return boost::algorithm::trim(element); });
-            return elements;
-        }
-    */
-    /*
-        static std::vector<station> parse_stations(std::vector<std::string>&& line1, std::vector<std::string>&& line2)
+    fn read_line(lines: &mut Lines<&mut dyn BufRead>) -> Result<Vec<String>> {
+        let Some(line) = lines.next() else {
+            return Err(TimetableError::UnexpectedEndOfFile.into());
+        };
+        let line = line?;
+        let elements = line
+            .split(',')
+            .map(|e| e.trim().to_string())
+            .collect::<Vec<_>>();
+        Ok(elements)
+    }
+
+    fn parse_stations(mut line1: Vec<String>, mut line2: Vec<String>) -> Result<Vec<Station>> {
         {
-            line1.erase(std::begin(line1), std::next(std::begin(line1), 2));
-            line2.erase(std::begin(line2), std::next(std::begin(line2), 2));
-            if (std::size(line1) != std::size(line2))
-            {
-                throw std::runtime_error{ "Input file format error: Station names and telegram codes unmatch." };
-            }
-            std::vector<station> stations{};
-            stations.reserve(std::size(line1));
-            for (auto i = static_cast<std::size_t>(0); i < std::size(line1); ++i)
-            {
-                stations.emplace_back(std::move(line1[i]), std::move(line2[i]));
-            }
-            return stations;
+            let _removed = line1.drain(0..2);
+            let _removed = line2.drain(0..2);
         }
-    */
+        if line1.len() != line2.len() {
+            return Err(TimetableError::StationNamesAndTelegramCodesUnmatch.into());
+        }
+        let stations = line1
+            .into_iter()
+            .zip(line2)
+            .map(|(name, telegram_code)| Station::new(name, telegram_code))
+            .collect::<Vec<_>>();
+        Ok(stations)
+    }
+
     /*
         static train parse_train(std::vector<std::string>&& line, const std::size_t station_count)
         {
