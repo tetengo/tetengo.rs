@@ -4,6 +4,8 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::io::BufRead;
+
 /**
  * A station.
  */
@@ -232,6 +234,16 @@ impl<'a> _Section<'a> {
     }
 }
 
+/**
+ * A timetable vocabulary.
+ */
+pub(crate) struct _Timetable {}
+
+impl _Timetable {
+    pub(crate) fn _new(_reader: &mut dyn BufRead) -> Self {
+        Self {}
+    }
+}
 /*
 /*!
     \brief A timetable vocabulary.
