@@ -24,6 +24,24 @@ pub(crate) enum TimetableError {
      */
     #[error("station names and telegram codes unmatch")]
     StationNamesAndTelegramCodesUnmatch,
+
+    /**
+     * Invalid train line found.
+     */
+    #[error("invalid train line found")]
+    InvalidTrainLineFound,
+
+    /**
+     * Invalid arrival/departure time found.
+     */
+    #[error("invalid arrival/departure time found")]
+    InvalidArrivalOrDepartureTimeFound,
+
+    /**
+     * Invalid time found.
+     */
+    #[error("invalid time found")]
+    InvalidTimeFound,
 }
 
 /**
@@ -86,7 +104,7 @@ impl Stop {
      * * `arrival_time`   - An arrival time.
      * * `departure_time` - A departure time.
      */
-    pub(crate) const fn _new(arrival_time: Option<usize>, departure_time: Option<usize>) -> Self {
+    pub(crate) const fn new(arrival_time: Option<usize>, departure_time: Option<usize>) -> Self {
         Self {
             _arrival_time: arrival_time,
             _departure_time: departure_time,
@@ -152,7 +170,7 @@ impl Train {
      * * `name`   - A name.
      * * `stops`  - Stops.
      */
-    pub(crate) const fn _new(number: String, name: String, stops: Vec<Stop>) -> Self {
+    pub(crate) const fn new(number: String, name: String, stops: Vec<Stop>) -> Self {
         Self {
             _number: number,
             _name: name,
@@ -310,139 +328,99 @@ impl Timetable {
         let mut lines = reader.lines();
 
         let stations = {
-            let line1 = Self::read_line(&mut lines)?;
-            let line2 = Self::read_line(&mut lines)?;
+            let Some(line1) = Self::read_line(&mut lines)? else {
+                return Err(TimetableError::UnexpectedEndOfFile.into());
+            };
+            let Some(line2) = Self::read_line(&mut lines)? else {
+                return Err(TimetableError::UnexpectedEndOfFile.into());
+            };
             Self::parse_stations(line1, line2)?
         };
 
-        let trains = Vec::new();
+        let trains = {
+            let mut trains = Vec::new();
+            while let Some(line) = Self::read_line(&mut lines)? {
+                if line.is_empty() || (line.len() == 1 && line[0].is_empty()) {
+                    continue;
+                }
+                trains.push(Self::parse_train(line, stations.len())?);
+            }
+            trains
+        };
 
         Ok(TimetableValue::new(stations, trains))
     }
-    /*
-        static timetable_value parse_input(std::istream& input_stream)
-        {
-            if (!input_stream)
-            {
-                throw std::runtime_error{ "Input file format error: Empty data." };
-            }
 
-            std::vector<station> stations{};
-            {
-                auto line1 = read_line(input_stream);
-                auto line2 = read_line(input_stream);
-                stations = parse_stations(std::move(line1), std::move(line2));
-            }
-
-            std::vector<train> trains{};
-            while (input_stream)
-            {
-                auto line = read_line(input_stream);
-                if (std::empty(line) || (std::size(line) == 1 && std::empty(line[0])))
-                {
-                    continue;
-                }
-                trains.push_back(parse_train(std::move(line), std::size(stations)));
-            }
-
-            return timetable_value{ std::move(stations), std::move(trains) };
-        }
-    */
-
-    fn read_line(lines: &mut Lines<&mut dyn BufRead>) -> Result<Vec<String>> {
+    fn read_line(lines: &mut Lines<&mut dyn BufRead>) -> Result<Option<Vec<String>>> {
         let Some(line) = lines.next() else {
-            return Err(TimetableError::UnexpectedEndOfFile.into());
+            return Ok(None);
         };
         let line = line?;
         let elements = line
             .split(',')
             .map(|e| e.trim().to_string())
             .collect::<Vec<_>>();
-        Ok(elements)
+        Ok(Some(elements))
     }
 
-    fn parse_stations(mut line1: Vec<String>, mut line2: Vec<String>) -> Result<Vec<Station>> {
-        {
-            let _removed = line1.drain(0..2);
-            let _removed = line2.drain(0..2);
-        }
+    fn parse_stations(line1: Vec<String>, line2: Vec<String>) -> Result<Vec<Station>> {
         if line1.len() != line2.len() {
             return Err(TimetableError::StationNamesAndTelegramCodesUnmatch.into());
         }
         let stations = line1
             .into_iter()
-            .zip(line2)
+            .skip(2)
+            .zip(line2.into_iter().skip(2))
             .map(|(name, telegram_code)| Station::new(name, telegram_code))
             .collect::<Vec<_>>();
         Ok(stations)
     }
 
-    /*
-        static train parse_train(std::vector<std::string>&& line, const std::size_t station_count)
-        {
-            if (std::size(line) > station_count + 2)
-            {
-                throw std::runtime_error{ "Input file format error: Invalid train line found." };
-            }
-            line.resize(station_count + 2);
-
-            std::vector<stop> stops{};
-            stops.reserve(station_count);
-            std::transform(std::next(std::begin(line), 2), std::end(line), std::back_inserter(stops), [](auto&& e) {
-                return to_stop(std::move(e));
-            });
-            return train{ std::move(line[0]), std::move(line[1]), std::move(stops) };
+    fn parse_train(mut line: Vec<String>, station_count: usize) -> Result<Train> {
+        if line.len() > station_count + 2 {
+            return Err(TimetableError::InvalidTrainLineFound.into());
         }
-    */
-    /*
-        static stop to_stop(std::string&& element)
-        {
-            std::vector<std::string> string_times{};
-            boost::algorithm::split(string_times, std::move(element), boost::is_any_of("/"));
-            std::for_each(std::begin(string_times), std::end(string_times), [](auto&& e) { return boost::trim(e); });
-            if (std::size(string_times) == 0 || std::size(string_times) > 2)
-            {
-                throw std::runtime_error{ "Input file format error: Invalid arrival/depature time found." };
-            }
-            else if (std::size(string_times) == 1)
-            {
-                return stop{ std::nullopt, to_minutes(std::move(string_times[0])) };
-            }
-            else
-            {
-                assert(std::size(string_times) == 2);
-                return stop{ to_minutes(std::move(string_times[0])), to_minutes(std::move(string_times[1])) };
-            }
+        line.resize(station_count + 2, String::new());
+        let number = line[0].clone();
+        let name = line[1].clone();
+        let stops = line
+            .into_iter()
+            .skip(2)
+            .map(Self::to_stop)
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Train::new(number, name, stops))
+    }
+
+    fn to_stop(element: String) -> Result<Stop> {
+        let string_times = element
+            .split('/')
+            .map(|e| e.trim().to_string())
+            .collect::<Vec<_>>();
+        if string_times.is_empty() || string_times.len() > 2 {
+            Err(TimetableError::InvalidArrivalOrDepartureTimeFound.into())
+        } else if string_times.len() == 1 {
+            Ok(Stop::new(None, Self::to_minutes(string_times[0].as_str())?))
+        } else {
+            Ok(Stop::new(
+                Self::to_minutes(string_times[0].as_str())?,
+                Self::to_minutes(string_times[1].as_str())?,
+            ))
         }
-    */
-    /*
-        static std::optional<std::size_t> to_minutes(std::string&& string_time)
-        {
-            if (std::empty(string_time) || string_time == "-")
-            {
-                return std::nullopt;
-            }
+    }
 
-            auto int_time = static_cast<std::size_t>(0);
-            try
-            {
-                int_time = boost::lexical_cast<std::size_t>(string_time);
-            }
-            catch (const boost::bad_lexical_cast&)
-            {
-                throw std::runtime_error{ "Input file format error: Invalid time found." };
-            }
-
-            const auto hour = int_time / 100;
-            const auto minute = int_time - hour * 100;
-            if (hour >= 24 || minute >= 60)
-            {
-                throw std::runtime_error{ "Input file format error: Invalid time found." };
-            }
-
-            return hour * 60 + minute;
+    fn to_minutes(string_time: &str) -> Result<Option<usize>> {
+        if string_time.is_empty() || string_time == "-" {
+            return Ok(None);
         }
-    */
+        let int_time = string_time.parse::<usize>()?;
+        let hour = int_time / 100;
+        let minute = int_time - hour * 100;
+        if hour >= 24 || minute >= 60 {
+            return Err(TimetableError::InvalidTimeFound.into());
+        }
+        Ok(Some(hour * 60 + minute))
+    }
+
     /*
         static void guess_arrival_times(timetable_value& timetable_)
         {
