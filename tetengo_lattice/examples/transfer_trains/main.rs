@@ -8,7 +8,7 @@ mod timetable;
 
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{stdin, stdout, BufRead, BufReader, Lines, StdinLock, Write};
 use std::path::Path;
 use std::process::exit;
 
@@ -29,7 +29,17 @@ fn main_core() -> Result<()> {
         return Ok(());
     }
 
-    let _timetable = Timetable::new(create_reader(Path::new(&args[1]))?);
+    let timetable = Timetable::new(create_reader(Path::new(&args[1]))?)?;
+
+    let mut lines = stdin().lines();
+    loop {
+        let _departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)? {
+            DeartureAndArrival::Input(Some(departure_and_arrival)) => departure_and_arrival,
+            DeartureAndArrival::Input(None) => continue,
+            DeartureAndArrival::Eof => break,
+        };
+    }
+
     Ok(())
 }
 /*
@@ -84,50 +94,67 @@ fn create_reader(path: &Path) -> Result<Box<dyn BufRead>> {
     Ok(Box::new(reader))
 }
 
-/*
-namespace
-{
-    std::string decode_from_input(const std::string_view& encoded)
-    {
-        const char* const locale_name = std::setlocale(LC_CTYPE, nullptr);
-        if (locale_name && std::string_view{ locale_name } == "Japanese_Japan.932")
-        {
-            return tetengo::text::encoder<tetengo::text::encoding::cp932>::instance().decode(encoded);
-        }
-        else
-        {
-            const std::u8string_view utf8_encoded{ reinterpret_cast<const char8_t*>(std::data(encoded)),
-                                                   encoded.length() };
-            return std::string{ tetengo::text::encoder<tetengo::text::encoding::utf8>::instance().decode(
-                utf8_encoded) };
-        }
-    }
-*/
-/*
-    std::string encode_for_print(const std::string_view& string_)
-    {
-        const char* const locale_name = std::setlocale(LC_CTYPE, nullptr);
-        if (locale_name && std::string_view{ locale_name } == "Japanese_Japan.932")
-        {
-            return tetengo::text::encoder<tetengo::text::encoding::cp932>::instance().encode(string_);
-        }
-        else
-        {
-            const auto encoded = tetengo::text::encoder<tetengo::text::encoding::utf8>::instance().encode(string_);
-            return std::string{ reinterpret_cast<const char*>(std::data(encoded)), encoded.length() };
-        }
-    }
-*/
-/*
-    std::size_t get_station_index(const std::string& prompt, const timetable& timetable_)
-    {
-        std::cout << prompt << ": ";
-        std::string input{};
-        std::cin >> input;
+enum DeartureAndArrival {
+    Input(Option<((usize, usize), usize)>),
+    Eof,
+}
 
-        return timetable_.station_index(decode_from_input(input));
+fn get_departure_and_arrival(
+    lines: &mut Lines<StdinLock<'_>>,
+    timetable: &Timetable,
+) -> Result<DeartureAndArrival> {
+    let Some(departure_station_index) = get_station_index("Departure Station", lines, timetable)?
+    else {
+        return Ok(DeartureAndArrival::Eof);
+    };
+    if departure_station_index >= timetable.stations().len() {
+        println!("No departure station is found.");
+        return Ok(DeartureAndArrival::Input(None));
+    }
+
+    Ok(DeartureAndArrival::Input(None))
+}
+/*
+    std::optional<std::pair<std::pair<std::size_t, std::size_t>, std::size_t>>
+    get_departure_and_arrival(const timetable& timetable_)
+    {
+        const auto departure_station_index = get_station_index("Departure Station", timetable_);
+        if (departure_station_index >= std::size(timetable_.stations()))
+        {
+            std::cout << "No departure station is found." << std::endl;
+            return std::nullopt;
+        }
+
+        const auto departure_time = get_time("Departure Time");
+        if (departure_time >= 1440)
+        {
+            std::cout << "Wrong time format." << std::endl;
+            return std::nullopt;
+        }
+
+        const auto arrival_station_index = get_station_index("Arrival Station", timetable_);
+        if (arrival_station_index >= std::size(timetable_.stations()))
+        {
+            std::cout << "No arrival station is found." << std::endl;
+            return std::nullopt;
+        }
+        return std::make_pair(std::make_pair(departure_station_index, departure_time), arrival_station_index);
     }
 */
+
+fn get_station_index(
+    prompt: &str,
+    lines: &mut Lines<StdinLock<'_>>,
+    timetable: &Timetable,
+) -> Result<Option<usize>> {
+    print!("{}: ", prompt);
+    stdout().flush()?;
+    let Some(input) = lines.next() else {
+        return Ok(None);
+    };
+    let input = input?;
+    Ok(Some(timetable.station_index(input.trim())))
+}
 /*
     std::size_t get_time(const std::string& prompt)
     {
@@ -157,33 +184,6 @@ namespace
             return 1440;
         }
         return hour * 60 + minute;
-    }
-*/
-/*
-    std::optional<std::pair<std::pair<std::size_t, std::size_t>, std::size_t>>
-    get_departure_and_arrival(const timetable& timetable_)
-    {
-        const auto departure_station_index = get_station_index("Departure Station", timetable_);
-        if (departure_station_index >= std::size(timetable_.stations()))
-        {
-            std::cout << "No departure station is found." << std::endl;
-            return std::nullopt;
-        }
-
-        const auto departure_time = get_time("Departure Time");
-        if (departure_time >= 1440)
-        {
-            std::cout << "Wrong time format." << std::endl;
-            return std::nullopt;
-        }
-
-        const auto arrival_station_index = get_station_index("Arrival Station", timetable_);
-        if (arrival_station_index >= std::size(timetable_.stations()))
-        {
-            std::cout << "No arrival station is found." << std::endl;
-            return std::nullopt;
-        }
-        return std::make_pair(std::make_pair(departure_station_index, departure_time), arrival_station_index);
     }
 */
 /*

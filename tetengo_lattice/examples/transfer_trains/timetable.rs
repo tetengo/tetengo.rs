@@ -293,7 +293,7 @@ impl TimetableValue {
  * A timetable vocabulary.
  */
 pub(crate) struct Timetable {
-    _value: TimetableValue,
+    value: TimetableValue,
 }
 
 impl Timetable {
@@ -305,7 +305,7 @@ impl Timetable {
      */
     pub(crate) fn new(reader: Box<dyn BufRead>) -> Result<Self> {
         Ok(Self {
-            _value: Self::build_timetable(reader)?,
+            value: Self::build_timetable(reader)?,
         })
     }
 
@@ -495,6 +495,36 @@ impl Timetable {
         true
     }
 
+    /**
+     * Returns the stations.
+     *
+     * # Returns
+     * The stations.
+     */
+    pub(crate) fn stations(&self) -> &[Station] {
+        self.value.stations.as_slice()
+    }
+
+    /**
+     * Returns the station index.
+     *
+     * # Arguments
+     * * `name_or_telegram_code` - A name or telegram code.
+     *
+     * # Returns
+     * The index. Or `stations().len()` if no station is found.
+     */
+    pub(crate) fn station_index(&self, name_or_telegram_code: &str) -> usize {
+        for (i, station) in self.value.stations.iter().enumerate() {
+            if station._name().to_lowercase() == name_or_telegram_code.to_lowercase()
+                || station._telegram_code().to_uppercase() == name_or_telegram_code.to_uppercase()
+            {
+                return i;
+            }
+        }
+        self.value.stations.len()
+    }
+
     /*
         static std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>
         build_entries(const timetable_value& timetable_)
@@ -646,26 +676,7 @@ public:
     */
     ~timetable();
 */
-/*
-    // functions
 
-    /*!
-        \brief Returns the stations.
-
-        \return The stations.
-    */
-    [[nodiscard]] const std::vector<station>& stations() const;
-*/
-/*
-    /*!
-        \brief Returns the station index.
-
-        \param name_or_telegram_code A name or telegram code.
-
-        \return The index. Or std::size(stations()) when no station is found.
-    */
-    [[nodiscard]] std::size_t station_index(const std::string& name_or_telegram_code) const;
-*/
 /*
     /*!
         \brief Creates a vocabulary.
@@ -697,31 +708,6 @@ public:
     explicit impl(std::unique_ptr<std::istream>&& p_input_stream) :
     m_timetable{ build_timetable(std::move(p_input_stream)) }
     {}
-*/
-/*
-    // functions
-
-    const std::vector<station>& stations() const
-    {
-        return m_timetable.stations;
-    }
-*/
-/*
-    std::size_t station_index(const std::string& name_or_telegram_code) const
-    {
-        for (auto i = static_cast<std::size_t>(0); i < std::size(m_timetable.stations); ++i)
-        {
-            if (const auto& station = m_timetable.stations[i];
-                boost::algorithm::to_lower_copy(station.name()) ==
-                    boost::algorithm::to_lower_copy(name_or_telegram_code) ||
-                boost::algorithm::to_upper_copy(station.telegram_code()) ==
-                    boost::algorithm::to_upper_copy(name_or_telegram_code))
-            {
-                return i;
-            }
-        }
-        return std::size(m_timetable.stations);
-    }
 */
 /*
     std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(const std::size_t departure_time) const
