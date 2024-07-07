@@ -98,8 +98,8 @@ impl Station {
  * A stop.
  */
 pub(crate) struct Stop {
-    _arrival_time: Option<usize>,
-    _departure_time: Option<usize>,
+    arrival_time: Option<usize>,
+    departure_time: Option<usize>,
 }
 
 impl Stop {
@@ -112,8 +112,8 @@ impl Stop {
      */
     pub(crate) const fn new(arrival_time: Option<usize>, departure_time: Option<usize>) -> Self {
         Self {
-            _arrival_time: arrival_time,
-            _departure_time: departure_time,
+            arrival_time,
+            departure_time,
         }
     }
 
@@ -124,7 +124,7 @@ impl Stop {
      * The arrival time.
      */
     pub(crate) const fn arrival_time(&self) -> Option<usize> {
-        self._arrival_time
+        self.arrival_time
     }
 
     /**
@@ -134,7 +134,7 @@ impl Stop {
      * * `time` - An arrival time.
      */
     pub(crate) fn set_arrival_time(&mut self, time: usize) {
-        self._arrival_time = Some(time);
+        self.arrival_time = Some(time);
     }
 
     /**
@@ -144,7 +144,7 @@ impl Stop {
      * The departure time.
      */
     pub(crate) const fn departure_time(&self) -> Option<usize> {
-        self._departure_time
+        self.departure_time
     }
 
     /**
@@ -154,7 +154,7 @@ impl Stop {
      * * `time` - A departure time.
      */
     pub(crate) fn set_departure_time(&mut self, time: usize) {
-        self._departure_time = Some(time);
+        self.departure_time = Some(time);
     }
 }
 
@@ -164,7 +164,7 @@ impl Stop {
 pub(crate) struct Train {
     _number: String,
     _name: String,
-    _stops: Vec<Stop>,
+    stops: Vec<Stop>,
 }
 
 impl Train {
@@ -180,7 +180,7 @@ impl Train {
         Self {
             _number: number,
             _name: name,
-            _stops: stops,
+            stops,
         }
     }
 
@@ -211,7 +211,7 @@ impl Train {
      * The stops.
      */
     pub(crate) fn stops(&self) -> &[Stop] {
-        self._stops.as_slice()
+        self.stops.as_slice()
     }
 
     /**
@@ -221,7 +221,7 @@ impl Train {
      * The stops.
      */
     pub(crate) fn stops_mut(&mut self) -> &mut Vec<Stop> {
-        &mut self._stops
+        &mut self.stops
     }
 }
 
