@@ -42,6 +42,12 @@ pub(crate) enum TimetableError {
      */
     #[error("invalid time found")]
     InvalidTimeFound,
+
+    /**
+     * Both arrival and departure time not found.
+     */
+    #[error("both arrival and departure time not found")]
+    BothArrivalAndDepartureTimeNotFound,
 }
 
 /**
@@ -117,7 +123,7 @@ impl Stop {
      * # Returns
      * The arrival time.
      */
-    pub(crate) const fn _arrival_time(&self) -> Option<usize> {
+    pub(crate) const fn arrival_time(&self) -> Option<usize> {
         self._arrival_time
     }
 
@@ -127,7 +133,7 @@ impl Stop {
      * # Arguments
      * * `time` - An arrival time.
      */
-    pub(crate) fn _set_arrival_time(&mut self, time: usize) {
+    pub(crate) fn set_arrival_time(&mut self, time: usize) {
         self._arrival_time = Some(time);
     }
 
@@ -137,7 +143,7 @@ impl Stop {
      * # Returns
      * The departure time.
      */
-    pub(crate) const fn _departure_time(&self) -> Option<usize> {
+    pub(crate) const fn departure_time(&self) -> Option<usize> {
         self._departure_time
     }
 
@@ -147,7 +153,7 @@ impl Stop {
      * # Arguments
      * * `time` - A departure time.
      */
-    pub(crate) fn _set_departure_time(&mut self, time: usize) {
+    pub(crate) fn set_departure_time(&mut self, time: usize) {
         self._departure_time = Some(time);
     }
 }
@@ -204,7 +210,7 @@ impl Train {
      * # Returns
      * The stops.
      */
-    pub(crate) fn _stops(&self) -> &[Stop] {
+    pub(crate) fn stops(&self) -> &[Stop] {
         self._stops.as_slice()
     }
 
@@ -214,8 +220,8 @@ impl Train {
      * # Returns
      * The stops.
      */
-    pub(crate) fn _stops_mut(&mut self) -> &Vec<Stop> {
-        &self._stops
+    pub(crate) fn stops_mut(&mut self) -> &mut Vec<Stop> {
+        &mut self._stops
     }
 }
 
@@ -273,16 +279,13 @@ impl<'a> _Section<'a> {
 }
 
 struct TimetableValue {
-    _stations: Vec<Station>,
-    _trains: Vec<Train>,
+    stations: Vec<Station>,
+    trains: Vec<Train>,
 }
 
 impl TimetableValue {
     fn new(stations: Vec<Station>, trains: Vec<Train>) -> Self {
-        Self {
-            _stations: stations,
-            _trains: trains,
-        }
+        Self { stations, trains }
     }
 }
 
@@ -307,22 +310,10 @@ impl Timetable {
     }
 
     fn build_timetable(mut reader: Box<dyn BufRead>) -> Result<TimetableValue> {
-        let value = Self::parse_input(reader.as_mut())?;
-        //guess_arrival_times(&mut value);
+        let mut value = Self::parse_input(reader.as_mut())?;
+        Self::guess_arrival_times(&mut value)?;
         Ok(value)
     }
-    /*
-    private:
-        // static functions
-
-        static timetable_value build_timetable(std::unique_ptr<std::istream>&& p_input_stream)
-        {
-            assert(p_input_stream);
-            auto timetable_value = parse_input(*p_input_stream);
-            guess_arrival_times(timetable_value);
-            return timetable_value;
-        }
-    */
 
     fn parse_input(reader: &mut dyn BufRead) -> Result<TimetableValue> {
         let mut lines = reader.lines();
@@ -421,62 +412,89 @@ impl Timetable {
         Ok(Some(hour * 60 + minute))
     }
 
-    /*
-        static void guess_arrival_times(timetable_value& timetable_)
-        {
-            for (auto from = static_cast<std::size_t>(0); from < std::size(timetable_.stations) - 1; ++from)
-            {
-                for (auto to = from + 1; to < std::size(timetable_.stations); ++to)
-                {
-                    const auto minimum_duration_ = minimum_duration(timetable_.trains, from, to);
-
-                    for (auto& train: timetable_.trains)
-                    {
-                        if (!all_passing(train.stops(), from, to))
-                        {
-                            continue;
-                        }
-
-                        if (!train.stops()[to].arrival_time())
-                        {
-                            train.stops()[to].set_arrival_time(
-                                add_time(*train.stops()[from].departure_time(), minimum_duration_));
-                        }
-                        else if (!train.stops()[from].departure_time())
-                        {
-                            train.stops()[from].set_departure_time(
-                                add_time(*train.stops()[to].arrival_time(), -minimum_duration_));
-                        }
+    fn guess_arrival_times(value: &mut TimetableValue) -> Result<()> {
+        for from in 0..value.stations.len() - 1 {
+            for to in from + 1..value.stations.len() {
+                let minimum_duration = Self::minimum_duration(value.trains.as_ref(), from, to)?;
+                for train in &mut value.trains {
+                    if !Self::all_passing(train.stops(), from, to) {
+                        continue;
+                    }
+                    if train.stops()[to].arrival_time().is_none() {
+                        let Some(from_departure_time) = train.stops()[from].departure_time() else {
+                            return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
+                        };
+                        train.stops_mut()[to].set_arrival_time(Self::add_time(
+                            from_departure_time,
+                            minimum_duration,
+                        ));
+                    } else if train.stops()[from].departure_time().is_none() {
+                        let Some(to_arrival_time) = train.stops()[to].arrival_time() else {
+                            return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
+                        };
+                        train.stops_mut()[from]
+                            .set_departure_time(Self::add_time(to_arrival_time, -minimum_duration));
                     }
                 }
             }
         }
-    */
-    /*
-        static std::ptrdiff_t
-        minimum_duration(const std::vector<train>& trains, const std::size_t from, const std::size_t to)
-        {
-            auto minimum = std::numeric_limits<std::ptrdiff_t>::max();
-            for (const auto& train: trains)
-            {
-                if (!all_passing(train.stops(), from, to))
-                {
-                    continue;
-                }
+        Ok(())
+    }
 
-                const auto from_time = train.stops()[from].departure_time() ? *train.stops()[from].departure_time() :
-                                                                              *train.stops()[from].arrival_time();
-                const auto to_time = train.stops()[to].arrival_time() ? *train.stops()[to].arrival_time() :
-                                                                        *train.stops()[to].departure_time();
-
-                if (diff_time(to_time, from_time) < minimum)
-                {
-                    minimum = diff_time(to_time, from_time);
-                }
+    fn minimum_duration(trains: &[Train], from: usize, to: usize) -> Result<isize> {
+        let mut minimum = isize::MAX;
+        for train in trains {
+            if !Self::all_passing(train.stops(), from, to) {
+                continue;
             }
-            return minimum;
+            let from_time = if let Some(departure_time) = train.stops()[from].arrival_time() {
+                departure_time
+            } else if let Some(departure_time) = train.stops()[from].departure_time() {
+                departure_time
+            } else {
+                return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
+            };
+            let to_time = if let Some(arrival_time) = train.stops()[to].arrival_time() {
+                arrival_time
+            } else if let Some(arrival_time) = train.stops()[to].departure_time() {
+                arrival_time
+            } else {
+                return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
+            };
+            if Self::diff_time(to_time, from_time) < minimum {
+                minimum = Self::diff_time(to_time, from_time);
+            }
         }
-    */
+        Ok(minimum)
+    }
+
+    fn add_time(time: usize, duration: isize) -> usize {
+        assert!(time < 1440);
+        assert!(-1440 < duration && duration < 1440);
+        (time as isize + 1440 + duration) as usize % 1440
+    }
+
+    fn diff_time(time1: usize, time2: usize) -> isize {
+        assert!(time1 < 1440);
+        assert!(time2 < 1440);
+        (time1 as isize + 1440 - time2 as isize) % 1440
+    }
+
+    fn all_passing(stops: &[Stop], from: usize, to: usize) -> bool {
+        if stops[from].arrival_time().is_none() && stops[from].departure_time().is_none() {
+            return false;
+        }
+        if stops[to].arrival_time().is_none() && stops[to].departure_time().is_none() {
+            return false;
+        }
+        for stop in stops.iter().take(to).skip(from + 1) {
+            if stop.arrival_time().is_some() || stop.departure_time().is_some() {
+                return false;
+            }
+        }
+        true
+    }
+
     /*
         static std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>
         build_entries(const timetable_value& timetable_)
@@ -542,27 +560,6 @@ impl Timetable {
         }
     */
     /*
-        static bool all_passing(const std::vector<stop>& stops, const std::size_t from, const std::size_t to)
-        {
-            if (!stops[from].arrival_time() && !stops[from].departure_time())
-            {
-                return false;
-            }
-            if (!stops[to].arrival_time() && !stops[to].departure_time())
-            {
-                return false;
-            }
-            for (auto i = from + 1; i + 1 < to + 1; ++i)
-            {
-                if (stops[i].arrival_time() || stops[i].departure_time())
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-    */
-    /*
         static std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> build_connections(
             const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>& entries,
             const std::size_t                                                                departure_time)
@@ -624,22 +621,6 @@ impl Timetable {
             }
 
             return connections;
-        }
-    */
-    /*
-        static std::size_t add_time(const std::size_t time, const std::ptrdiff_t duration)
-        {
-            assert(time < 1440);
-            assert(-1440 < duration && duration < 1440);
-            return (time + 1440 + duration) % 1440;
-        }
-    */
-    /*
-        static std::ptrdiff_t diff_time(const std::size_t time1, const std::size_t time2)
-        {
-            assert(time1 < 1440);
-            assert(time2 < 1440);
-            return (time1 + 1440 - time2) % 1440;
         }
     */
 }
