@@ -4,9 +4,14 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::collections::HashMap;
 use std::io::{BufRead, Lines};
+use std::rc::Rc;
 
 use anyhow::Result;
+use tetengo_lattice::entry::Entry;
+use tetengo_lattice::string_input::StringInput;
+use tetengo_lattice::vocabulary::Vocabulary;
 
 /**
  * A timetable error.
@@ -97,6 +102,7 @@ impl Station {
 /**
  * A stop.
  */
+#[derive(Clone)]
 pub(crate) struct Stop {
     arrival_time: Option<usize>,
     departure_time: Option<usize>,
@@ -161,6 +167,7 @@ impl Stop {
 /**
  * A train.
  */
+#[derive(Clone)]
 pub(crate) struct Train {
     _number: String,
     _name: String,
@@ -228,13 +235,14 @@ impl Train {
 /**
  * A section.
  */
-pub(crate) struct _Section<'a> {
-    train: &'a Train,
-    from: usize,
-    to: usize,
+#[derive(Clone)]
+pub(crate) struct Section {
+    _train: Rc<Train>,
+    _from: usize,
+    _to: usize,
 }
 
-impl<'a> _Section<'a> {
+impl Section {
     /**
      * Creates a section.
      *
@@ -243,8 +251,12 @@ impl<'a> _Section<'a> {
      * * `from`  - A departure station index.
      * * `to`    - An arrival station index.
      */
-    pub(crate) const fn _new(train: &'a Train, from: usize, to: usize) -> Self {
-        Self { train, from, to }
+    pub(crate) const fn new(train: Rc<Train>, from: usize, to: usize) -> Self {
+        Self {
+            _train: train,
+            _from: from,
+            _to: to,
+        }
     }
 
     /**
@@ -253,8 +265,8 @@ impl<'a> _Section<'a> {
      * # Returns
      * The train.
      */
-    pub(crate) const fn _train(&self) -> &Train {
-        self.train
+    pub(crate) fn _train(&self) -> &Train {
+        self._train.as_ref()
     }
 
     /**
@@ -264,7 +276,7 @@ impl<'a> _Section<'a> {
      * The departure station index.
      */
     pub(crate) const fn _from(&self) -> usize {
-        self.from
+        self._from
     }
 
     /**
@@ -274,7 +286,7 @@ impl<'a> _Section<'a> {
      * The arrival station index.
      */
     pub(crate) const fn _to(&self) -> usize {
-        self.to
+        self._to
     }
 }
 
@@ -468,33 +480,6 @@ impl Timetable {
         Ok(minimum)
     }
 
-    fn add_time(time: usize, duration: isize) -> usize {
-        assert!(time < 1440);
-        assert!(-1440 < duration && duration < 1440);
-        (time as isize + 1440 + duration) as usize % 1440
-    }
-
-    fn diff_time(time1: usize, time2: usize) -> isize {
-        assert!(time1 < 1440);
-        assert!(time2 < 1440);
-        (time1 as isize + 1440 - time2 as isize) % 1440
-    }
-
-    fn all_passing(stops: &[Stop], from: usize, to: usize) -> bool {
-        if stops[from].arrival_time().is_none() && stops[from].departure_time().is_none() {
-            return false;
-        }
-        if stops[to].arrival_time().is_none() && stops[to].departure_time().is_none() {
-            return false;
-        }
-        for stop in stops.iter().take(to).skip(from + 1) {
-            if stop.arrival_time().is_some() || stop.departure_time().is_some() {
-                return false;
-            }
-        }
-        true
-    }
-
     /**
      * Returns the stations.
      *
@@ -525,6 +510,20 @@ impl Timetable {
         self.value.stations.len()
     }
 
+    /**
+     * Creates a vocabulary.
+     *
+     * # Arguments
+     * * `departure_time` - A departure time.
+     *
+     * # Returns
+     * A vocabulary.
+     */
+    pub(crate) fn create_vocabulary(&self, _departure_time: usize) -> Box<dyn Vocabulary> {
+        let _entries = Self::build_entries(&self.value);
+        todo!()
+    }
+
     /*
         /*!
             \brief Creates a vocabulary.
@@ -545,6 +544,28 @@ impl Timetable {
         }
     */
 
+    fn build_entries(timetable: &TimetableValue) -> Vec<(String, Vec<Entry>)> {
+        let mut map = HashMap::<String, Vec<Entry>>::new();
+        for train in &timetable.trains {
+            for from in 0..timetable.stations.len() - 1 {
+                for to in from + 1..timetable.stations.len() {
+                    if !Self::all_passing(train.stops(), from, to) {
+                        continue;
+                    }
+
+                    let section_name = Self::make_section_name(&timetable.stations, from, to);
+                    let found = map.entry(section_name.clone()).or_default();
+                    let section = Section::new(Rc::new(train.clone()), from, to);
+                    found.push(Entry::new(
+                        Box::new(StringInput::new(section_name)),
+                        Box::new(section),
+                        Self::make_section_duration(train.stops(), from, to) as i32,
+                    ));
+                }
+            }
+        }
+        todo!()
+    }
     /*
         static std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>
         build_entries(const timetable_value& timetable_)
@@ -588,6 +609,33 @@ impl Timetable {
             return entries;
         }
     */
+
+    fn all_passing(stops: &[Stop], from: usize, to: usize) -> bool {
+        if stops[from].arrival_time().is_none() && stops[from].departure_time().is_none() {
+            return false;
+        }
+        if stops[to].arrival_time().is_none() && stops[to].departure_time().is_none() {
+            return false;
+        }
+        for stop in stops.iter().take(to).skip(from + 1) {
+            if stop.arrival_time().is_some() || stop.departure_time().is_some() {
+                return false;
+            }
+        }
+        true
+    }
+
+    fn make_section_name(stations: &[Station], from: usize, to: usize) -> String {
+        let mut name = String::new();
+        for i in from..to {
+            name += &format!(
+                "{}-{}/",
+                stations[i].telegram_code(),
+                stations[i + 1].telegram_code()
+            );
+        }
+        name
+    }
     /*
         static std::string
         make_section_name(const std::vector<station>& stations, const std::size_t from, const std::size_t to)
@@ -600,6 +648,16 @@ impl Timetable {
             return name;
         }
     */
+
+    fn make_section_duration(stops: &[Stop], from: usize, to: usize) -> usize {
+        let departure_time = stops[from].departure_time().unwrap_or_else(|| {
+            unreachable!("departure_time must be set.");
+        });
+        let arrival_time = stops[to].arrival_time().unwrap_or_else(|| {
+            unreachable!("arrival_time must be set.");
+        });
+        Self::diff_time(arrival_time, departure_time) as usize
+    }
     /*
         static std::size_t
         make_section_duration(const std::vector<stop>& stops, const std::size_t from, const std::size_t to)
@@ -609,6 +667,7 @@ impl Timetable {
             return diff_time(*stops[to].arrival_time(), *stops[from].departure_time());
         }
     */
+
     /*
         static std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> build_connections(
             const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>& entries,
@@ -652,8 +711,7 @@ impl Timetable {
                     }
                 }
             }
-    */
-    /*
+
             for (const auto& key_and_entries: entries)
             {
                 for (const auto& entry: key_and_entries.second)
@@ -673,6 +731,18 @@ impl Timetable {
             return connections;
         }
     */
+
+    fn add_time(time: usize, duration: isize) -> usize {
+        assert!(time < 1440);
+        assert!(-1440 < duration && duration < 1440);
+        (time as isize + 1440 + duration) as usize % 1440
+    }
+
+    fn diff_time(time1: usize, time2: usize) -> isize {
+        assert!(time1 < 1440);
+        assert!(time2 < 1440);
+        (time1 as isize + 1440 - time2 as isize) % 1440
+    }
 }
 
 /*

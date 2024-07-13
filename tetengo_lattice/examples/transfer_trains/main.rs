@@ -33,14 +33,14 @@ fn main_core() -> Result<()> {
 
     let mut lines = stdin().lines();
     loop {
-        let ((_departure_station_index, _departure_timee), _arrival_station_indexex) =
+        let ((_departure_station_index, departure_time), _arrival_station_indexex) =
             match get_departure_and_arrival(&mut lines, &timetable)? {
                 Input::DepartureAndArrival(Some(value)) => value,
                 Input::DepartureAndArrival(None) => continue,
                 Input::Eof => break,
             };
 
-        // let vocabulary = timetable.create_vocabulary(departure_time);
+        let _vocabulary = timetable.create_vocabulary(departure_time);
     }
 
     Ok(())
