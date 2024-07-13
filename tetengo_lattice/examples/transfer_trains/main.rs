@@ -34,9 +34,9 @@ fn main_core() -> Result<()> {
     let mut lines = stdin().lines();
     loop {
         let _departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)? {
-            DeartureAndArrival::Input(Some(departure_and_arrival)) => departure_and_arrival,
-            DeartureAndArrival::Input(None) => continue,
-            DeartureAndArrival::Eof => break,
+            Input::DepartureAndArrival(Some(value)) => value,
+            Input::DepartureAndArrival(None) => continue,
+            Input::Eof => break,
         };
     }
 
@@ -94,42 +94,42 @@ fn create_reader(path: &Path) -> Result<Box<dyn BufRead>> {
     Ok(Box::new(reader))
 }
 
-enum DeartureAndArrival {
-    Input(Option<((usize, usize), usize)>),
+enum Input {
+    DepartureAndArrival(Option<((usize, usize), usize)>),
     Eof,
 }
 
 fn get_departure_and_arrival(
     lines: &mut Lines<StdinLock<'_>>,
     timetable: &Timetable,
-) -> Result<DeartureAndArrival> {
+) -> Result<Input> {
     let Some(departure_station_index) = get_station_index("Departure Station", lines, timetable)?
     else {
-        return Ok(DeartureAndArrival::Eof);
+        return Ok(Input::Eof);
     };
     if departure_station_index >= timetable.stations().len() {
         println!("No departure station is found.");
-        return Ok(DeartureAndArrival::Input(None));
+        return Ok(Input::DepartureAndArrival(None));
     }
 
     let Some(departure_time) = get_time("Departure Time", lines)? else {
-        return Ok(DeartureAndArrival::Eof);
+        return Ok(Input::Eof);
     };
     if departure_time >= 1440 {
         println!("Wrong time format.");
-        return Ok(DeartureAndArrival::Input(None));
+        return Ok(Input::DepartureAndArrival(None));
     }
 
     let Some(arrival_station_index) = get_station_index("Arrival Station", lines, timetable)?
     else {
-        return Ok(DeartureAndArrival::Eof);
+        return Ok(Input::Eof);
     };
     if arrival_station_index >= timetable.stations().len() {
         println!("No arrival station is found.");
-        return Ok(DeartureAndArrival::Input(None));
+        return Ok(Input::DepartureAndArrival(None));
     };
 
-    Ok(DeartureAndArrival::Input(Some((
+    Ok(Input::DepartureAndArrival(Some((
         (departure_station_index, departure_time),
         arrival_station_index,
     ))))
