@@ -564,51 +564,8 @@ impl Timetable {
                 }
             }
         }
-        todo!()
+        map.into_iter().collect::<Vec<_>>()
     }
-    /*
-        static std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>
-        build_entries(const timetable_value& timetable_)
-        {
-            std::unordered_map<std::string, std::vector<tetengo::lattice::entry>> map{};
-            for (const auto& train_: timetable_.trains)
-            {
-                for (auto from = static_cast<std::size_t>(0); from + 1 < std::size(timetable_.stations); ++from)
-                {
-                    for (auto to = from + 1; to < std::size(timetable_.stations); ++to)
-                    {
-                        if (!all_passing(train_.stops(), from, to))
-                        {
-                            continue;
-                        }
-
-                        auto section_name = make_section_name(timetable_.stations, from, to);
-                        auto found = map.find(section_name);
-                        if (found == std::end(map))
-                        {
-                            auto inserted =
-                                map.insert(std::make_pair(section_name, std::vector<tetengo::lattice::entry>{}));
-                            found = inserted.first;
-                        }
-                        section    section_{ &train_, from, to };
-                        const auto section_duration = make_section_duration(train_.stops(), from, to);
-                        found->second.emplace_back(
-                            std::make_unique<tetengo::lattice::string_input>(std::move(section_name)),
-                            std::move(section_),
-                            static_cast<int>(section_duration));
-                    }
-                }
-            }
-
-            std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>> entries{};
-            entries.reserve(std::size(map));
-            for (auto& map_entry: map)
-            {
-                entries.emplace_back(map_entry.first, std::move(map_entry.second));
-            }
-            return entries;
-        }
-    */
 
     fn all_passing(stops: &[Stop], from: usize, to: usize) -> bool {
         if stops[from].arrival_time().is_none() && stops[from].departure_time().is_none() {
@@ -636,18 +593,6 @@ impl Timetable {
         }
         name
     }
-    /*
-        static std::string
-        make_section_name(const std::vector<station>& stations, const std::size_t from, const std::size_t to)
-        {
-            std::string name;
-            for (auto i = from; i + 1 <= to; ++i)
-            {
-                name += stations[i].telegram_code() + "-" + stations[i + 1].telegram_code() + "/";
-            }
-            return name;
-        }
-    */
 
     fn make_section_duration(stops: &[Stop], from: usize, to: usize) -> usize {
         let departure_time = stops[from].departure_time().unwrap_or_else(|| {
@@ -658,15 +603,6 @@ impl Timetable {
         });
         Self::diff_time(arrival_time, departure_time) as usize
     }
-    /*
-        static std::size_t
-        make_section_duration(const std::vector<stop>& stops, const std::size_t from, const std::size_t to)
-        {
-            assert(stops[from].departure_time());
-            assert(stops[to].arrival_time());
-            return diff_time(*stops[to].arrival_time(), *stops[from].departure_time());
-        }
-    */
 
     /*
         static std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> build_connections(
