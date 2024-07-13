@@ -112,6 +112,12 @@ fn get_departure_and_arrival(
         return Ok(DeartureAndArrival::Input(None));
     }
 
+    let departure_time = get_time("Departure Time", lines)?;
+    if departure_time >= 1440 {
+        println!("Wrong time format.");
+        return Ok(DeartureAndArrival::Input(None));
+    }
+
     Ok(DeartureAndArrival::Input(None))
 }
 /*
@@ -155,37 +161,31 @@ fn get_station_index(
     let input = input?;
     Ok(Some(timetable.station_index(input.trim())))
 }
-/*
-    std::size_t get_time(const std::string& prompt)
-    {
-        std::cout << prompt << ": ";
-        std::string input{};
-        std::cin >> input;
 
-        std::vector<std::string> elements{};
-        boost::split(elements, decode_from_input(input), boost::is_any_of(":"));
-        if (std::size(elements) != 2)
-        {
-            return 1440;
-        }
-        auto hour = static_cast<std::size_t>(0);
-        auto minute = static_cast<std::size_t>(0);
-        try
-        {
-            hour = boost::lexical_cast<std::size_t>(elements[0]);
-            minute = boost::lexical_cast<std::size_t>(elements[1]);
-        }
-        catch (const boost::bad_lexical_cast&)
-        {
-            return 1440;
-        }
-        if (hour >= 24 || minute >= 60)
-        {
-            return 1440;
-        }
-        return hour * 60 + minute;
+fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<usize> {
+    print!("{}: ", prompt);
+    stdout().flush()?;
+    let Some(input) = lines.next() else {
+        return Ok(1440);
+    };
+    let input = input?;
+
+    let elements = input.split(':').collect::<Vec<_>>();
+    if elements.len() != 2 {
+        return Ok(1440);
     }
-*/
+    let Ok(hour) = elements[0].parse::<usize>() else {
+        return Ok(1440);
+    };
+    let Ok(minute) = elements[1].parse::<usize>() else {
+        return Ok(1440);
+    };
+    if hour >= 24 || minute >= 60 {
+        return Ok(1440);
+    }
+    Ok(hour * 60 + minute)
+}
+
 /*
     void build_lattice(
         const std::pair<std::pair<std::size_t, std::size_t>, std::size_t>& departure_and_arrival,
