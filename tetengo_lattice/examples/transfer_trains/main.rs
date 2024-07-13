@@ -112,41 +112,28 @@ fn get_departure_and_arrival(
         return Ok(DeartureAndArrival::Input(None));
     }
 
-    let departure_time = get_time("Departure Time", lines)?;
+    let Some(departure_time) = get_time("Departure Time", lines)? else {
+        return Ok(DeartureAndArrival::Eof);
+    };
     if departure_time >= 1440 {
         println!("Wrong time format.");
         return Ok(DeartureAndArrival::Input(None));
     }
 
-    Ok(DeartureAndArrival::Input(None))
+    let Some(arrival_station_index) = get_station_index("Arrival Station", lines, timetable)?
+    else {
+        return Ok(DeartureAndArrival::Eof);
+    };
+    if arrival_station_index >= timetable.stations().len() {
+        println!("No arrival station is found.");
+        return Ok(DeartureAndArrival::Input(None));
+    };
+
+    Ok(DeartureAndArrival::Input(Some((
+        (departure_station_index, departure_time),
+        arrival_station_index,
+    ))))
 }
-/*
-    std::optional<std::pair<std::pair<std::size_t, std::size_t>, std::size_t>>
-    get_departure_and_arrival(const timetable& timetable_)
-    {
-        const auto departure_station_index = get_station_index("Departure Station", timetable_);
-        if (departure_station_index >= std::size(timetable_.stations()))
-        {
-            std::cout << "No departure station is found." << std::endl;
-            return std::nullopt;
-        }
-
-        const auto departure_time = get_time("Departure Time");
-        if (departure_time >= 1440)
-        {
-            std::cout << "Wrong time format." << std::endl;
-            return std::nullopt;
-        }
-
-        const auto arrival_station_index = get_station_index("Arrival Station", timetable_);
-        if (arrival_station_index >= std::size(timetable_.stations()))
-        {
-            std::cout << "No arrival station is found." << std::endl;
-            return std::nullopt;
-        }
-        return std::make_pair(std::make_pair(departure_station_index, departure_time), arrival_station_index);
-    }
-*/
 
 fn get_station_index(
     prompt: &str,
@@ -162,28 +149,28 @@ fn get_station_index(
     Ok(Some(timetable.station_index(input.trim())))
 }
 
-fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<usize> {
+fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<Option<usize>> {
     print!("{}: ", prompt);
     stdout().flush()?;
     let Some(input) = lines.next() else {
-        return Ok(1440);
+        return Ok(None);
     };
     let input = input?;
 
     let elements = input.split(':').collect::<Vec<_>>();
     if elements.len() != 2 {
-        return Ok(1440);
+        return Ok(Some(1440));
     }
     let Ok(hour) = elements[0].parse::<usize>() else {
-        return Ok(1440);
+        return Ok(Some(1440));
     };
     let Ok(minute) = elements[1].parse::<usize>() else {
-        return Ok(1440);
+        return Ok(Some(1440));
     };
     if hour >= 24 || minute >= 60 {
-        return Ok(1440);
+        return Ok(Some(1440));
     }
-    Ok(hour * 60 + minute)
+    Ok(Some(hour * 60 + minute))
 }
 
 /*
