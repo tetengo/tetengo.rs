@@ -54,8 +54,8 @@ pub(crate) enum TimetableError {
  * A station.
  */
 pub(crate) struct Station {
-    _name: String,
-    _telegram_code: String,
+    name: String,
+    telegram_code: String,
 }
 
 impl Station {
@@ -68,8 +68,8 @@ impl Station {
      */
     pub(crate) const fn new(name: String, telegram_code: String) -> Self {
         Self {
-            _name: name,
-            _telegram_code: telegram_code,
+            name,
+            telegram_code,
         }
     }
 
@@ -79,8 +79,8 @@ impl Station {
      * # Returns
      * The name.
      */
-    pub(crate) fn _name(&self) -> &str {
-        self._name.as_str()
+    pub(crate) fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     /**
@@ -89,8 +89,8 @@ impl Station {
      * # Returns
      * The telegram code.
      */
-    pub(crate) fn _telegram_code(&self) -> &str {
-        self._telegram_code.as_str()
+    pub(crate) fn telegram_code(&self) -> &str {
+        self.telegram_code.as_str()
     }
 }
 
@@ -516,14 +516,34 @@ impl Timetable {
      */
     pub(crate) fn station_index(&self, name_or_telegram_code: &str) -> usize {
         for (i, station) in self.value.stations.iter().enumerate() {
-            if station._name().to_lowercase() == name_or_telegram_code.to_lowercase()
-                || station._telegram_code().to_uppercase() == name_or_telegram_code.to_uppercase()
+            if station.name().to_lowercase() == name_or_telegram_code.to_lowercase()
+                || station.telegram_code().to_uppercase() == name_or_telegram_code.to_uppercase()
             {
                 return i;
             }
         }
         self.value.stations.len()
     }
+
+    /*
+        /*!
+            \brief Creates a vocabulary.
+
+            \param departure_time A departure time.
+
+            \return A vocabulary.
+        */
+        [[nodiscard]] std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(std::size_t departure_time) const;
+    */
+    /*
+        std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(const std::size_t departure_time) const
+        {
+            auto entries = build_entries(m_timetable);
+            auto connections = build_connections(entries, departure_time);
+            return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
+                std::move(entries), std::move(connections), entry_hash, entry_equal_to);
+        }
+    */
 
     /*
         static std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>
@@ -654,93 +674,6 @@ impl Timetable {
         }
     */
 }
-
-/*
-/*!
-    \brief A timetable vocabulary.
-*/
-class timetable : private boost::noncopyable
-{
-public:
-    // constructors and destructor
-
-    /*!
-        \brief Creates a timetable vocabulary.
-
-        \param p_input_stream A unique pointer to an input stream.
-    */
-    explicit timetable(std::unique_ptr<std::istream>&& p_input_stream);
-
-    /*!
-        \brief Destroys the timetable vocabulary.
-    */
-    ~timetable();
-*/
-
-/*
-    /*!
-        \brief Creates a vocabulary.
-
-        \param departure_time A departure time.
-
-        \return A vocabulary.
-    */
-    [[nodiscard]] std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(std::size_t departure_time) const;
-*/
-/*
-private:
-    // types
-
-    class impl;
-
-
-    // variables
-
-    const std::unique_ptr<impl> m_p_impl;
-};
- */
-/*
-class timetable::impl : private boost::noncopyable
-{
-public:
-    // constructors and destructor
-
-    explicit impl(std::unique_ptr<std::istream>&& p_input_stream) :
-    m_timetable{ build_timetable(std::move(p_input_stream)) }
-    {}
-*/
-/*
-    std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(const std::size_t departure_time) const
-    {
-        auto entries = build_entries(m_timetable);
-        auto connections = build_connections(entries, departure_time);
-        return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
-            std::move(entries), std::move(connections), entry_hash, entry_equal_to);
-    }
-*/
-
-/*
-timetable::timetable(std::unique_ptr<std::istream>&& p_input_stream) :
-m_p_impl{ std::make_unique<impl>(std::move(p_input_stream)) }
-{}
-
-timetable::~timetable() = default;
-
-const std::vector<station>& timetable::stations() const
-{
-    return m_p_impl->stations();
-}
-
-std::size_t timetable::station_index(const std::string& name_or_telegram_code) const
-{
-    return m_p_impl->station_index(name_or_telegram_code);
-}
-
-std::unique_ptr<tetengo::lattice::vocabulary> timetable::create_vocabulary(const std::size_t departure_time) const
-{
-    return m_p_impl->create_vocabulary(departure_time);
-}
- */
 
 /*
     std::size_t entry_hash(const tetengo::lattice::entry_view& entry)
