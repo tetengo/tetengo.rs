@@ -169,7 +169,7 @@ impl Stop {
  */
 #[derive(Clone)]
 pub(crate) struct Train {
-    _number: String,
+    number: String,
     _name: String,
     stops: Vec<Stop>,
 }
@@ -185,7 +185,7 @@ impl Train {
      */
     pub(crate) const fn new(number: String, name: String, stops: Vec<Stop>) -> Self {
         Self {
-            _number: number,
+            number,
             _name: name,
             stops,
         }
@@ -197,8 +197,8 @@ impl Train {
      * # Returns
      * The number.
      */
-    pub(crate) fn _number(&self) -> &str {
-        self._number.as_str()
+    pub(crate) fn number(&self) -> &str {
+        self.number.as_str()
     }
 
     /**
@@ -237,9 +237,9 @@ impl Train {
  */
 #[derive(Clone)]
 pub(crate) struct Section {
-    _train: Rc<Train>,
-    _from: usize,
-    _to: usize,
+    train: Rc<Train>,
+    from: usize,
+    to: usize,
 }
 
 impl Section {
@@ -252,11 +252,7 @@ impl Section {
      * * `to`    - An arrival station index.
      */
     pub(crate) const fn new(train: Rc<Train>, from: usize, to: usize) -> Self {
-        Self {
-            _train: train,
-            _from: from,
-            _to: to,
-        }
+        Self { train, from, to }
     }
 
     /**
@@ -265,8 +261,8 @@ impl Section {
      * # Returns
      * The train.
      */
-    pub(crate) fn _train(&self) -> &Train {
-        self._train.as_ref()
+    pub(crate) fn train(&self) -> &Train {
+        self.train.as_ref()
     }
 
     /**
@@ -275,8 +271,8 @@ impl Section {
      * # Returns
      * The departure station index.
      */
-    pub(crate) const fn _from(&self) -> usize {
-        self._from
+    pub(crate) const fn from(&self) -> usize {
+        self.from
     }
 
     /**
@@ -285,8 +281,8 @@ impl Section {
      * # Returns
      * The arrival station index.
      */
-    pub(crate) const fn _to(&self) -> usize {
-        self._to
+    pub(crate) const fn to(&self) -> usize {
+        self.to
     }
 }
 
@@ -519,8 +515,9 @@ impl Timetable {
      * # Returns
      * A vocabulary.
      */
-    pub(crate) fn create_vocabulary(&self, _departure_time: usize) -> Box<dyn Vocabulary> {
-        let _entries = Self::build_entries(&self.value);
+    pub(crate) fn create_vocabulary(&self, departure_time: usize) -> Box<dyn Vocabulary> {
+        let entries = Self::build_entries(&self.value);
+        let _connections = Self::build_connections(&entries, departure_time);
         todo!()
     }
 
@@ -604,6 +601,81 @@ impl Timetable {
         Self::diff_time(arrival_time, departure_time) as usize
     }
 
+    fn build_connections(
+        entries: &[(String, Vec<Entry>)],
+        departure_time: usize,
+    ) -> Vec<((Entry, Entry), i32)> {
+        let mut connections = Vec::<((Entry, Entry), i32)>::new();
+
+        for (_, from_entries) in entries {
+            for (_, to_entries) in entries {
+                for from_entry in from_entries {
+                    for to_entry in to_entries {
+                        let from_value = from_entry
+                            .value()
+                            .unwrap_or_else(|| {
+                                unreachable!("from_entry.value() must not be empty.")
+                            })
+                            .as_any()
+                            .downcast_ref::<Section>()
+                            .unwrap_or_else(|| unreachable!("from_entry.value() must be Section."));
+                        let to_value = to_entry
+                            .value()
+                            .unwrap_or_else(|| unreachable!("to_entry.value() must not be empty."))
+                            .as_any()
+                            .downcast_ref::<Section>()
+                            .unwrap_or_else(|| unreachable!("to_entry.value() must be Section."));
+                        if from_value.to() != to_value.from() {
+                            continue;
+                        }
+
+                        let from_arrival_time = from_value.train().stops()[from_value.to()]
+                            .arrival_time()
+                            .unwrap_or_else(|| {
+                                unreachable!("from_arrival_time must be set.");
+                            });
+                        let to_departure_time = to_value.train().stops()[to_value.from()]
+                            .departure_time()
+                            .unwrap_or_else(|| {
+                                unreachable!("to_departure_time must be set.");
+                            });
+                        let cost = Self::diff_time(to_departure_time, from_arrival_time) as i32;
+                        if cost > 60 {
+                            continue;
+                        }
+                        if from_value.train().number() != to_value.train().number() {
+                            connections.push(((from_entry.clone(), to_entry.clone()), cost + 1));
+                        } else {
+                            connections.push(((from_entry.clone(), to_entry.clone()), cost));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (_, entries) in entries {
+            for entry in entries {
+                let section = entry
+                    .value()
+                    .unwrap_or_else(|| unreachable!("entry.value() must not be empty."))
+                    .as_any()
+                    .downcast_ref::<Section>()
+                    .unwrap_or_else(|| unreachable!("entry.value() must be Section."));
+                let section_departure_time = section.train().stops()[section.from()]
+                    .departure_time()
+                    .unwrap_or_else(|| {
+                        unreachable!("departure_time() must be set.");
+                    });
+                let bos_cost = Self::diff_time(section_departure_time, departure_time) as i32;
+                if bos_cost <= 240 {
+                    connections.push(((Entry::BosEos, entry.clone()), bos_cost));
+                }
+                connections.push(((entry.clone(), Entry::BosEos), 0));
+            }
+        }
+
+        connections
+    }
     /*
         static std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> build_connections(
             const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>& entries,
