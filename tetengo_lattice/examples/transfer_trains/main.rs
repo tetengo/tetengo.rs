@@ -6,6 +6,7 @@
 
 mod timetable;
 
+use std::collections::HashSet;
 use std::env;
 use std::fs::File;
 use std::io::{stdin, stdout, BufRead, BufReader, Lines, StdinLock, Write};
@@ -13,8 +14,8 @@ use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
-use tetengo_lattice::{Lattice, StringInput};
-use timetable::Timetable;
+use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
+use timetable::{Section, Timetable};
 
 fn main() {
     if let Err(e) = main_core() {
@@ -44,7 +45,9 @@ fn main_core() -> Result<()> {
         let vocabulary = timetable.create_vocabulary(departure_time);
         let mut lattice = Lattice::new(vocabulary.as_ref());
         build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
-        let _eos_and_precedings = lattice.settle();
+        let (eos_node, _) = lattice.settle()?;
+
+        let _trips = enumerate_trips(&lattice, eos_node, 5);
     }
 
     Ok(())
@@ -197,91 +200,97 @@ fn build_lattice(
     Ok(())
 }
 
-/*
-    struct trip_section
-    {
-        std::string_view train_number;
+struct TripSection {
+    pub(crate) train_number: String,
+    pub(crate) _train_name: String,
+    pub(crate) _departure_time: usize,
+    pub(crate) _departure_station: usize,
+    pub(crate) arrival_time: usize,
+    pub(crate) arrival_station: usize,
+}
 
-        std::string_view train_name;
+struct Trip {
+    pub(crate) sections: Vec<TripSection>,
+    pub(crate) cost: i32,
+}
 
-        std::size_t departure_time;
-
-        std::size_t departure_station;
-
-        std::size_t arrival_time;
-
-        std::size_t arrival_station;
-    };
-*/
-/*
-    struct trip
-    {
-        std::vector<trip_section> sections;
-
-        int cost;
-    };
-*/
-/*
-    std::vector<trip> enumerate_trips(
-        const tetengo::lattice::lattice&                                            lattice_,
-        const std::pair<tetengo::lattice::node, std::unique_ptr<std::vector<int>>>& eos_and_precedings,
-        const std::size_t                                                           trip_capacity)
-    {
-        tetengo::lattice::n_best_iterator       iter{ lattice_,
-                                                eos_and_precedings.first,
-                                                std::make_unique<tetengo::lattice::constraint>() };
-        const tetengo::lattice::n_best_iterator last{};
-        std::vector<trip>                       trips{};
-        trips.reserve(trip_capacity);
-        std::unordered_set<std::string_view> duplication_checker{};
-        for (; std::size(trips) < trip_capacity && iter != last; ++iter)
-        {
-            const auto& path = *iter;
-            if (path.cost() >= 1440)
-            {
-                break;
-            }
-
-            trip trip_{};
-            for (const auto& node: path.nodes())
-            {
-                const auto* const p_section = std::any_cast<section>(&node.value());
-                if (!p_section)
-                {
-                    continue;
-                }
-
-                if (std::empty(trip_.sections) || trip_.sections.back().train_number != p_section->p_train()->number())
-                {
-                    trip_.sections.push_back({ p_section->p_train()->number(),
-                                               p_section->p_train()->name(),
-                                               *p_section->p_train()->stops()[p_section->from()].departure_time(),
-                                               p_section->from(),
-                                               *p_section->p_train()->stops()[p_section->to()].arrival_time(),
-                                               p_section->to() });
-                }
-                else
-                {
-                    trip_.sections.back().arrival_time = *p_section->p_train()->stops()[p_section->to()].arrival_time();
-                    trip_.sections.back().arrival_station = p_section->to();
-                }
-            }
-            trip_.cost = path.cost();
-
-            if (duplication_checker.find(trip_.sections.front().train_number) != std::end(duplication_checker) ||
-                duplication_checker.find(trip_.sections.back().train_number) != std::end(duplication_checker))
-            {
-                continue;
-            }
-
-            duplication_checker.insert(trip_.sections.front().train_number);
-            duplication_checker.insert(trip_.sections.back().train_number);
-            trips.push_back(std::move(trip_));
+fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node<'_>, trip_capacity: usize) -> Vec<Trip> {
+    let iter = NBestIterator::new(lattice, eos_node, Box::new(Constraint::new()));
+    let mut trips = Vec::with_capacity(trip_capacity);
+    let mut duplication_checker = HashSet::<String>::new();
+    for path in iter {
+        if trips.len() >= trip_capacity || path.cost() >= 1440 {
+            break;
         }
 
-        return trips;
+        let mut trip = Trip {
+            sections: Vec::new(),
+            cost: 0,
+        };
+        for node in path.nodes() {
+            let section = if let Some(node_value) = node.value() {
+                if let Some(section) = node_value.as_any().downcast_ref::<Section>() {
+                    section
+                } else {
+                    continue;
+                }
+            } else {
+                continue;
+            };
+
+            if trip.sections.is_empty()
+                || trip
+                    .sections
+                    .last()
+                    .unwrap_or_else(|| unreachable!("trip.sections must not empty."))
+                    .train_number
+                    != section.train().number()
+            {
+                trip.sections.push(TripSection {
+                    train_number: section.train().number().to_string(),
+                    _train_name: section.train().name().to_string(),
+                    _departure_time: section.train().stops()[section.from()]
+                        .departure_time()
+                        .unwrap_or_else(|| unreachable!("departure_time must not None.")),
+                    _departure_station: section.from(),
+                    arrival_time: section.train().stops()[section.to()]
+                        .arrival_time()
+                        .unwrap_or_else(|| unreachable!("arrival_time must not None.")),
+                    arrival_station: section.to(),
+                });
+            } else {
+                let last_section = trip
+                    .sections
+                    .last_mut()
+                    .unwrap_or_else(|| unreachable!("trip.sections must not empty."));
+                last_section.arrival_time = section.train().stops()[section.to()]
+                    .arrival_time()
+                    .unwrap_or_else(|| unreachable!("arrival_time must not None."));
+                last_section.arrival_station = section.to();
+            }
+        }
+        trip.cost = path.cost();
+
+        let first_section = trip
+            .sections
+            .first()
+            .unwrap_or_else(|| unreachable!("trip.sections must not empty."));
+        let last_section = trip
+            .sections
+            .last()
+            .unwrap_or_else(|| unreachable!("trip.sections must not empty."));
+        if duplication_checker.contains(&first_section.train_number)
+            || duplication_checker.contains(&last_section.train_number)
+        {
+            continue;
+        }
+        let _ = duplication_checker.insert(first_section.train_number.clone());
+        let _ = duplication_checker.insert(last_section.train_number.clone());
+        trips.push(trip);
     }
-*/
+    trips
+}
+
 /*
     std::string to_fixed_width_train_name(const std::string_view& train_name, const std::size_t width)
     {
