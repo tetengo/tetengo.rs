@@ -10,10 +10,7 @@ use std::io::{BufRead, Lines};
 use std::rc::Rc;
 
 use anyhow::Result;
-use tetengo_lattice::entry::{Entry, EntryView};
-use tetengo_lattice::hash_map_vocabulary::HashMapVocabulary;
-use tetengo_lattice::string_input::StringInput;
-use tetengo_lattice::vocabulary::Vocabulary;
+use tetengo_lattice::{Entry, EntryView, HashMapVocabulary, StringInput, Vocabulary};
 
 /**
  * A timetable error.

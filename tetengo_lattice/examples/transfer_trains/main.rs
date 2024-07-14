@@ -13,6 +13,7 @@ use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
+use tetengo_lattice::{Lattice, StringInput};
 use timetable::Timetable;
 
 fn main() {
@@ -33,14 +34,17 @@ fn main_core() -> Result<()> {
 
     let mut lines = stdin().lines();
     loop {
-        let ((_departure_station_index, departure_time), _arrival_station_indexex) =
-            match get_departure_and_arrival(&mut lines, &timetable)? {
-                Input::DepartureAndArrival(Some(value)) => value,
-                Input::DepartureAndArrival(None) => continue,
-                Input::Eof => break,
-            };
+        let departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)? {
+            Input::DepartureAndArrival(Some(value)) => value,
+            Input::DepartureAndArrival(None) => continue,
+            Input::Eof => break,
+        };
 
-        let _vocabulary = timetable.create_vocabulary(departure_time);
+        let ((_, departure_time), _) = departure_and_arrival;
+        let vocabulary = timetable.create_vocabulary(departure_time);
+        let mut lattice = Lattice::new(vocabulary.as_ref());
+        build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
+        let _eos_and_precedings = lattice.settle();
     }
 
     Ok(())
@@ -176,21 +180,23 @@ fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<Option<usi
     Ok(Some(hour * 60 + minute))
 }
 
-/*
-    void build_lattice(
-        const std::pair<std::pair<std::size_t, std::size_t>, std::size_t>& departure_and_arrival,
-        const timetable&                                                   timetable_,
-        tetengo::lattice::lattice&                                         lattice_)
-    {
-        for (auto i = departure_and_arrival.first.first; i < departure_and_arrival.second; ++i)
-        {
-            auto key =
-                timetable_.stations()[i].telegram_code() + "-" + timetable_.stations()[i + 1].telegram_code() + "/";
-            auto p_input = std::make_unique<tetengo::lattice::string_input>(std::move(key));
-            lattice_.push_back(std::move(p_input));
-        }
+fn build_lattice(
+    ((departure_station_index, _), arrival_station_index): ((usize, usize), usize),
+    timetable: &Timetable,
+    lattice: &mut Lattice<'_>,
+) -> Result<()> {
+    for i in departure_station_index..arrival_station_index {
+        let key = format!(
+            "{}-{}/",
+            timetable.stations()[i].telegram_code(),
+            timetable.stations()[i + 1].telegram_code()
+        );
+        let input = Box::new(StringInput::new(key));
+        lattice.push_back(input)?;
     }
-*/
+    Ok(())
+}
+
 /*
     struct trip_section
     {
