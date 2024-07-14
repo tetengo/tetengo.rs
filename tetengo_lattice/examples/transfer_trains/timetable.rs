@@ -5,11 +5,13 @@
  */
 
 use std::collections::HashMap;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{BufRead, Lines};
 use std::rc::Rc;
 
 use anyhow::Result;
-use tetengo_lattice::entry::Entry;
+use tetengo_lattice::entry::{Entry, EntryView};
+use tetengo_lattice::hash_map_vocabulary::HashMapVocabulary;
 use tetengo_lattice::string_input::StringInput;
 use tetengo_lattice::vocabulary::Vocabulary;
 
@@ -170,7 +172,7 @@ impl Stop {
 #[derive(Clone)]
 pub(crate) struct Train {
     number: String,
-    _name: String,
+    name: String,
     stops: Vec<Stop>,
 }
 
@@ -186,7 +188,7 @@ impl Train {
     pub(crate) const fn new(number: String, name: String, stops: Vec<Stop>) -> Self {
         Self {
             number,
-            _name: name,
+            name,
             stops,
         }
     }
@@ -207,8 +209,8 @@ impl Train {
      * # Returns
      * The name.
      */
-    pub(crate) fn _name(&self) -> &str {
-        self._name.as_str()
+    pub(crate) fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     /**
@@ -517,29 +519,14 @@ impl Timetable {
      */
     pub(crate) fn create_vocabulary(&self, departure_time: usize) -> Box<dyn Vocabulary> {
         let entries = Self::build_entries(&self.value);
-        let _connections = Self::build_connections(&entries, departure_time);
-        todo!()
+        let connections = Self::build_connections(&entries, departure_time);
+        Box::new(HashMapVocabulary::new(
+            entries,
+            connections,
+            &Self::entry_hash_value,
+            &Self::entry_equal_to,
+        ))
     }
-
-    /*
-        /*!
-            \brief Creates a vocabulary.
-
-            \param departure_time A departure time.
-
-            \return A vocabulary.
-        */
-        [[nodiscard]] std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(std::size_t departure_time) const;
-    */
-    /*
-        std::unique_ptr<tetengo::lattice::vocabulary> create_vocabulary(const std::size_t departure_time) const
-        {
-            auto entries = build_entries(m_timetable);
-            auto connections = build_connections(entries, departure_time);
-            return std::make_unique<tetengo::lattice::unordered_map_vocabulary>(
-                std::move(entries), std::move(connections), entry_hash, entry_equal_to);
-        }
-    */
 
     fn build_entries(timetable: &TimetableValue) -> Vec<(String, Vec<Entry>)> {
         let mut map = HashMap::<String, Vec<Entry>>::new();
@@ -632,12 +619,12 @@ impl Timetable {
                         let from_arrival_time = from_value.train().stops()[from_value.to()]
                             .arrival_time()
                             .unwrap_or_else(|| {
-                                unreachable!("from_arrival_time must be set.");
+                                unreachable!("from arrival_time must be set.");
                             });
                         let to_departure_time = to_value.train().stops()[to_value.from()]
                             .departure_time()
                             .unwrap_or_else(|| {
-                                unreachable!("to_departure_time must be set.");
+                                unreachable!("to departure_time must be set.");
                             });
                         let cost = Self::diff_time(to_departure_time, from_arrival_time) as i32;
                         if cost > 60 {
@@ -688,62 +675,73 @@ impl Timetable {
         assert!(time2 < 1440);
         (time1 as isize + 1440 - time2 as isize) % 1440
     }
-}
 
-/*
-    std::size_t entry_hash(const tetengo::lattice::entry_view& entry)
-    {
-        const std::size_t key_hash = entry.p_key() ? entry.p_key()->hash_value() : 0;
-        std::size_t       entry_train_number_hash = std::hash<std::string_view>{}(std::string_view{});
-        std::size_t       entry_train_name_hash = std::hash<std::string_view>{}(std::string_view{});
-        std::size_t       entry_from_hash = std::hash<std::size_t>{}(0);
-        std::size_t       entry_to_hash = std::hash<std::size_t>{}(0);
-        if (entry.value()->has_value())
-        {
-            if (const auto* const p_section = std::any_cast<section>(entry.value()); p_section)
-            {
-                entry_train_number_hash = std::hash<std::string>{}(p_section->p_train()->number());
-                entry_train_name_hash = std::hash<std::string>{}(p_section->p_train()->name());
-                entry_from_hash = std::hash<std::size_t>{}(p_section->from());
-                entry_to_hash = std::hash<std::size_t>{}(p_section->to());
-            }
+    fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
+        let mut hasher = DefaultHasher::new();
+
+        hasher.write_u64(if let Some(key) = entry.key() {
+            key.hash_value()
+        } else {
+            0
+        });
+        let section = if let Some(value) = entry.value() {
+            value.as_any().downcast_ref::<Section>()
+        } else {
+            None
+        };
+        if let Some(section) = section {
+            section.train().number().hash(&mut hasher);
+            section.train().name().hash(&mut hasher);
+            section.from().hash(&mut hasher);
+            section.to().hash(&mut hasher);
+        } else {
+            "".hash(&mut hasher);
+            "".hash(&mut hasher);
+            0usize.hash(&mut hasher);
+            0usize.hash(&mut hasher);
         }
-        return key_hash ^ entry_train_number_hash ^ entry_train_name_hash ^ entry_from_hash ^ entry_to_hash;
-    }
-*/
-/*
-    bool entry_equal_to(const tetengo::lattice::entry_view& one, const tetengo::lattice::entry_view& another)
-    {
-        if (one.value()->has_value() && another.value()->has_value())
-        {
-            const auto* const p_one_section = std::any_cast<section>(one.value());
-            const auto* const p_another_section = std::any_cast<section>(another.value());
-            if (p_one_section && p_another_section)
-            {
-                return ((!one.p_key() && !another.p_key()) ||
-                        (one.p_key() && another.p_key() && *one.p_key() == *another.p_key())) &&
-                       p_one_section->p_train()->number() == p_another_section->p_train()->number() &&
-                       p_one_section->p_train()->name() == p_another_section->p_train()->name() &&
-                       p_one_section->from() == p_another_section->from() &&
-                       p_one_section->to() == p_another_section->to();
-            }
-            else
-            {
-                assert(false);
-                throw std::logic_error{ "Unexpected entry value." };
-            }
-        }
-        else if (one.value()->has_value() || another.value()->has_value())
-        {
-            return false;
-        }
-        else
-        {
-            return (!one.p_key() && !another.p_key()) ||
-                   (one.p_key() && another.p_key() && *one.p_key() == *another.p_key());
-        }
+        hasher.finish()
     }
 
-
+    fn entry_equal_to(one: &EntryView<'_>, another: &EntryView<'_>) -> bool {
+        if let Some(one_value) = one.value() {
+            if let Some(another_value) = another.value() {
+                let Some(one_section) = one_value.as_any().downcast_ref::<Section>() else {
+                    unreachable!("one.value() must be Section.");
+                };
+                let Some(another_section) = another_value.as_any().downcast_ref::<Section>() else {
+                    unreachable!("another.value() must be Section.");
+                };
+                let is_equal = if let Some(one_key) = one.key() {
+                    if let Some(another_key) = another.key() {
+                        one_key.equal_to(another_key)
+                    } else {
+                        false
+                    }
+                } else {
+                    another.key().is_none()
+                } && one_section.train().number()
+                    == another_section.train().number()
+                    && one_section.train().name() == another_section.train().name()
+                    && one_section.from() == another_section.from()
+                    && one_section.to() == another_section.to();
+                is_equal
+            } else {
+                false
+            }
+        } else if another.value().is_none() {
+            let is_equal = if let Some(one_key) = one.key() {
+                if let Some(another_key) = another.key() {
+                    one_key.equal_to(another_key)
+                } else {
+                    false
+                }
+            } else {
+                another.key().is_none()
+            };
+            is_equal
+        } else {
+            false
+        }
+    }
 }
-*/
