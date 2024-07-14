@@ -676,69 +676,6 @@ impl Timetable {
 
         connections
     }
-    /*
-        static std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> build_connections(
-            const std::vector<std::pair<std::string, std::vector<tetengo::lattice::entry>>>& entries,
-            const std::size_t                                                                departure_time)
-        {
-            std::vector<std::pair<std::pair<tetengo::lattice::entry, tetengo::lattice::entry>, int>> connections{};
-
-            for (const auto& from: entries)
-            {
-                for (const auto& to: entries)
-                {
-                    for (const auto& from_entry: from.second)
-                    {
-                        for (const auto& to_entry: to.second)
-                        {
-                            const auto* const p_from_value = std::any_cast<section>(&from_entry.value());
-                            const auto* const p_to_value = std::any_cast<section>(&to_entry.value());
-                            if (p_from_value->to() != p_to_value->from())
-                            {
-                                continue;
-                            }
-
-                            const auto from_arrival_time =
-                                p_from_value->p_train()->stops()[p_from_value->to()].arrival_time();
-                            const auto to_departure_time =
-                                p_to_value->p_train()->stops()[p_to_value->from()].departure_time();
-                            assert(from_arrival_time);
-                            assert(to_departure_time);
-                            auto cost = static_cast<int>(diff_time(*to_departure_time, *from_arrival_time));
-                            if (cost > 60)
-                            {
-                                continue;
-                            }
-                            if (p_from_value->p_train()->number() != p_to_value->p_train()->number())
-                            {
-                                cost += 1;
-                            }
-
-                            connections.emplace_back(std::make_pair(from_entry, to_entry), cost);
-                        }
-                    }
-                }
-            }
-
-            for (const auto& key_and_entries: entries)
-            {
-                for (const auto& entry: key_and_entries.second)
-                {
-                    const auto* const p_section = std::any_cast<section>(&entry.value());
-                    const auto        section_departure_time =
-                        p_section ? *p_section->p_train()->stops()[p_section->from()].departure_time() : 0;
-                    if (const auto bos_cost = static_cast<int>(diff_time(section_departure_time, departure_time));
-                        bos_cost <= 240)
-                    {
-                        connections.emplace_back(std::make_pair(tetengo::lattice::entry::bos_eos(), entry), bos_cost);
-                    }
-                    connections.emplace_back(std::make_pair(entry, tetengo::lattice::entry::bos_eos()), 0);
-                }
-            }
-
-            return connections;
-        }
-    */
 
     fn add_time(time: usize, duration: isize) -> usize {
         assert!(time < 1440);
