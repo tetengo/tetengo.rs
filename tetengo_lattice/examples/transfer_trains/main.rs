@@ -16,6 +16,7 @@ use std::process::exit;
 use anyhow::Result;
 use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
 use timetable::{Section, Timetable};
+use unicode_width::UnicodeWidthStr;
 
 fn main() {
     if let Err(e) = main_core() {
@@ -267,31 +268,14 @@ fn print_trips(trips: &[Trip], timetable: &Timetable) {
     println!("--------------------------------");
 }
 
-fn to_fixed_width_train_name(train_name: &str, _width: usize) -> String {
-    train_name.to_string()
-}
-/*
-    std::string to_fixed_width_train_name(const std::string_view& train_name, const std::size_t width)
-    {
-        const tetengo::text::grapheme_splitter grapheme_splitter_{};
-        const auto                             graphemes = grapheme_splitter_.split(train_name);
-        const auto                             train_name_width = std::accumulate(
-            std::begin(graphemes),
-            std::end(graphemes),
-            static_cast<std::size_t>(0),
-            [](const std::size_t subtotal, const tetengo::text::grapheme& grapheme) {
-                return subtotal + grapheme.width();
-            });
-        if (train_name_width >= width)
-        {
-            return std::string{ train_name };
-        }
-        else
-        {
-            return std::string{ train_name } + std::string(width - train_name_width, ' ');
-        }
+fn to_fixed_width_train_name(train_name: &str, width: usize) -> String {
+    let train_name_with = train_name.width_cjk();
+    if train_name_with >= width {
+        train_name.to_string()
+    } else {
+        format!("{}{}", train_name, " ".repeat(width - train_name_with))
     }
-*/
+}
 
 fn to_time_string(time_value: usize) -> String {
     assert!(time_value < 1440);
