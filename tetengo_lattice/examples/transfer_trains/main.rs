@@ -47,57 +47,13 @@ fn main_core() -> Result<()> {
         build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
         let (eos_node, _) = lattice.settle()?;
 
-        let _trips = enumerate_trips(&lattice, eos_node, 5);
+        let trips = enumerate_trips(&lattice, eos_node, 5);
+
+        print_trips(&trips, &timetable);
     }
 
     Ok(())
 }
-/*
-int main(const int argc, char** const argv)
-{
-    try
-    {
-        std::locale::global(std::locale{ "" });
-
-        if (argc <= 1)
-        {
-            std::cerr << "Usage: transfer_trains timetable.txt" << std::endl;
-            return 0;
-        }
-
-        const timetable timetable_{ create_input_stream(argv[1]) };
-
-        while (std::cin)
-        {
-            const auto departure_and_arrival = get_departure_and_arrival(timetable_);
-            if (!departure_and_arrival)
-            {
-                continue;
-            }
-
-            const auto                p_vocabulary = timetable_.create_vocabulary(departure_and_arrival->first.second);
-            tetengo::lattice::lattice lattice_{ *p_vocabulary };
-            build_lattice(*departure_and_arrival, timetable_, lattice_);
-            const auto eos_and_precedings = lattice_.settle();
-
-            const auto trips = enumerate_trips(lattice_, eos_and_precedings, 5);
-
-            print_trips(trips, timetable_);
-        }
-        return 0;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
-    }
-    catch (...)
-    {
-        std::cerr << "Error: unknown error." << std::endl;
-        return 1;
-    }
-}
- */
 
 fn create_reader(path: &Path) -> Result<Box<dyn BufRead>> {
     let reader = BufReader::new(File::open(path)?);
@@ -291,6 +247,29 @@ fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node<'_>, trip_capacity: usi
     trips
 }
 
+fn print_trips(trips: &[Trip], timetable: &Timetable) {
+    for (i, trip) in trips.iter().enumerate() {
+        println!("[{}] Cost: {}", i + 1, trip.cost);
+
+        for section in &trip.sections {
+            let train = format!(
+                "    {:5} {} {:5}->{:5} {}->{}",
+                section.train_number,
+                to_fixed_width_train_name(&section._train_name, 40),
+                to_time_string(section._departure_time),
+                to_time_string(section.arrival_time),
+                timetable.stations()[section._departure_station].name(),
+                timetable.stations()[section.arrival_station].name()
+            );
+            println!("{}", train);
+        }
+    }
+    println!("--------------------------------");
+}
+
+fn to_fixed_width_train_name(train_name: &str, _width: usize) -> String {
+    train_name.to_string()
+}
 /*
     std::string to_fixed_width_train_name(const std::string_view& train_name, const std::size_t width)
     {
@@ -313,37 +292,8 @@ fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node<'_>, trip_capacity: usi
         }
     }
 */
-/*
-    std::string to_time_string(const int time_value)
-    {
-        assert(0 <= time_value && time_value < 1440);
-        return (boost::format{ "%02d:%02d" } % (time_value / 60) % (time_value % 60)).str();
-    }
-*/
-/*
-    void print_trips(const std::vector<trip>& trips, const timetable& timetable_)
-    {
-        for (auto i = static_cast<std::size_t>(0); i < std::size(trips); ++i)
-        {
-            const auto& trip_ = trips[i];
 
-            std::cout << boost::format("[%d] Cost: %d") % (i + 1) % trip_.cost << std::endl;
-
-            for (const auto& section: trip_.sections)
-            {
-                const auto train = boost::format("    %5s %s %5s->%5s %s->%s") % section.train_number %
-                                   to_fixed_width_train_name(section.train_name, 40) %
-                                   to_time_string(static_cast<int>(section.departure_time)) %
-                                   to_time_string(static_cast<int>(section.arrival_time)) %
-                                   timetable_.stations()[section.departure_station].name() %
-                                   timetable_.stations()[section.arrival_station].name();
-                std::cout << encode_for_print(train.str()) << std::endl;
-            }
-        }
-
-        std::cout << "--------------------------------" << std::endl;
-    }
-
-
+fn to_time_string(time_value: usize) -> String {
+    assert!(time_value < 1440);
+    format!("{:02}:{:02}", time_value / 60, time_value % 60)
 }
-*/
