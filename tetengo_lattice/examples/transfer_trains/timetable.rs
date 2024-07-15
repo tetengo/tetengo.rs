@@ -656,7 +656,7 @@ impl Timetable {
                     });
                 let bos_cost = Self::diff_time(section_departure_time, departure_time) as i32;
                 if bos_cost <= 240 {
-                    connections.push(((Entry::BosEos, entry.clone()), bos_cost));
+                    connections.push(((Entry::BosEos, entry.clone()), bos_cost * 9 / 10));
                 }
                 connections.push(((entry.clone(), Entry::BosEos), 0));
             }
