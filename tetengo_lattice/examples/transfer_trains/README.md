@@ -46,8 +46,8 @@ Here is the format of arrival and departure time cells:
 - Blank
   - Out of the operational section of the train.
 
-There are sample timetable files supplied in data directory. (data directory is
-located in the same directory where this README.md exists.)
+There are sample timetable files supplied in the directory where this README.md
+exists.
 
 - kagoshima_down.txt
   - The part of Kagoshima line of Kyushu Railway Company in Japan.
@@ -64,4 +64,3 @@ Returns a non-zero value when some error is happened.
 ---
 
 Copyright (C) 2023-2024 kaoru  https://www.tetengo.org/
-
