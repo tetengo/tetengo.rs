@@ -457,22 +457,23 @@ impl Timetable {
             if !Self::all_passing(train.stops(), from, to) {
                 continue;
             }
-            let from_time = if let Some(departure_time) = train.stops()[from].arrival_time() {
+            let from_time = if let Some(departure_time) = train.stops()[from].departure_time() {
                 departure_time
-            } else if let Some(departure_time) = train.stops()[from].departure_time() {
-                departure_time
+            } else if let Some(arrival_time) = train.stops()[from].arrival_time() {
+                arrival_time
             } else {
                 return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
             };
             let to_time = if let Some(arrival_time) = train.stops()[to].arrival_time() {
                 arrival_time
-            } else if let Some(arrival_time) = train.stops()[to].departure_time() {
-                arrival_time
+            } else if let Some(departure_time) = train.stops()[to].departure_time() {
+                departure_time
             } else {
                 return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
             };
-            if Self::diff_time(to_time, from_time) < minimum {
-                minimum = Self::diff_time(to_time, from_time);
+            let duration = Self::diff_time(to_time, from_time);
+            if duration < minimum {
+                minimum = duration;
             }
         }
         Ok(minimum)
