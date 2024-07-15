@@ -157,15 +157,17 @@ fn build_lattice(
     Ok(())
 }
 
+#[derive(Debug)]
 struct TripSection {
     pub(crate) train_number: String,
-    pub(crate) _train_name: String,
-    pub(crate) _departure_time: usize,
-    pub(crate) _departure_station: usize,
+    pub(crate) train_name: String,
+    pub(crate) departure_time: usize,
+    pub(crate) departure_station: usize,
     pub(crate) arrival_time: usize,
     pub(crate) arrival_station: usize,
 }
 
+#[derive(Debug)]
 struct Trip {
     pub(crate) sections: Vec<TripSection>,
     pub(crate) cost: i32,
@@ -205,11 +207,11 @@ fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node<'_>, trip_capacity: usi
             {
                 trip.sections.push(TripSection {
                     train_number: section.train().number().to_string(),
-                    _train_name: section.train().name().to_string(),
-                    _departure_time: section.train().stops()[section.from()]
+                    train_name: section.train().name().to_string(),
+                    departure_time: section.train().stops()[section.from()]
                         .departure_time()
                         .unwrap_or_else(|| unreachable!("departure_time must not None.")),
-                    _departure_station: section.from(),
+                    departure_station: section.from(),
                     arrival_time: section.train().stops()[section.to()]
                         .arrival_time()
                         .unwrap_or_else(|| unreachable!("arrival_time must not None.")),
@@ -256,10 +258,10 @@ fn print_trips(trips: &[Trip], timetable: &Timetable) {
             let train = format!(
                 "    {:5} {} {:5}->{:5} {}->{}",
                 section.train_number,
-                to_fixed_width_train_name(&section._train_name, 40),
-                to_time_string(section._departure_time),
+                to_fixed_width_train_name(&section.train_name, 40),
+                to_time_string(section.departure_time),
                 to_time_string(section.arrival_time),
-                timetable.stations()[section._departure_station].name(),
+                timetable.stations()[section.departure_station].name(),
                 timetable.stations()[section.arrival_station].name()
             );
             println!("{}", train);

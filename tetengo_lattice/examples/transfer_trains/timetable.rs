@@ -57,6 +57,7 @@ pub(crate) enum TimetableError {
 /**
  * A station.
  */
+#[derive(Debug)]
 pub(crate) struct Station {
     name: String,
     telegram_code: String,
@@ -101,7 +102,7 @@ impl Station {
 /**
  * A stop.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct Stop {
     arrival_time: Option<usize>,
     departure_time: Option<usize>,
@@ -166,7 +167,7 @@ impl Stop {
 /**
  * A train.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct Train {
     number: String,
     name: String,
@@ -234,7 +235,7 @@ impl Train {
 /**
  * A section.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct Section {
     train: Rc<Train>,
     from: usize,
@@ -285,6 +286,7 @@ impl Section {
     }
 }
 
+#[derive(Debug)]
 struct TimetableValue {
     stations: Vec<Station>,
     trains: Vec<Train>,
@@ -299,6 +301,7 @@ impl TimetableValue {
 /**
  * A timetable vocabulary.
  */
+#[derive(Debug)]
 pub(crate) struct Timetable {
     value: TimetableValue,
 }
