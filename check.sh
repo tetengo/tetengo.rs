@@ -1,9 +1,10 @@
 #! /bin/sh
 # Checks this package
-# Copyright (C) 2023-2024 kaoru  https://www.tetengo.org/
+# Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
 
 set -e
 
+./scripts/check.sh
 cargo verify-project
 cargo fmt --check
 cargo clippy --all-targets
