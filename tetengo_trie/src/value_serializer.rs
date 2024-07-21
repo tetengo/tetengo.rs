@@ -4,6 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::type_name_of_val;
 use std::fmt::{self, Debug, Formatter};
 
 use anyhow::Result;
@@ -62,7 +63,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
 impl<Value: ?Sized> Debug for ValueSerializer<Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
-            .field("serialize", &"fn(value: &Value) -> Vec<u8>")
+            .field("serialize", &type_name_of_val(&self.serialize))
             .field("fixed_value_size", &self.fixed_value_size)
             .finish()
     }
@@ -110,7 +111,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
 impl<Value: Clone> Debug for ValueDeserializer<Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueDeserializer")
-            .field("deserialize", &"fn(serialized: &[u8]) -> Result<Value>")
+            .field("deserialize", &type_name_of_val(&self.deserialize))
             .finish()
     }
 }

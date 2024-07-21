@@ -4,6 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::type_name_of_val;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
@@ -57,8 +58,8 @@ impl<'a> BuldingObserverSet<'a> {
 impl Debug for BuldingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
-            .field("adding", &"dyn FnOnce(&[u8])")
-            .field("done", &"dyn FnOnce()")
+            .field("adding", &type_name_of_val(&self.adding))
+            .field("done", &type_name_of_val(&self.done))
             .finish()
     }
 }
