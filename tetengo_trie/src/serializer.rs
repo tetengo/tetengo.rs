@@ -4,8 +4,9 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::error;
+
+use anyhow::Result;
 
 /**
  * A serializer.

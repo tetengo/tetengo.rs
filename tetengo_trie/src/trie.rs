@@ -4,11 +4,12 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
 use std::rc::Rc;
+
+use anyhow::Result;
 
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
@@ -385,8 +386,9 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
 
 #[cfg(test)]
 mod tests {
-    use once_cell::sync::Lazy;
     use std::io::Cursor;
+
+    use once_cell::sync::Lazy;
 
     use crate::memory_storage::MemoryStorage;
     use crate::serializer::Deserializer;

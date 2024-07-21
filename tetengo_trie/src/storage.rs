@@ -4,12 +4,13 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::any::Any;
 use std::error;
 use std::fmt::Debug;
 use std::io::Write;
 use std::rc::Rc;
+
+use anyhow::Result;
 
 use crate::value_serializer::ValueSerializer;
 

@@ -4,8 +4,9 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::fmt::{self, Debug, Formatter};
+
+use anyhow::Result;
 
 /**
  * A value serializer.

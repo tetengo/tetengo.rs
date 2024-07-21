@@ -14,9 +14,11 @@ use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
-use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
-use timetable::{Section, Timetable};
 use unicode_width::UnicodeWidthStr;
+
+use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
+
+use timetable::{Section, Timetable};
 
 fn main() {
     if let Err(e) = main_core() {

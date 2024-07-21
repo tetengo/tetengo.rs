@@ -62,8 +62,9 @@ impl<'a> Path<'a> {
 mod tests {
     use std::rc::Rc;
 
-    use crate::string_input::StringInput;
     use once_cell::sync::Lazy;
+
+    use crate::string_input::StringInput;
 
     use super::*;
 

@@ -4,8 +4,9 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use crate::node::Node;
 use std::fmt::Debug;
+
+use crate::node::Node;
 
 /**
  * A constraint element.

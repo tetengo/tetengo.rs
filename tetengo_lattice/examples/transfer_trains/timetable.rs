@@ -10,6 +10,7 @@ use std::io::{BufRead, Lines};
 use std::rc::Rc;
 
 use anyhow::Result;
+
 use tetengo_lattice::{Entry, EntryView, HashMapVocabulary, StringInput, Vocabulary};
 
 /**

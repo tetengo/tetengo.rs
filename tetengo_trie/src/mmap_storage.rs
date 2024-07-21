@@ -4,7 +4,6 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::any::Any;
 use std::cell::RefCell;
 use std::fmt::Debug;
@@ -13,6 +12,7 @@ use std::io::Write;
 use std::mem::size_of;
 use std::rc::Rc;
 
+use anyhow::Result;
 use hashlink::LinkedHashMap;
 use memmap2::Mmap;
 use once_cell::sync::Lazy;
