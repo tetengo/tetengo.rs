@@ -8,8 +8,13 @@ Features
 
 ### Trie (tetengo_trie)
 
-An associative data structure for common prefix search.
-Implemented with double array.
+An associative data structure optimized for common prefix searches.
+Implemented using a double array structure.
+
+### Lattice (tetengo_lattice)
+
+A Viterbi search library.
+It also supports N-best search using A* search.
 
 ---
 
