@@ -4,8 +4,10 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::type_name_of_val;
+use std::fmt::{self, Debug, Formatter};
+
 use anyhow::Result;
-use std::fmt;
 
 /**
  * A value serializer.
@@ -27,7 +29,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * * `serialize`        - A serializing function.
      * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
      */
-    pub fn new(serialize: fn(value: &Value) -> Vec<u8>, fixed_value_size: usize) -> Self {
+    pub const fn new(serialize: fn(value: &Value) -> Vec<u8>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
             fixed_value_size,
@@ -53,15 +55,15 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * # Returns
      * The fixed value size.
      */
-    pub fn fixed_value_size(&self) -> usize {
+    pub const fn fixed_value_size(&self) -> usize {
         self.fixed_value_size
     }
 }
 
-impl<Value: ?Sized> fmt::Debug for ValueSerializer<Value> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<Value: ?Sized> Debug for ValueSerializer<Value> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
-            .field("serialize", &"<fn>")
+            .field("serialize", &type_name_of_val(&self.serialize))
             .field("fixed_value_size", &self.fixed_value_size)
             .finish()
     }
@@ -85,7 +87,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
      * # Arguments
      * * `deserialize` - A deserializing function.
      */
-    pub fn new(deserialize: fn(serialized: &[u8]) -> Result<Value>) -> Self {
+    pub const fn new(deserialize: fn(serialized: &[u8]) -> Result<Value>) -> Self {
         Self { deserialize }
     }
 
@@ -106,10 +108,10 @@ impl<Value: Clone> ValueDeserializer<Value> {
     }
 }
 
-impl<Value: Clone> fmt::Debug for ValueDeserializer<Value> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<Value: Clone> Debug for ValueDeserializer<Value> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueDeserializer")
-            .field("deserialize", &"<fn>")
+            .field("deserialize", &type_name_of_val(&self.deserialize))
             .finish()
     }
 }
@@ -125,7 +127,7 @@ mod tests {
         use super::super::*;
 
         #[test]
-        fn new() {
+        const fn new() {
             {
                 let _ = ValueSerializer::new(
                     |value: &i32| IntegerSerializer::new(false).serialize(value),
@@ -183,7 +185,7 @@ mod tests {
         use super::super::*;
 
         #[test]
-        fn new() {
+        const fn new() {
             {
                 let _ = ValueDeserializer::new(|serialized: &[u8]| {
                     IntegerDeserializer::<i32>::new(false).deserialize(serialized)

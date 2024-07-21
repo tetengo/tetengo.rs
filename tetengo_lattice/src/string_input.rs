@@ -27,7 +27,7 @@ impl StringInput {
      * # Arguments
      * * `value` - A value.
      */
-    pub fn new(value: String) -> Self {
+    pub const fn new(value: String) -> Self {
         Self { value }
     }
 
@@ -107,6 +107,7 @@ impl Input for StringInput {
 mod tests {
     use super::*;
 
+    #[derive(Debug)]
     struct AnotherInput {}
 
     impl Input for AnotherInput {

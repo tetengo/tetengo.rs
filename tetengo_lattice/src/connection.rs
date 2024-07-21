@@ -39,7 +39,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new() {
+    const fn new() {
         let _ = Connection::new(42);
     }
 

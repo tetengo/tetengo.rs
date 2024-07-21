@@ -40,10 +40,9 @@ mod usage {
         let _ignored = lattice.push_back(Box::new(StringInput::new(String::from("b"))));
 
         // Finishes the lattice construction.
-        let eos = match lattice.settle() {
-            Ok((eos, _)) => eos,
-            Err(e) => unreachable!("Error: {}", e),
-        };
+        let eos = lattice
+            .settle()
+            .unwrap_or_else(|e| unreachable!("Error: {}", e));
 
         // Creates an iterator to enumerate the paths in the lattice.
         let iterator = NBestIterator::new(&lattice, eos, Box::new(Constraint::new()));

@@ -4,6 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::type_name_of_val;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
@@ -27,11 +28,8 @@ impl Debug for HashableEntryEntity<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("HashableEntryEntity")
             .field("entry", &self.entry)
-            .field("hash_value", &"&'a dyn Fn(&EntryView<'_>) -> u64")
-            .field(
-                "equal",
-                &"&'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool",
-            )
+            .field("hash_value", &type_name_of_val(&self.hash_value))
+            .field("equal", &type_name_of_val(&self.equal))
             .finish()
     }
 }
@@ -47,11 +45,8 @@ impl Debug for HashableEntryView<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("HashableEntryEntity")
             .field("entry_view", &self.entry_view)
-            .field("hash_value", &"&'a dyn Fn(&EntryView<'_>) -> u64")
-            .field(
-                "equal",
-                &"&'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool",
-            )
+            .field("hash_value", &type_name_of_val(&self.hash_value))
+            .field("equal", &type_name_of_val(&self.equal))
             .finish()
     }
 }
@@ -63,7 +58,7 @@ enum HashableEntry<'a> {
 }
 
 impl<'a> HashableEntry<'a> {
-    fn from_entity(
+    const fn from_entity(
         entry: Entry,
         hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
         equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
@@ -75,7 +70,7 @@ impl<'a> HashableEntry<'a> {
         })
     }
 
-    fn from_view(
+    const fn from_view(
         entry_view: EntryView<'a>,
         hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
         equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
@@ -142,11 +137,11 @@ impl Debug for HashMapVocabulary<'_> {
         f.debug_struct("HashableEntryEntity")
             .field("entry_map", &self.entry_map)
             .field("connection_map", &self.connection_map)
-            .field("hash_value", &"&'a dyn Fn(&EntryView<'_>) -> u64")
             .field(
-                "equal",
-                &"&'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool",
+                "entry_hash_value",
+                &type_name_of_val(&self.entry_hash_value),
             )
+            .field("entry_equal", &type_name_of_val(&self.entry_equal))
             .finish()
     }
 }

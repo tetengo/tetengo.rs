@@ -4,10 +4,12 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::any::Any;
+use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::rc::Rc;
+
+use anyhow::Result;
 
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
@@ -56,7 +58,7 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
     }
 }
 
-impl<Value: Clone + 'static> Storage<Value> for SharedStorage<Value> {
+impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }
@@ -121,8 +123,9 @@ impl<Value: Clone + 'static> Storage<Value> for SharedStorage<Value> {
 
 #[cfg(test)]
 mod tests {
-    use once_cell::sync::Lazy;
     use std::io::Cursor;
+
+    use once_cell::sync::Lazy;
 
     use crate::double_array::VACANT_CHECK_VALUE;
     use crate::serializer::{Deserializer, Serializer};

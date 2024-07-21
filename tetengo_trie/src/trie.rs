@@ -4,11 +4,13 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
+use std::any::type_name_of_val;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
 use std::rc::Rc;
+
+use anyhow::Result;
 
 use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
 use crate::serializer::{Serializer, SerializerOf};
@@ -56,8 +58,8 @@ impl<'a> BuldingObserverSet<'a> {
 impl Debug for BuldingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
-            .field("adding", &"Box<dyn FnOnce(&[u8])>")
-            .field("done", &"Box<dyn FnOnce()>")
+            .field("adding", &type_name_of_val(&self.adding))
+            .field("done", &type_name_of_val(&self.done))
             .finish()
     }
 }
@@ -81,7 +83,7 @@ pub struct TrieBuilder<Key, Value, KeySerializer: Serializer> {
     double_array_density_factor: usize,
 }
 
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
+impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     TrieBuilder<Key, Value, KeySerializer>
 {
     /**
@@ -186,18 +188,7 @@ pub struct TrieStorageBuilder<Key, Value: Clone, KeySerializer: Serializer> {
     key_serializer: KeySerializer,
 }
 
-impl<Key, Value: Clone, KeySerializer: Serializer> Debug
-    for TrieStorageBuilder<Key, Value, KeySerializer>
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("_TrieStorageBuilder")
-            .field("storage", &"Box<dyn Storage<Value>>")
-            .field("key_serializer", &"KeySerializer")
-            .finish()
-    }
-}
-
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
+impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     TrieStorageBuilder<Key, Value, KeySerializer>
 {
     /**
@@ -223,6 +214,17 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
     }
 }
 
+impl<Key, Value: Clone, KeySerializer: Serializer> Debug
+    for TrieStorageBuilder<Key, Value, KeySerializer>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("_TrieStorageBuilder")
+            .field("storage", &"Box<dyn Storage<Value>>")
+            .field("key_serializer", &"KeySerializer")
+            .finish()
+    }
+}
+
 /**
  * A trie.
  *
@@ -232,13 +234,13 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
  * * `KeySerializer` - A key serializer type.
  */
 #[derive(Debug)]
-pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
+pub struct Trie<Key, Value: Debug, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
     phantom: PhantomData<Key>,
     double_array: DoubleArray<Value>,
     key_serializer: KeySerializer,
 }
 
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
+impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
     Trie<Key, Value, KeySerializer>
 {
     /**
@@ -385,8 +387,9 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
 
 #[cfg(test)]
 mod tests {
-    use once_cell::sync::Lazy;
     use std::io::Cursor;
+
+    use once_cell::sync::Lazy;
 
     use crate::memory_storage::MemoryStorage;
     use crate::serializer::Deserializer;

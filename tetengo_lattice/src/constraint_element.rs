@@ -4,12 +4,14 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::fmt::Debug;
+
 use crate::node::Node;
 
 /**
  * A constraint element.
  */
-pub trait ConstraintElement {
+pub trait ConstraintElement: Debug {
     /**
      * Returns whether this constraint element matches the specified node.
      *

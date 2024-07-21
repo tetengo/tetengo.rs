@@ -1,9 +1,12 @@
 #! /bin/sh
 # Checks this package
-# Copyright (C) 2023-2024 kaoru  https://www.tetengo.org/
+# Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
 
 set -e
 
+./scripts/check.sh
+./scripts/sort_derive_attributes.py .
+./scripts/check_use_order.py .
 cargo verify-project
 cargo fmt --check
 cargo clippy --all-targets

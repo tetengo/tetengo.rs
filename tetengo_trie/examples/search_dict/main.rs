@@ -13,6 +13,7 @@ use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
+
 use tetengo_trie::{MemoryStorage, Trie, ValueDeserializer};
 
 fn main() {

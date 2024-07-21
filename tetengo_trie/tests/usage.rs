@@ -1,5 +1,6 @@
 mod usage {
     use std::cell::RefCell;
+
     use tetengo_trie::{BuldingObserverSet, Serializer, StrSerializer, Trie};
 
     #[test]

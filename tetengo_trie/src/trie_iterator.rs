@@ -4,7 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::Debug;
 use std::rc::Rc;
 
 use crate::double_array_iterator::DoubleArrayIterator;
@@ -13,7 +13,7 @@ use crate::storage::Storage;
 /**
  * A trie iterator.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TrieIterator<'a, T> {
     double_array_iterator: DoubleArrayIterator<'a, T>,
     storage: &'a dyn Storage<T>,
@@ -27,7 +27,7 @@ impl<'a, T> TrieIterator<'a, T> {
      * * `double_array_iterator` - A double array iterator.
      * * `storage`               - A storage.
      */
-    pub(super) fn new(
+    pub(super) const fn new(
         double_array_iterator: DoubleArrayIterator<'a, T>,
         storage: &'a dyn Storage<T>,
     ) -> Self {
@@ -50,15 +50,6 @@ impl<T> Iterator for TrieIterator<'_, T> {
                 None
             }
         }
-    }
-}
-
-impl<T> Debug for TrieIterator<'_, T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("TrieIterator")
-            .field("double_array_iterator", &self.double_array_iterator)
-            .field("storage", &"&'a dyn Storage<T>")
-            .finish()
     }
 }
 

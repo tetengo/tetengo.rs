@@ -22,7 +22,7 @@ impl WildcardConstraintElement {
      * # Arguments
      * * `preceding_step` - An index of a preceding step.
      */
-    pub fn new(preceding_step: usize) -> Self {
+    pub const fn new(preceding_step: usize) -> Self {
         Self { preceding_step }
     }
 }
@@ -52,7 +52,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new() {
+    const fn new() {
         let _ = WildcardConstraintElement::new(3);
     }
 

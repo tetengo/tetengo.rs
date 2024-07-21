@@ -4,9 +4,11 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
+use std::any::type_name_of_val;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
+
+use anyhow::Result;
 
 use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
@@ -45,8 +47,8 @@ impl<'a> BuildingObserverSet<'a> {
 impl Debug for BuildingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
-            .field("adding", &"Box<dyn FnOnce(&DoubleArrayElement<'_>)>")
-            .field("done", &"Box<dyn FnOnce()>")
+            .field("adding", &type_name_of_val(&self.adding))
+            .field("done", &type_name_of_val(&self.done))
             .finish()
     }
 }
@@ -58,19 +60,19 @@ pub(super) const KEY_TERMINATOR: u8 = 0;
 pub(super) const VACANT_CHECK_VALUE: u8 = 0xFF;
 
 #[derive(Debug)]
-pub(super) struct DoubleArrayBuilder<'a, Value> {
+pub(super) struct DoubleArrayBuilder<'a, Value: Debug> {
     elements: Vec<DoubleArrayElement<'a>>,
     density_factor: usize,
     phantom: PhantomData<Value>,
 }
 
-impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
+impl<'a, Value: Clone + Debug + 'static> DoubleArrayBuilder<'a, Value> {
     pub(super) fn elements(mut self, elements: Vec<DoubleArrayElement<'a>>) -> Self {
         self.elements = elements;
         self
     }
 
-    pub(super) fn density_factor(mut self, density_factor: usize) -> Self {
+    pub(super) const fn density_factor(mut self, density_factor: usize) -> Self {
         self.density_factor = density_factor;
         self
     }
@@ -95,13 +97,14 @@ impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
     }
 }
 
-pub(super) struct DoubleArray<Value> {
+#[derive(Debug)]
+pub(super) struct DoubleArray<Value: Debug> {
     storage: Box<dyn Storage<Value>>,
     root_base_check_index: usize,
 }
 
-impl<Value: Clone + 'static> DoubleArray<Value> {
-    pub(super) fn builder() -> DoubleArrayBuilder<'static, Value> {
+impl<Value: Clone + Debug + 'static> DoubleArray<Value> {
+    pub(super) const fn builder() -> DoubleArrayBuilder<'static, Value> {
         DoubleArrayBuilder {
             elements: vec![],
             density_factor: DEFAULT_DENSITY_FACTOR,
@@ -109,7 +112,10 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         }
     }
 
-    pub(super) fn new(storage: Box<dyn Storage<Value>>, root_base_check_index: usize) -> Self {
+    pub(super) const fn new(
+        storage: Box<dyn Storage<Value>>,
+        root_base_check_index: usize,
+    ) -> Self {
         Self {
             storage,
             root_base_check_index,
@@ -163,15 +169,6 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
 
     pub(super) fn storage_mut(&mut self) -> &mut dyn Storage<Value> {
         &mut *self.storage
-    }
-}
-
-impl<Value> Debug for DoubleArray<Value> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DoubleArray")
-            .field("storage", &"Box<dyn Storage<Value>")
-            .field("root_base_check_index", &self.root_base_check_index)
-            .finish()
     }
 }
 

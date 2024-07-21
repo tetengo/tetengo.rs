@@ -4,14 +4,15 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::any::Any;
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
 use std::mem::size_of;
 use std::rc::Rc;
 
+use anyhow::Result;
 use hashlink::LinkedHashMap;
 use memmap2::Mmap;
 use once_cell::sync::Lazy;
@@ -45,7 +46,7 @@ impl FileMapping {
         Ok(Self { mmap })
     }
 
-    fn mmap(&self) -> &Mmap {
+    const fn mmap(&self) -> &Mmap {
         &self.mmap
     }
 }
@@ -117,7 +118,7 @@ impl StorageError for MmapStorageError {}
  * * `Value` - A value type.
 */
 #[derive(Debug)]
-pub struct MmapStorageBuilder<Value: Clone> {
+pub struct MmapStorageBuilder<Value: Clone + Debug> {
     file_mapping: Rc<FileMapping>,
     content_offset: usize,
     file_size: usize,
@@ -125,14 +126,14 @@ pub struct MmapStorageBuilder<Value: Clone> {
     value_cache_capacity: usize,
 }
 
-impl<Value: Clone + 'static> MmapStorageBuilder<Value> {
+impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
     /**
      * Sets a value cache capacity.
      *
      * # Arguments
      * * `value` - A value cache capacity.
      */
-    pub fn value_cache_capacity(mut self, value: usize) -> Self {
+    pub const fn value_cache_capacity(mut self, value: usize) -> Self {
         self.value_cache_capacity = value;
         self
     }
@@ -177,7 +178,7 @@ impl<Value: Clone + 'static> MmapStorageBuilder<Value> {
  * * `Value` - A value type.
  */
 #[derive(Debug)]
-pub struct MmapStorage<Value: Clone> {
+pub struct MmapStorage<Value: Clone + Debug> {
     file_mapping: Rc<FileMapping>,
     content_offset: usize,
     file_size: usize,
@@ -185,7 +186,7 @@ pub struct MmapStorage<Value: Clone> {
     value_cache: RefCell<ValueCache<Value>>,
 }
 
-impl<Value: Clone + 'static> MmapStorage<Value> {
+impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
     /// A default value cache capacity.
     pub const DEFAULT_VALUE_CACHE_CAPACITY: usize = 10000;
 
@@ -201,7 +202,7 @@ impl<Value: Clone + 'static> MmapStorage<Value> {
      * # Returns
      * An mmap storage builder.
      */
-    pub fn builder(
+    pub const fn builder(
         file_mapping: Rc<FileMapping>,
         content_offset: usize,
         file_size: usize,
@@ -254,7 +255,7 @@ impl<Value: Clone + 'static> MmapStorage<Value> {
     }
 }
 
-impl<Value: Clone + 'static> Storage<Value> for MmapStorage<Value> {
+impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         self.read_u32(0).map(|v| v as usize)
     }
@@ -334,6 +335,7 @@ impl<Value: Clone + 'static> Storage<Value> for MmapStorage<Value> {
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom, Write};
+
     use tempfile::tempfile;
 
     use crate::serializer::Serializer;

@@ -131,7 +131,7 @@ impl<'a> NBestIterator<'a> {
         path
     }
 
-    fn add_cost(one: i32, another: i32) -> i32 {
+    const fn add_cost(one: i32, another: i32) -> i32 {
         if one == i32::MAX || another == i32::MAX {
             i32::MAX
         } else {
@@ -160,7 +160,7 @@ struct Cap<'a> {
 }
 
 impl<'a> Cap<'a> {
-    fn new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
+    const fn new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         Cap {
             tail_path,
             tail_path_cost,
@@ -172,11 +172,11 @@ impl<'a> Cap<'a> {
         self.tail_path.as_slice()
     }
 
-    fn tail_path_cost(&self) -> i32 {
+    const fn tail_path_cost(&self) -> i32 {
         self.tail_path_cost
     }
 
-    fn whole_path_cost(&self) -> i32 {
+    const fn whole_path_cost(&self) -> i32 {
         self.whole_path_cost
     }
 }
@@ -463,7 +463,7 @@ mod tests {
         let _result = lattice.push_back(to_input("[TosuOmuta]"));
         let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-        let (eos_node, _) = lattice.settle().unwrap();
+        let eos_node = lattice.settle().unwrap();
         let _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
     }
 
@@ -476,7 +476,7 @@ mod tests {
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-            let (eos_node, _) = lattice.settle().unwrap();
+            let eos_node = lattice.settle().unwrap();
             let mut iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
 
             {
@@ -730,7 +730,7 @@ mod tests {
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-            let (eos_node, _) = lattice.settle().unwrap();
+            let eos_node = lattice.settle().unwrap();
             let mut iterator =
                 NBestIterator::new(&lattice, eos_node.clone(), Box::new(Constraint::new()));
 

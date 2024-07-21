@@ -14,9 +14,11 @@ use std::path::Path;
 use std::process::exit;
 
 use anyhow::Result;
-use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
-use timetable::{Section, Timetable};
 use unicode_width::UnicodeWidthStr;
+
+use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
+
+use crate::timetable::{Section, Timetable};
 
 fn main() {
     if let Err(e) = main_core() {
@@ -46,7 +48,7 @@ fn main_core() -> Result<()> {
         let vocabulary = timetable.create_vocabulary(departure_time);
         let mut lattice = Lattice::new(vocabulary.as_ref());
         build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
-        let (eos_node, _) = lattice.settle()?;
+        let eos_node = lattice.settle()?;
 
         let trips = enumerate_trips(&lattice, eos_node, 5);
 
