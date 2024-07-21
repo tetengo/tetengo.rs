@@ -4,12 +4,12 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::Debug;
 
 use crate::double_array;
 use crate::storage::Storage;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(super) struct DoubleArrayIterator<'a, T> {
     storage: &'a dyn Storage<T>,
     base_check_index_key_stack: Vec<(usize, Vec<u8>)>,
@@ -79,18 +79,6 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
         }
 
         self.next()
-    }
-}
-
-impl<T> Debug for DoubleArrayIterator<'_, T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DoubleArrayIterator")
-            .field("storage", &" &'a dyn Storage<T>")
-            .field(
-                "base_check_index_key_stack",
-                &self.base_check_index_key_stack,
-            )
-            .finish()
     }
 }
 

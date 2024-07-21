@@ -7,6 +7,7 @@
 use anyhow::Result;
 use std::any::Any;
 use std::error;
+use std::fmt::Debug;
 use std::io::Write;
 use std::rc::Rc;
 
@@ -23,7 +24,7 @@ pub trait StorageError: error::Error {}
  * # Type Parameters
  * * `Value` - A value type.
  */
-pub trait Storage<Value> {
+pub trait Storage<Value>: Debug {
     /**
      * Returns the base-check size.
      *

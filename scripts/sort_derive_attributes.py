@@ -63,13 +63,14 @@ def sort_single_derive_attributes(input_line: str) -> list[str] | None:
     matched = SINGLE_DERIVE_PATTERN.fullmatch(input_line)
     if not matched:
         return None
+    indent = input_line[0 : input_line.find("#")]
     traits = [
         t
         for t in map(lambda x: x.strip(), matched.group("traits").split(","))
         if len(t) > 0
     ]
     traits.sort()
-    output_line = "#[derive({})]\n".format(", ".join(traits))
+    output_line = "{}#[derive({})]\n".format(indent, ", ".join(traits))
     return [output_line]
 
 

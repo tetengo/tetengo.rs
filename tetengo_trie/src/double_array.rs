@@ -4,9 +4,10 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
+
+use anyhow::Result;
 
 use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
@@ -58,13 +59,13 @@ pub(super) const KEY_TERMINATOR: u8 = 0;
 pub(super) const VACANT_CHECK_VALUE: u8 = 0xFF;
 
 #[derive(Debug)]
-pub(super) struct DoubleArrayBuilder<'a, Value> {
+pub(super) struct DoubleArrayBuilder<'a, Value: Debug> {
     elements: Vec<DoubleArrayElement<'a>>,
     density_factor: usize,
     phantom: PhantomData<Value>,
 }
 
-impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
+impl<'a, Value: Clone + Debug + 'static> DoubleArrayBuilder<'a, Value> {
     pub(super) fn elements(mut self, elements: Vec<DoubleArrayElement<'a>>) -> Self {
         self.elements = elements;
         self
@@ -95,12 +96,13 @@ impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
     }
 }
 
-pub(super) struct DoubleArray<Value> {
+#[derive(Debug)]
+pub(super) struct DoubleArray<Value: Debug> {
     storage: Box<dyn Storage<Value>>,
     root_base_check_index: usize,
 }
 
-impl<Value: Clone + 'static> DoubleArray<Value> {
+impl<Value: Clone + Debug + 'static> DoubleArray<Value> {
     pub(super) const fn builder() -> DoubleArrayBuilder<'static, Value> {
         DoubleArrayBuilder {
             elements: vec![],
@@ -166,15 +168,6 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
 
     pub(super) fn storage_mut(&mut self) -> &mut dyn Storage<Value> {
         &mut *self.storage
-    }
-}
-
-impl<Value> Debug for DoubleArray<Value> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DoubleArray")
-            .field("storage", &"Box<dyn Storage<Value>")
-            .field("root_base_check_index", &self.root_base_check_index)
-            .finish()
     }
 }
 

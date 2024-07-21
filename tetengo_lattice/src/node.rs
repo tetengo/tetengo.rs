@@ -4,7 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::Debug;
 use std::rc::Rc;
 
 use anyhow::Result;
@@ -45,7 +45,7 @@ pub struct Eos {
 /**
  * A middle node.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Middle<'a> {
     key: &'a dyn Input,
     value: &'a dyn AnyValue,
@@ -55,21 +55,6 @@ pub struct Middle<'a> {
     best_preceding_node: usize,
     node_cost: i32,
     path_cost: i32,
-}
-
-impl Debug for Middle<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Middle")
-            .field("key", &"&'a dyn Input")
-            .field("value", &"&'a dyn AnyValue")
-            .field("index_in_step", &self.index_in_step)
-            .field("preceding_step", &self.preceding_step)
-            .field("preceding_edge_costs", &self.preceding_edge_costs)
-            .field("best_preceding_node", &self.best_preceding_node)
-            .field("node_cost", &self.node_cost)
-            .field("path_cost", &self.path_cost)
-            .finish()
-    }
 }
 
 impl Eq for Middle<'_> {}

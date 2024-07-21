@@ -61,7 +61,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
 impl<Value: ?Sized> Debug for ValueSerializer<Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
-            .field("serialize", &"<fn>")
+            .field("serialize", &"fn(value: &Value) -> Vec<u8>")
             .field("fixed_value_size", &self.fixed_value_size)
             .finish()
     }
@@ -109,7 +109,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
 impl<Value: Clone> Debug for ValueDeserializer<Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueDeserializer")
-            .field("deserialize", &"<fn>")
+            .field("deserialize", &"fn(serialized: &[u8]) -> Result<Value>")
             .finish()
     }
 }

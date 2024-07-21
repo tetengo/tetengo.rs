@@ -4,8 +4,10 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
 use std::collections::HashSet;
+use std::fmt::Debug;
+
+use anyhow::Result;
 
 use crate::double_array::{
     BuildingObserverSet, DoubleArrayElement, DoubleArrayError, KEY_TERMINATOR, VACANT_CHECK_VALUE,
@@ -13,7 +15,7 @@ use crate::double_array::{
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
-pub(super) fn build<T: Clone + 'static>(
+pub(super) fn build<T: Clone + Debug + 'static>(
     mut elements: Vec<DoubleArrayElement<'_>>,
     observer: &mut BuildingObserverSet<'_>,
     density_factor: usize,

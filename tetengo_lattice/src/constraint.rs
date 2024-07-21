@@ -4,15 +4,13 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::fmt::{self, Debug, Formatter};
-
 use crate::constraint_element::ConstraintElement;
 use crate::Node;
 
 /**
  * A constraint.
  */
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Constraint<'a> {
     pattern: Vec<Box<dyn ConstraintElement + 'a>>,
 }
@@ -90,14 +88,6 @@ impl<'a> Constraint<'a> {
         }
 
         pattern_index
-    }
-}
-
-impl Debug for Constraint<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Constraint")
-            .field("pattern", &"Vec<Box<dyn ConstraintElement>>")
-            .finish()
     }
 }
 

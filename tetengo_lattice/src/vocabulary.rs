@@ -4,6 +4,8 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::fmt::Debug;
+
 use crate::connection::Connection;
 use crate::entry::EntryView;
 use crate::input::Input;
@@ -12,7 +14,7 @@ use crate::node::Node;
 /**
  * A vocabulary.
  */
-pub trait Vocabulary {
+pub trait Vocabulary: Debug {
     /**
      * Finds entries.
      *

@@ -4,7 +4,7 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::Debug;
 use std::rc::Rc;
 
 use anyhow::Result;
@@ -61,20 +61,11 @@ impl<'a> GraphStep<'a> {
 /**
  * A lattice.
  */
+#[derive(Debug)]
 pub struct Lattice<'a> {
     vocabulary: &'a dyn Vocabulary,
     input: Option<Box<dyn Input>>,
     graph: Vec<GraphStep<'a>>,
-}
-
-impl Debug for Lattice<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Lattice")
-            .field("vocabulary", &"&'a dyn Vocabulary")
-            .field("input", &"Box<dyn Input>")
-            .field("graph", &self.graph)
-            .finish()
-    }
 }
 
 impl<'a> Lattice<'a> {

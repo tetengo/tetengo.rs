@@ -5,6 +5,7 @@
  */
 
 use std::any::Any;
+use std::fmt::Debug;
 
 use anyhow::Result;
 
@@ -29,7 +30,7 @@ pub enum InputError {
 /**
  * An input.
  */
-pub trait Input {
+pub trait Input: Debug {
     /**
      * Returns `true` if this input is equal to the other.
      *

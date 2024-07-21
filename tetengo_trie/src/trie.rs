@@ -56,8 +56,8 @@ impl<'a> BuldingObserverSet<'a> {
 impl Debug for BuldingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
-            .field("adding", &"Box<dyn FnOnce(&[u8])>")
-            .field("done", &"Box<dyn FnOnce()>")
+            .field("adding", &"dyn FnOnce(&[u8])")
+            .field("done", &"dyn FnOnce()")
             .finish()
     }
 }
@@ -81,7 +81,7 @@ pub struct TrieBuilder<Key, Value, KeySerializer: Serializer> {
     double_array_density_factor: usize,
 }
 
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
+impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     TrieBuilder<Key, Value, KeySerializer>
 {
     /**
@@ -186,7 +186,7 @@ pub struct TrieStorageBuilder<Key, Value: Clone, KeySerializer: Serializer> {
     key_serializer: KeySerializer,
 }
 
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
+impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     TrieStorageBuilder<Key, Value, KeySerializer>
 {
     /**
@@ -232,13 +232,13 @@ impl<Key, Value: Clone, KeySerializer: Serializer> Debug
  * * `KeySerializer` - A key serializer type.
  */
 #[derive(Debug)]
-pub struct Trie<Key, Value, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
+pub struct Trie<Key, Value: Debug, KeySerializer: Serializer = <() as SerializerOf<Key>>::Type> {
     phantom: PhantomData<Key>,
     double_array: DoubleArray<Value>,
     key_serializer: KeySerializer,
 }
 
-impl<Key, Value: Clone + 'static, KeySerializer: Serializer + Clone>
+impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
     Trie<Key, Value, KeySerializer>
 {
     /**

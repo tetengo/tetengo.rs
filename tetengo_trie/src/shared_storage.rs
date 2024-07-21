@@ -6,6 +6,7 @@
 
 use anyhow::Result;
 use std::any::Any;
+use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
@@ -56,7 +57,7 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
     }
 }
 
-impl<Value: Clone + 'static> Storage<Value> for SharedStorage<Value> {
+impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         self.entity.base_check_size()
     }

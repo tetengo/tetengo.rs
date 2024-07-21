@@ -5,11 +5,12 @@
  */
 
 use crate::node::Node;
+use std::fmt::Debug;
 
 /**
  * A constraint element.
  */
-pub trait ConstraintElement {
+pub trait ConstraintElement: Debug {
     /**
      * Returns whether this constraint element matches the specified node.
      *

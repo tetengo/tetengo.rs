@@ -5,14 +5,14 @@
  */
 
 use std::any::Any;
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::Debug;
 
 use crate::input::Input;
 
 /**
  * An any value.
  */
-pub trait AnyValue: Any {
+pub trait AnyValue: Any + Debug {
     /**
      * Clones this object.
      *
@@ -30,7 +30,7 @@ pub trait AnyValue: Any {
     fn as_any(&self) -> &dyn Any;
 }
 
-impl<T: Clone + 'static> AnyValue for T {
+impl<T: Clone + Debug + 'static> AnyValue for T {
     fn clone_box(&self) -> Box<dyn AnyValue> {
         Box::new(self.clone())
     }
@@ -43,20 +43,11 @@ impl<T: Clone + 'static> AnyValue for T {
 /**
  * A middle entry.
  */
+#[derive(Debug)]
 pub struct Middle {
     key: Box<dyn Input>,
     value: Box<dyn AnyValue>,
     cost: i32,
-}
-
-impl Debug for Middle {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("MiddleEntry")
-            .field("key", &"Box<dyn Input>")
-            .field("value", &"Box<dyn AnyValue>")
-            .field("cost", &self.cost)
-            .finish()
-    }
 }
 
 impl Clone for Middle {
@@ -152,21 +143,11 @@ impl Entry {
 /**
  * An middle entry view.
  */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MiddleView<'a> {
     key: &'a dyn Input,
     value: &'a dyn AnyValue,
     cost: i32,
-}
-
-impl Debug for MiddleView<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("MiddleEntryView")
-            .field("key", &"Option<&dyn Input>")
-            .field("value", &"Option<&'a dyn AnyValue>")
-            .field("cost", &self.cost)
-            .finish()
-    }
 }
 
 /**

@@ -8,6 +8,7 @@ use anyhow::Result;
 use once_cell::sync::Lazy;
 use std::any::Any;
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::mem::size_of;
 use std::rc::Rc;
@@ -198,7 +199,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     }
 }
 
-impl<Value: Clone + 'static> Storage<Value> for MemoryStorage<Value> {
+impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn base_check_size(&self) -> Result<usize> {
         Ok(self.base_check_array.borrow().len())
     }
