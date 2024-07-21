@@ -5,6 +5,9 @@ rem Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
 call scripts/check.bat
 if errorlevel 1 exit /b 1
 
+scripts\sort_derive_attributes.py .
+if errorlevel 1 exit /b 1
+
 cargo verify-project
 if errorlevel 1 exit /b 1
 

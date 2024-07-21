@@ -5,6 +5,7 @@
 set -e
 
 ./scripts/check.sh
+./scripts/sort_derive_attributes.py .
 cargo verify-project
 cargo fmt --check
 cargo clippy --all-targets

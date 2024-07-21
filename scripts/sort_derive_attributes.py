@@ -21,6 +21,7 @@ def main(args: list[str]):
 
 def sort_derive_attributes(path: Path):
     input_lines = load_from_file(path)
+    original_lines = input_lines.copy()
     output_lines = []
     while len(input_lines) > 0:
         input_line = input_lines.pop(0)
@@ -36,7 +37,9 @@ def sort_derive_attributes(path: Path):
             continue
 
         output_lines.append(input_line)
-    save_to_file(output_lines, path)
+    if output_lines != original_lines:
+        print("derive attribute reordered in {}".format(path), file=sys.stderr)
+        save_to_file(output_lines, path)
 
 
 def load_from_file(path: Path) -> list[str]:
