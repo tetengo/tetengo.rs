@@ -18,7 +18,7 @@ use unicode_width::UnicodeWidthStr;
 
 use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
 
-use timetable::{Section, Timetable};
+use crate::timetable::{Section, Timetable};
 
 fn main() {
     if let Err(e) = main_core() {

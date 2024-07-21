@@ -335,6 +335,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom, Write};
+
     use tempfile::tempfile;
 
     use crate::serializer::Serializer;

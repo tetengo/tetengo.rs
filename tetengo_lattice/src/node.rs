@@ -314,7 +314,7 @@ impl<'a> Node<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::StringInput;
+    use crate::string_input::StringInput;
 
     use super::*;
 

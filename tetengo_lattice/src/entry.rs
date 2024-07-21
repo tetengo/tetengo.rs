@@ -234,7 +234,7 @@ impl<'a> EntryView<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::StringInput;
+    use crate::string_input::StringInput;
 
     use super::*;
 

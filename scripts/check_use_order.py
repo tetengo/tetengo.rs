@@ -47,16 +47,10 @@ def check_use_order(path: Path) -> bool:
 
 
 def make_use_declarations(path: Path) -> list[tuple[int, list[int]]]:
-    section_index = 0
-    use_declarations: list[tuple[int, list[int]]] = [(section_index, [])]
+    use_declarations: list[tuple[int, list[int]]] = [(0, [])]
     with path.open(mode="r", encoding="UTF-8") as file:
         for line in file:
             line = line.rstrip("\r\n")
-
-            if len(line) == 0:
-                if len(use_declarations[-1][1]) > 0:
-                    use_declarations.append((section_index, []))
-                continue
 
             matched = USE_PATTERN.fullmatch(line)
             if matched:
@@ -64,17 +58,25 @@ def make_use_declarations(path: Path) -> list[tuple[int, list[int]]]:
                 use_declarations[-1][1].append(id)
                 continue
 
-            if len(use_declarations[-1][1]) > 0:
-                section_index += 1
-                use_declarations.append((section_index, []))
-    assert len(use_declarations[-1][1]) == 0
-    use_declarations.pop()
+            if len(line) == 0:
+                if len(use_declarations[-1][1]) > 0:
+                    section_index = use_declarations[-1][0]
+                    use_declarations.append((section_index, []))
+                continue
+
+            section_index = use_declarations[-1][0]
+            if len(use_declarations[-1][1]) == 0:
+                use_declarations[-1] = (section_index + 1, use_declarations[-1][1])
+            else:
+                use_declarations.append((section_index + 1, []))
+    if len(use_declarations[-1][1]) == 0:
+        use_declarations.pop()
     return use_declarations
 
 
 TETENGO_CRATE_PATTERN = re.compile(r"tetengo_[a-z0-9_]+::.*")
 
-LOCAL_CRATE_PATTERN = re.compile(r"crate::[a-z0-9_]+::.*")
+LOCAL_CRATE_PATTERN = re.compile(r"crate::[a-z0-9_]+.*")
 
 OTHER_CRATE_PATTERN = re.compile(r"[a-z0-9_]+.*")
 
@@ -82,6 +84,9 @@ OTHER_CRATE_PATTERN = re.compile(r"[a-z0-9_]+.*")
 def to_id(name: str) -> int:
     if name.startswith("std::"):
         return 0
+
+    if name.startswith("super::"):
+        return 4
 
     matched = TETENGO_CRATE_PATTERN.fullmatch(name)
     if matched:

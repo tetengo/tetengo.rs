@@ -8,6 +8,9 @@ if errorlevel 1 exit /b 1
 scripts\sort_derive_attributes.py .
 if errorlevel 1 exit /b 1
 
+scripts\check_use_order.py .
+if errorlevel 1 exit /b 1
+
 cargo verify-project
 if errorlevel 1 exit /b 1
 

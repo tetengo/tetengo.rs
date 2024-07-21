@@ -5,7 +5,7 @@
  */
 
 use crate::constraint_element::ConstraintElement;
-use crate::Node;
+use crate::node::Node;
 
 /**
  * A constraint.
