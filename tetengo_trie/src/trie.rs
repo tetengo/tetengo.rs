@@ -186,17 +186,6 @@ pub struct TrieStorageBuilder<Key, Value: Clone, KeySerializer: Serializer> {
     key_serializer: KeySerializer,
 }
 
-impl<Key, Value: Clone, KeySerializer: Serializer> Debug
-    for TrieStorageBuilder<Key, Value, KeySerializer>
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("_TrieStorageBuilder")
-            .field("storage", &"Box<dyn Storage<Value>>")
-            .field("key_serializer", &"KeySerializer")
-            .finish()
-    }
-}
-
 impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
     TrieStorageBuilder<Key, Value, KeySerializer>
 {
@@ -220,6 +209,17 @@ impl<Key, Value: Clone + 'static, KeySerializer: Serializer>
             double_array: DoubleArray::new(self.storage, 0),
             key_serializer: self.key_serializer,
         }
+    }
+}
+
+impl<Key, Value: Clone, KeySerializer: Serializer> Debug
+    for TrieStorageBuilder<Key, Value, KeySerializer>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("_TrieStorageBuilder")
+            .field("storage", &"Box<dyn Storage<Value>>")
+            .field("key_serializer", &"KeySerializer")
+            .finish()
     }
 }
 

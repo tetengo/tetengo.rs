@@ -5,7 +5,7 @@
  */
 
 use anyhow::Result;
-use std::fmt;
+use std::fmt::{self, Debug, Formatter};
 
 /**
  * A value serializer.
@@ -58,8 +58,8 @@ impl<Value: ?Sized> ValueSerializer<Value> {
     }
 }
 
-impl<Value: ?Sized> fmt::Debug for ValueSerializer<Value> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<Value: ?Sized> Debug for ValueSerializer<Value> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
             .field("serialize", &"<fn>")
             .field("fixed_value_size", &self.fixed_value_size)
@@ -106,8 +106,8 @@ impl<Value: Clone> ValueDeserializer<Value> {
     }
 }
 
-impl<Value: Clone> fmt::Debug for ValueDeserializer<Value> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<Value: Clone> Debug for ValueDeserializer<Value> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueDeserializer")
             .field("deserialize", &"<fn>")
             .finish()
