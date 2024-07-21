@@ -200,12 +200,12 @@ impl<'a> Lattice<'a> {
      * Modification of the lattice after settlement invalidate the EOS node.
      *
      * # Returns
-     * The EOS node and its preceding edge costs.
+     * The EOS node.
      *
      * # Errors
      * * When no input pushed yet.
      */
-    pub fn settle(&mut self) -> Result<(Node<'a>, Rc<Vec<i32>>)> {
+    pub fn settle(&mut self) -> Result<Node<'a>> {
         let Some(graph_last) = self.graph.last() else {
             return Err(LatticeError::NoInput.into());
         };
@@ -219,11 +219,11 @@ impl<'a> Lattice<'a> {
 
         let eos_node = Node::eos(
             self.graph.len() - 1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             best_preceding_node_index,
             best_preceding_path_cost,
         );
-        Ok((eos_node, preceding_edge_costs))
+        Ok(eos_node)
     }
 
     fn preceding_edge_costs(
@@ -705,53 +705,41 @@ mod tests {
 
             {
                 let result = lattice.settle();
-                let (eos_node, preceding_edge_costs) = result.unwrap();
+                let eos_node = result.unwrap();
 
                 assert_eq!(eos_node.preceding_step(), 0);
                 assert_eq!(eos_node.best_preceding_node(), 0);
                 assert_eq!(eos_node.path_cost(), 8000);
-
-                let expected_preceding_edge_costs = vec![8000];
-                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
             }
 
             let _result = lattice.push_back(to_input("[HakataTosu]"));
             {
                 let result = lattice.settle();
-                let (eos_node, preceding_edge_costs) = result.unwrap();
+                let eos_node = result.unwrap();
 
                 assert_eq!(eos_node.preceding_step(), 1);
                 assert_eq!(eos_node.best_preceding_node(), 1);
                 assert_eq!(eos_node.path_cost(), 7370);
-
-                let expected_preceding_edge_costs = vec![6000, 6000];
-                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
             }
 
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             {
                 let result = lattice.settle();
-                let (eos_node, preceding_edge_costs) = result.unwrap();
+                let eos_node = result.unwrap();
 
                 assert_eq!(eos_node.preceding_step(), 2);
                 assert_eq!(eos_node.best_preceding_node(), 1);
                 assert_eq!(eos_node.path_cost(), 4010);
-
-                let expected_preceding_edge_costs = vec![2000, 2000, 3000];
-                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
             }
 
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
             {
                 let result = lattice.settle();
-                let (eos_node, preceding_edge_costs) = result.unwrap();
+                let eos_node = result.unwrap();
 
                 assert_eq!(eos_node.preceding_step(), 3);
                 assert_eq!(eos_node.best_preceding_node(), 2);
                 assert_eq!(eos_node.path_cost(), 3390);
-
-                let expected_preceding_edge_costs = vec![400, 400, 400, 500, 600];
-                assert_eq!(*preceding_edge_costs, expected_preceding_edge_costs);
             }
         }
     }

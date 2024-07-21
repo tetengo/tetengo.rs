@@ -48,7 +48,7 @@ fn main_core() -> Result<()> {
         let vocabulary = timetable.create_vocabulary(departure_time);
         let mut lattice = Lattice::new(vocabulary.as_ref());
         build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
-        let (eos_node, _) = lattice.settle()?;
+        let eos_node = lattice.settle()?;
 
         let trips = enumerate_trips(&lattice, eos_node, 5);
 

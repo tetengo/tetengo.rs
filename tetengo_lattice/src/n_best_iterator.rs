@@ -463,7 +463,7 @@ mod tests {
         let _result = lattice.push_back(to_input("[TosuOmuta]"));
         let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-        let (eos_node, _) = lattice.settle().unwrap();
+        let eos_node = lattice.settle().unwrap();
         let _iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
     }
 
@@ -476,7 +476,7 @@ mod tests {
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-            let (eos_node, _) = lattice.settle().unwrap();
+            let eos_node = lattice.settle().unwrap();
             let mut iterator = NBestIterator::new(&lattice, eos_node, Box::new(Constraint::new()));
 
             {
@@ -730,7 +730,7 @@ mod tests {
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
 
-            let (eos_node, _) = lattice.settle().unwrap();
+            let eos_node = lattice.settle().unwrap();
             let mut iterator =
                 NBestIterator::new(&lattice, eos_node.clone(), Box::new(Constraint::new()));
 
