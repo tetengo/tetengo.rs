@@ -23,7 +23,7 @@ impl<'a> Constraint<'a> {
      *
      * It matches any path.
      */
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             pattern: Vec::new(),
         }
@@ -35,7 +35,7 @@ impl<'a> Constraint<'a> {
      * # Arguments
      * * `pattern` - A pattern.
      */
-    pub fn new_with_pattern(pattern: Vec<Box<dyn ConstraintElement + 'a>>) -> Self {
+    pub const fn new_with_pattern(pattern: Vec<Box<dyn ConstraintElement + 'a>>) -> Self {
         Self { pattern }
     }
 

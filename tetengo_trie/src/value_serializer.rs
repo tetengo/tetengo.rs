@@ -27,7 +27,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * * `serialize`        - A serializing function.
      * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
      */
-    pub fn new(serialize: fn(value: &Value) -> Vec<u8>, fixed_value_size: usize) -> Self {
+    pub const fn new(serialize: fn(value: &Value) -> Vec<u8>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
             fixed_value_size,
@@ -53,7 +53,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * # Returns
      * The fixed value size.
      */
-    pub fn fixed_value_size(&self) -> usize {
+    pub const fn fixed_value_size(&self) -> usize {
         self.fixed_value_size
     }
 }
@@ -85,7 +85,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
      * # Arguments
      * * `deserialize` - A deserializing function.
      */
-    pub fn new(deserialize: fn(serialized: &[u8]) -> Result<Value>) -> Self {
+    pub const fn new(deserialize: fn(serialized: &[u8]) -> Result<Value>) -> Self {
         Self { deserialize }
     }
 
@@ -125,7 +125,7 @@ mod tests {
         use super::super::*;
 
         #[test]
-        fn new() {
+        const fn new() {
             {
                 let _ = ValueSerializer::new(
                     |value: &i32| IntegerSerializer::new(false).serialize(value),
@@ -183,7 +183,7 @@ mod tests {
         use super::super::*;
 
         #[test]
-        fn new() {
+        const fn new() {
             {
                 let _ = ValueDeserializer::new(|serialized: &[u8]| {
                     IntegerDeserializer::<i32>::new(false).deserialize(serialized)

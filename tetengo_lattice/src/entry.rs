@@ -90,7 +90,7 @@ impl Entry {
      * * `value` - A box of a value.
      * * `cost`  - A cost.
      */
-    pub fn new(key: Box<dyn Input>, value: Box<dyn AnyValue>, cost: i32) -> Self {
+    pub const fn new(key: Box<dyn Input>, value: Box<dyn AnyValue>, cost: i32) -> Self {
         Entry::Middle(Middle { key, value, cost })
     }
 
@@ -141,7 +141,7 @@ impl Entry {
      * # Returns
      * The cost.
      */
-    pub fn cost(&self) -> i32 {
+    pub const fn cost(&self) -> i32 {
         match self {
             Entry::BosEos => 0,
             Entry::Middle(entry) => entry.cost,

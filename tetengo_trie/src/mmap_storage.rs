@@ -45,7 +45,7 @@ impl FileMapping {
         Ok(Self { mmap })
     }
 
-    fn mmap(&self) -> &Mmap {
+    const fn mmap(&self) -> &Mmap {
         &self.mmap
     }
 }
@@ -132,7 +132,7 @@ impl<Value: Clone + 'static> MmapStorageBuilder<Value> {
      * # Arguments
      * * `value` - A value cache capacity.
      */
-    pub fn value_cache_capacity(mut self, value: usize) -> Self {
+    pub const fn value_cache_capacity(mut self, value: usize) -> Self {
         self.value_cache_capacity = value;
         self
     }
@@ -201,7 +201,7 @@ impl<Value: Clone + 'static> MmapStorage<Value> {
      * # Returns
      * An mmap storage builder.
      */
-    pub fn builder(
+    pub const fn builder(
         file_mapping: Rc<FileMapping>,
         content_offset: usize,
         file_size: usize,

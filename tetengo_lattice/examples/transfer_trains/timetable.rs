@@ -293,7 +293,7 @@ struct TimetableValue {
 }
 
 impl TimetableValue {
-    fn new(stations: Vec<Station>, trains: Vec<Train>) -> Self {
+    const fn new(stations: Vec<Station>, trains: Vec<Train>) -> Self {
         Self { stations, trains }
     }
 }
@@ -665,13 +665,13 @@ impl Timetable {
         connections
     }
 
-    fn add_time(time: usize, duration: isize) -> usize {
+    const fn add_time(time: usize, duration: isize) -> usize {
         assert!(time < 1440);
         assert!(-1440 < duration && duration < 1440);
         (time as isize + 1440 + duration) as usize % 1440
     }
 
-    fn diff_time(time1: usize, time2: usize) -> isize {
+    const fn diff_time(time1: usize, time2: usize) -> isize {
         assert!(time1 < 1440);
         assert!(time2 < 1440);
         (time1 as isize + 1440 - time2 as isize) % 1440

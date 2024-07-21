@@ -23,7 +23,7 @@ impl<'a> Path<'a> {
      * * `nodes` - Nodes.
      * * `cost`  - A cost.
      */
-    pub fn new(nodes: Vec<Node<'a>>, cost: i32) -> Self {
+    pub const fn new(nodes: Vec<Node<'a>>, cost: i32) -> Self {
         Path { nodes, cost }
     }
 
@@ -53,7 +53,7 @@ impl<'a> Path<'a> {
      * # Returns
      * The cost.
      */
-    pub fn cost(&self) -> i32 {
+    pub const fn cost(&self) -> i32 {
         self.cost
     }
 }

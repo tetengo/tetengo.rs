@@ -27,7 +27,7 @@ impl<'a, T> TrieIterator<'a, T> {
      * * `double_array_iterator` - A double array iterator.
      * * `storage`               - A storage.
      */
-    pub(super) fn new(
+    pub(super) const fn new(
         double_array_iterator: DoubleArrayIterator<'a, T>,
         storage: &'a dyn Storage<T>,
     ) -> Self {

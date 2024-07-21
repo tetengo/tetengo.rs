@@ -22,7 +22,7 @@ impl<'a> NodeConstraintElement<'a> {
      * # Arguments
      * * `node` - A node.
      */
-    pub fn new(node: Node<'a>) -> Self {
+    pub const fn new(node: Node<'a>) -> Self {
         Self { node }
     }
 }

@@ -63,7 +63,7 @@ enum HashableEntry<'a> {
 }
 
 impl<'a> HashableEntry<'a> {
-    fn from_entity(
+    const fn from_entity(
         entry: Entry,
         hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
         equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
@@ -75,7 +75,7 @@ impl<'a> HashableEntry<'a> {
         })
     }
 
-    fn from_view(
+    const fn from_view(
         entry_view: EntryView<'a>,
         hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
         equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,

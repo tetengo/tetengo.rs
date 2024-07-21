@@ -70,7 +70,7 @@ impl<'a, Value: Clone + 'static> DoubleArrayBuilder<'a, Value> {
         self
     }
 
-    pub(super) fn density_factor(mut self, density_factor: usize) -> Self {
+    pub(super) const fn density_factor(mut self, density_factor: usize) -> Self {
         self.density_factor = density_factor;
         self
     }
@@ -101,7 +101,7 @@ pub(super) struct DoubleArray<Value> {
 }
 
 impl<Value: Clone + 'static> DoubleArray<Value> {
-    pub(super) fn builder() -> DoubleArrayBuilder<'static, Value> {
+    pub(super) const fn builder() -> DoubleArrayBuilder<'static, Value> {
         DoubleArrayBuilder {
             elements: vec![],
             density_factor: DEFAULT_DENSITY_FACTOR,
@@ -109,7 +109,10 @@ impl<Value: Clone + 'static> DoubleArray<Value> {
         }
     }
 
-    pub(super) fn new(storage: Box<dyn Storage<Value>>, root_base_check_index: usize) -> Self {
+    pub(super) const fn new(
+        storage: Box<dyn Storage<Value>>,
+        root_base_check_index: usize,
+    ) -> Self {
         Self {
             storage,
             root_base_check_index,

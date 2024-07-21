@@ -45,11 +45,11 @@ struct GraphStep<'a> {
 }
 
 impl<'a> GraphStep<'a> {
-    fn new(input_tail: usize, nodes: Vec<Node<'a>>) -> Self {
+    const fn new(input_tail: usize, nodes: Vec<Node<'a>>) -> Self {
         Self { input_tail, nodes }
     }
 
-    fn input_tail(&self) -> usize {
+    const fn input_tail(&self) -> usize {
         self.input_tail
     }
 
@@ -262,7 +262,7 @@ impl<'a> Lattice<'a> {
         min_index
     }
 
-    fn add_cost(one: i32, another: i32) -> i32 {
+    const fn add_cost(one: i32, another: i32) -> i32 {
         if one == i32::MAX || another == i32::MAX {
             i32::MAX
         } else {
