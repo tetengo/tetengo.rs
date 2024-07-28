@@ -9,7 +9,6 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
-use std::mem::size_of;
 use std::rc::Rc;
 
 use anyhow::Result;

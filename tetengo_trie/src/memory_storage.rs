@@ -8,7 +8,6 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::io::{Read, Write};
-use std::mem::size_of;
 use std::rc::Rc;
 
 use anyhow::Result;

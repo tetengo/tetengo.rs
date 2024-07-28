@@ -21,7 +21,6 @@ rustflags = [
     "-D", "non_ascii_idents",
 #    "-D", "non_exhaustive_omitted_patterns",
     "-D", "noop_method_call",
-    "-D", "pointer_structural_match",
     "-D", "rust_2021_incompatible_closure_captures",
     "-D", "rust_2021_incompatible_or_patterns",
     "-D", "rust_2021_prefixes_incompatible_syntax",
