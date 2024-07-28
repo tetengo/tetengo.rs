@@ -12,9 +12,6 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  RUST_VER: 1.80.0
-
 jobs:
   verify_project:
     name:    cargo verify-project
@@ -25,11 +22,6 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup default/update
-      shell: cmd
-      run: |
-        rustup default ${{ env.RUST_VER }}
-      
     - name: cargo verify-project
       shell: cmd
       run: |
@@ -44,12 +36,6 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup default/update
-      shell: cmd
-      run: |
-        rustup default ${{ env.RUST_VER }}
-        rustup component add --toolchain ${{ env.RUST_VER }} rustfmt
-      
     - name: cargo fmt
       shell: cmd
       run: |
@@ -64,12 +50,6 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup default/update
-      shell: cmd
-      run: |
-        rustup default ${{ env.RUST_VER }}
-        rustup component add --toolchain ${{ env.RUST_VER }} clippy
-      
     - name: cargo clippy
       shell: cmd
       run: |
@@ -84,11 +64,6 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup default/update
-      shell: cmd
-      run: |
-        rustup default ${{ env.RUST_VER }}
-      
     - name: cargo doc
       shell: cmd
       run: |
@@ -103,11 +78,6 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup default/update
-      shell: cmd
-      run: |
-        rustup default ${{ env.RUST_VER }}
-      
     - name: cargo build
       shell: cmd
       run: |
