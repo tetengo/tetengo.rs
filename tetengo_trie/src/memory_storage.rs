@@ -8,11 +8,10 @@ use std::any::Any;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::io::{Read, Write};
-use std::mem::size_of;
 use std::rc::Rc;
+use std::sync::LazyLock;
 
 use anyhow::Result;
-use once_cell::sync::Lazy;
 
 use crate::double_array::VACANT_CHECK_VALUE;
 use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
@@ -114,8 +113,8 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     }
 
     fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
-        static INTEGER_SERIALIZER: Lazy<IntegerSerializer<u32>> =
-            Lazy::new(|| IntegerSerializer::new(false));
+        static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
+            LazyLock::new(|| IntegerSerializer::new(false));
 
         let serialized = INTEGER_SERIALIZER.serialize(&value);
         writer.write_all(&serialized)?;
@@ -181,8 +180,8 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     }
 
     fn read_u32(reader: &mut dyn Read) -> Result<u32> {
-        static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
-            Lazy::new(|| IntegerDeserializer::new(false));
+        static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
+            LazyLock::new(|| IntegerDeserializer::new(false));
 
         let mut to_deserialize: [u8; size_of::<u32>()] = [0u8; size_of::<u32>()];
         reader.read_exact(&mut to_deserialize)?;
@@ -368,8 +367,8 @@ mod tests {
         {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
@@ -382,8 +381,8 @@ mod tests {
         {
             let mut reader = create_input_stream_fixed_value_size();
             let deserializer = ValueDeserializer::new(|serialized| {
-                static U32_DESERIALIZER: Lazy<IntegerDeserializer<u32>> =
-                    Lazy::new(|| IntegerDeserializer::<u32>::new(false));
+                static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
+                    LazyLock::new(|| IntegerDeserializer::<u32>::new(false));
                 U32_DESERIALIZER.deserialize(serialized)
             });
             let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
@@ -396,8 +395,8 @@ mod tests {
         {
             let mut reader = create_input_stream_broken();
             let deserializer = ValueDeserializer::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let result = MemoryStorage::new_with_reader(&mut reader, &deserializer);
@@ -528,8 +527,8 @@ mod tests {
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<String>::new(
                 |value| {
-                    static STR_SERIALIZER: Lazy<StrSerializer> =
-                        Lazy::new(|| StrSerializer::new(false));
+                    static STR_SERIALIZER: LazyLock<StrSerializer> =
+                        LazyLock::new(|| StrSerializer::new(false));
                     STR_SERIALIZER.serialize(&value.as_str())
                 },
                 0,
@@ -570,8 +569,8 @@ mod tests {
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<u32>::new(
                 |value| {
-                    static INTEGER_SERIALIZER: Lazy<IntegerSerializer<u32>> =
-                        Lazy::new(|| IntegerSerializer::new(false));
+                    static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
+                        LazyLock::new(|| IntegerSerializer::new(false));
                     INTEGER_SERIALIZER.serialize(value)
                 },
                 size_of::<u32>(),

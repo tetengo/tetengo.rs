@@ -388,8 +388,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
-
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
 
     use crate::memory_storage::MemoryStorage;
     use crate::serializer::Deserializer;
@@ -556,8 +555,8 @@ mod tests {
         {
             let mut reader = create_input_stream();
             let value_deserializer = ValueDeserializer::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage =
@@ -568,8 +567,8 @@ mod tests {
         {
             let mut reader = create_input_stream();
             let value_deserializer = ValueDeserializer::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage =
@@ -854,8 +853,8 @@ mod tests {
         {
             let mut reader = create_input_stream();
             let value_deserializer = ValueDeserializer::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage =
@@ -867,8 +866,8 @@ mod tests {
             let mut writer = Cursor::new(Vec::<u8>::new());
             let serializer = ValueSerializer::<String>::new(
                 |value| {
-                    static STR_SERIALIZER: Lazy<StrSerializer> =
-                        Lazy::new(|| StrSerializer::new(false));
+                    static STR_SERIALIZER: LazyLock<StrSerializer> =
+                        LazyLock::new(|| StrSerializer::new(false));
                     STR_SERIALIZER.serialize(&value.as_str())
                 },
                 0,

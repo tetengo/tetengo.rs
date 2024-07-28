@@ -119,8 +119,6 @@ impl<Value: Clone> Debug for ValueDeserializer<Value> {
 #[cfg(test)]
 mod tests {
     mod value_serializer {
-        use std::mem::size_of;
-
         use crate::integer_serializer::IntegerSerializer;
         use crate::serializer::Serializer;
 

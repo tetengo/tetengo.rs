@@ -87,4 +87,3 @@ jobs:
       shell: bash
       run: |
         cargo test --release --verbose
-  

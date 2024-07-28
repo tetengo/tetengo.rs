@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter};
-use std::mem::size_of;
 use std::path::Path;
 use std::process::exit;
 

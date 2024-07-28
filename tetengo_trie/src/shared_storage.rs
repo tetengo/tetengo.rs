@@ -124,8 +124,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
-
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
 
     use crate::double_array::VACANT_CHECK_VALUE;
     use crate::serializer::{Deserializer, Serializer};
@@ -189,8 +188,8 @@ mod tests {
         {
             let mut reader = create_input_stream();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let storage = SharedStorage::new_with_reader(&mut reader, &deserializer).unwrap();
@@ -203,8 +202,8 @@ mod tests {
         {
             let mut reader = create_input_stream_broken();
             let deserializer = ValueDeserializer::<String>::new(|serialized| {
-                static STRING_DESERIALIZER: Lazy<StringDeserializer> =
-                    Lazy::new(|| StringDeserializer::new(false));
+                static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
+                    LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
             });
             let result = SharedStorage::new_with_reader(&mut reader, &deserializer);
@@ -334,8 +333,8 @@ mod tests {
         let mut writer = Cursor::new(Vec::<u8>::new());
         let serializer = ValueSerializer::<String>::new(
             |value| {
-                static STR_SERIALIZER: Lazy<StrSerializer> =
-                    Lazy::new(|| StrSerializer::new(false));
+                static STR_SERIALIZER: LazyLock<StrSerializer> =
+                    LazyLock::new(|| StrSerializer::new(false));
                 STR_SERIALIZER.serialize(&value.as_str())
             },
             0,

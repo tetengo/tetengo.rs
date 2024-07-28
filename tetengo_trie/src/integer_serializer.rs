@@ -5,7 +5,6 @@
  */
 
 use std::marker::PhantomData;
-use std::mem;
 use std::ops;
 
 use anyhow::Result;
@@ -161,9 +160,9 @@ fn to_bytes_with_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> {
 }
 
 fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> {
-    let mut bytes = Vec::with_capacity(mem::size_of::<Object>());
+    let mut bytes = Vec::with_capacity(size_of::<Object>());
     let mut object = *object;
-    for _ in 0..mem::size_of::<Object>() {
+    for _ in 0..size_of::<Object>() {
         let byte_object = object & Object::from(0xFFu8);
         let u128_object: i128 = byte_object.into();
         let u8_object = u128_object as u8;
@@ -183,9 +182,7 @@ fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Re
 }
 
 fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
-    if serialized.len() < mem::size_of::<Object>()
-        || 2 * mem::size_of::<Object>() < serialized.len()
-    {
+    if serialized.len() < size_of::<Object>() || 2 * size_of::<Object>() < serialized.len() {
         return Err(IntegerDeserialationError::InvalidSerializedLength.into());
     }
     let mut object = Object::from(0);
@@ -212,9 +209,7 @@ fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<
 }
 
 fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
-    if serialized.len() < mem::size_of::<Object>()
-        || 2 * mem::size_of::<Object>() < serialized.len()
-    {
+    if serialized.len() < size_of::<Object>() || 2 * size_of::<Object>() < serialized.len() {
         return Err(IntegerDeserialationError::InvalidSerializedLength.into());
     }
     let mut object = Object::from(0);
