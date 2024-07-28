@@ -25,14 +25,10 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup update
-      shell: cmd
-      run: |
-        rustup update ${{ env.RUST_VER }}
-
     - name: cargo verify-project
       shell: cmd
       run: |
+        rustup update ${{ env.RUST_VER }}
         cargo verify-project --verbose
   
   format:
@@ -44,14 +40,10 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup update
-      shell: cmd
-      run: |
-        rustup update ${{ env.RUST_VER }}
-
     - name: cargo fmt
       shell: cmd
       run: |
+        rustup update ${{ env.RUST_VER }}
         cargo fmt --check --verbose
   
   lint:
@@ -63,14 +55,10 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup update
-      shell: cmd
-      run: |
-        rustup update ${{ env.RUST_VER }}
-
     - name: cargo clippy
       shell: cmd
       run: |
+        rustup update ${{ env.RUST_VER }}
         cargo clippy
   
   document:
@@ -82,14 +70,10 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup update
-      shell: cmd
-      run: |
-        rustup update ${{ env.RUST_VER }}
-
     - name: cargo doc
       shell: cmd
       run: |
+        rustup update ${{ env.RUST_VER }}
         cargo doc --verbose
   
   build_and_test:
@@ -101,18 +85,15 @@ jobs:
       with:
         submodules: recursive
     
-    - name: rustup update
-      shell: cmd
-      run: |
-        rustup update ${{ env.RUST_VER }}
-
     - name: cargo build
       shell: cmd
       run: |
+        rustup update ${{ env.RUST_VER }}
         cargo build --release --verbose
     
     - name: cargo test
       shell: cmd
       run: |
+        rustup update ${{ env.RUST_VER }}
         cargo test --release --verbose
   
