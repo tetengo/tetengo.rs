@@ -61,8 +61,7 @@ impl<'a> Path<'a> {
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
 
     use crate::string_input::StringInput;
 
@@ -72,15 +71,15 @@ mod tests {
 
     const BOS_PRECEDING_EDGE_COSTS: Vec<i32> = vec![];
 
-    static PRECEDING_EDGE_COSTS: Lazy<Vec<i32>> = Lazy::new(|| vec![1]);
+    static PRECEDING_EDGE_COSTS: LazyLock<Vec<i32>> = LazyLock::new(|| vec![1]);
 
     fn make_nodes() -> Vec<Node<'static>> {
-        static KEY_MIZUHO: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("mizuho")));
-        static KEY_SAKURA: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("sakura")));
-        static KEY_TSUBAME: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        static KEY_MIZUHO: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("mizuho")));
+        static KEY_SAKURA: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("sakura")));
+        static KEY_TSUBAME: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(Rc::new(BOS_PRECEDING_EDGE_COSTS)),
             Node::new(

@@ -94,8 +94,7 @@ impl<'a> Constraint<'a> {
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
 
     use crate::node_constraint_element::NodeConstraintElement;
     use crate::string_input::StringInput;
@@ -121,12 +120,12 @@ mod tests {
     }
 
     fn make_path_b_m_s_t_e() -> Vec<Node<'static>> {
-        static KEY_MIZUHO: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("mizuho")));
-        static KEY_SAKURA: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("sakura")));
-        static KEY_TSUBAME: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        static KEY_MIZUHO: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("mizuho")));
+        static KEY_SAKURA: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("sakura")));
+        static KEY_TSUBAME: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
@@ -164,12 +163,12 @@ mod tests {
     }
 
     fn make_path_b_m_a_t_e() -> Vec<Node<'static>> {
-        static KEY_MIZUHO: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("mizuho")));
-        static KEY_ARIAKE: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("ariake")));
-        static KEY_TSUBAME: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        static KEY_MIZUHO: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("mizuho")));
+        static KEY_ARIAKE: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("ariake")));
+        static KEY_TSUBAME: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
@@ -207,10 +206,10 @@ mod tests {
     }
 
     fn make_path_b_h_t_e() -> Vec<Node<'static>> {
-        static KEY_HINOKUNI: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("hinokuni")));
-        static KEY_TSUBAME: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("tsubame")));
+        static KEY_HINOKUNI: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("hinokuni")));
+        static KEY_TSUBAME: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
@@ -238,12 +237,12 @@ mod tests {
     }
 
     fn make_path_b_k_s_k_e() -> Vec<Node<'static>> {
-        static KEY_KAMOME: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("kamome")));
-        static KEY_SAKURA: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("sakura")));
-        static KEY_KUMAGAWA: Lazy<StringInput> =
-            Lazy::new(|| StringInput::new(String::from("kumagawa")));
+        static KEY_KAMOME: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("kamome")));
+        static KEY_SAKURA: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("sakura")));
+        static KEY_KUMAGAWA: LazyLock<StringInput> =
+            LazyLock::new(|| StringInput::new(String::from("kumagawa")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
