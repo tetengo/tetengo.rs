@@ -28,7 +28,7 @@ jobs:
     - name: cargo verify-project
       shell: cmd
       run: |
-        rustup update ${{ env.RUST_VER }}
+        rustup default ${{ env.RUST_VER }}
         cargo verify-project --verbose
   
   format:
@@ -43,7 +43,7 @@ jobs:
     - name: cargo fmt
       shell: cmd
       run: |
-        rustup update ${{ env.RUST_VER }}
+        rustup default ${{ env.RUST_VER }}
         cargo fmt --check --verbose
   
   lint:
@@ -58,7 +58,7 @@ jobs:
     - name: cargo clippy
       shell: cmd
       run: |
-        rustup update ${{ env.RUST_VER }}
+        rustup default ${{ env.RUST_VER }}
         cargo clippy
   
   document:
@@ -73,7 +73,7 @@ jobs:
     - name: cargo doc
       shell: cmd
       run: |
-        rustup update ${{ env.RUST_VER }}
+        rustup default ${{ env.RUST_VER }}
         cargo doc --verbose
   
   build_and_test:
@@ -88,12 +88,12 @@ jobs:
     - name: cargo build
       shell: cmd
       run: |
-        rustup update ${{ env.RUST_VER }}
+        rustup default ${{ env.RUST_VER }}
         cargo build --release --verbose
     
     - name: cargo test
       shell: cmd
       run: |
-        rustup update ${{ env.RUST_VER }}
+        rustup default ${{ env.RUST_VER }}
         cargo test --release --verbose
   
