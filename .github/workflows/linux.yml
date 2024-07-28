@@ -28,7 +28,11 @@ jobs:
     - name: cargo verify-project
       shell: bash
       run: |
+        cargo --version
+        rustc --version
         rustup update ${{ env.RUST_VER }}
+        cargo --version
+        rustc --version
         cargo verify-project --verbose
   
   format:
