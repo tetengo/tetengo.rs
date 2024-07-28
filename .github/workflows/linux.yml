@@ -25,15 +25,14 @@ jobs:
       with:
         submodules: recursive
     
+    - name: rustup default/update
+      shell: bash
+      run: |
+        rustup default ${{ env.RUST_VER }}
+      
     - name: cargo verify-project
       shell: bash
       run: |
-        cargo --version
-        rustc --version
-        rustup default ${{ env.RUST_VER }}
-        rustup update ${{ env.RUST_VER }}
-        cargo --version
-        rustc --version
         cargo verify-project --verbose
   
   format:
@@ -45,11 +44,15 @@ jobs:
       with:
         submodules: recursive
     
-    - name: cargo fmt
+    - name: rustup default/update
       shell: bash
       run: |
         rustup default ${{ env.RUST_VER }}
-        rustup update ${{ env.RUST_VER }}
+        rustup component add --toolchain ${{ env.RUST_VER }} rustfmt
+      
+    - name: cargo fmt
+      shell: bash
+      run: |
         cargo fmt --check --verbose
   
   lint:
@@ -61,11 +64,15 @@ jobs:
       with:
         submodules: recursive
     
-    - name: cargo clippy
+    - name: rustup default/update
       shell: bash
       run: |
         rustup default ${{ env.RUST_VER }}
-        rustup update ${{ env.RUST_VER }}
+        rustup component add --toolchain ${{ env.RUST_VER }} clippy
+      
+    - name: cargo clippy
+      shell: bash
+      run: |
         cargo clippy
   
   document:
@@ -77,11 +84,14 @@ jobs:
       with:
         submodules: recursive
     
-    - name: cargo doc
+    - name: rustup default/update
       shell: bash
       run: |
         rustup default ${{ env.RUST_VER }}
-        rustup update ${{ env.RUST_VER }}
+      
+    - name: cargo doc
+      shell: bash
+      run: |
         cargo doc --verbose
   
   build_and_test:
@@ -93,16 +103,17 @@ jobs:
       with:
         submodules: recursive
     
-    - name: cargo build
+    - name: rustup default/update
       shell: bash
       run: |
         rustup default ${{ env.RUST_VER }}
-        rustup update ${{ env.RUST_VER }}
+      
+    - name: cargo build
+      shell: bash
+      run: |
         cargo build --release --verbose
     
     - name: cargo test
       shell: bash
       run: |
-        rustup default ${{ env.RUST_VER }}
-        rustup update ${{ env.RUST_VER }}
         cargo test --release --verbose
