@@ -53,7 +53,7 @@ jobs:
     - name: cargo clippy
       shell: cmd
       run: |
-        cargo clippy
+        cargo clippy --all-targets
   
   document:
     name:    cargo doc
@@ -81,10 +81,10 @@ jobs:
     - name: cargo build
       shell: cmd
       run: |
-        cargo build --release --verbose
+        cargo build --release --all-targets --verbose
     
     - name: cargo test
       shell: cmd
       run: |
-        cargo test --release --verbose
+        cargo test --release --all-targets --verbose
   
