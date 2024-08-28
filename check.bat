@@ -2,13 +2,13 @@
 rem Checks this package
 rem Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
 
-call scripts/check.bat
+call kogyan\scripts/check.bat
 if errorlevel 1 exit /b 1
 
-scripts\sort_derive_attributes.py .
+kogyan\scripts\sort_derive_attributes.py .
 if errorlevel 1 exit /b 1
 
-scripts\check_use_order.py .
+kogyan\scripts\check_use_order.py .
 if errorlevel 1 exit /b 1
 
 cargo verify-project
