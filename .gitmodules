@@ -1,0 +1,3 @@
+[submodule "kogyan"]
+	path = kogyan
+	url = https://github.com/tetengo/kogyan.rs.git
