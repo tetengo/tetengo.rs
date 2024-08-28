@@ -38,7 +38,7 @@ impl<'a> Constraint<'a> {
     }
 
     /**
-     * Returns `true`` if the path matches the pattern.
+     * Returns `true` if the path matches the pattern.
      *
      * # Arguments
      * * `reverse_path` - A path in reverse order.
@@ -51,7 +51,7 @@ impl<'a> Constraint<'a> {
     }
 
     /**
-     * Returns `true`` if the tail path matches the tail of the pattern.
+     * Returns `true` if the tail path matches the tail of the pattern.
      *
      * # Arguments
      * * `reverse_tail_path` - A tail path in reverse order.
