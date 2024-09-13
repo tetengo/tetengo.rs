@@ -312,8 +312,8 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn contains(&self, key: KeySerializer::Object<'_>) -> Result<bool> {
-        let serialized_key = self.key_serializer.serialize(&key);
+    pub fn contains(&self, key: &KeySerializer::Object<'_>) -> Result<bool> {
+        let serialized_key = self.key_serializer.serialize(key);
         Ok(self.double_array.find(&serialized_key)?.is_some())
     }
 
@@ -329,8 +329,8 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn find(&self, key: KeySerializer::Object<'_>) -> Result<Option<Rc<Value>>> {
-        let serialized_key = self.key_serializer.serialize(&key);
+    pub fn find(&self, key: &KeySerializer::Object<'_>) -> Result<Option<Rc<Value>>> {
+        let serialized_key = self.key_serializer.serialize(key);
         let index = self.double_array.find(&serialized_key)?;
         let Some(index) = index else {
             return Ok(None);
@@ -361,8 +361,8 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn subtrie(&self, key_prefix: KeySerializer::Object<'_>) -> Result<Option<Self>> {
-        let serialized_key_prefix = self.key_serializer.serialize(&key_prefix);
+    pub fn subtrie(&self, key_prefix: &KeySerializer::Object<'_>) -> Result<Option<Self>> {
+        let serialized_key_prefix = self.key_serializer.serialize(key_prefix);
         let subdouble_array = self.double_array.subtrie(&serialized_key_prefix)?;
         let Some(subdouble_array) = subdouble_array else {
             return Ok(None);
@@ -646,7 +646,7 @@ mod tests {
         {
             let trie = Trie::<&str, String>::builder().build().unwrap();
 
-            assert!(!trie.contains(KUMAMOTO).unwrap());
+            assert!(!trie.contains(&KUMAMOTO).unwrap());
         }
         {
             let trie = Trie::<&str, String>::builder()
@@ -660,9 +660,9 @@ mod tests {
                 .build()
                 .unwrap();
 
-            assert!(trie.contains(KUMAMOTO).unwrap());
-            assert!(trie.contains(TAMANA).unwrap());
-            assert!(!trie.contains(UTO).unwrap());
+            assert!(trie.contains(&KUMAMOTO).unwrap());
+            assert!(trie.contains(&TAMANA).unwrap());
+            assert!(!trie.contains(&UTO).unwrap());
         }
     }
 
@@ -671,7 +671,7 @@ mod tests {
         {
             let trie = Trie::<&str, String>::builder().build().unwrap();
 
-            let found = trie.find(KUMAMOTO).unwrap();
+            let found = trie.find(&KUMAMOTO).unwrap();
             assert!(found.is_none());
         }
         {
@@ -687,15 +687,15 @@ mod tests {
                 .unwrap();
 
             {
-                let found = trie.find(KUMAMOTO).unwrap().unwrap();
+                let found = trie.find(&KUMAMOTO).unwrap().unwrap();
                 assert_eq!(*found, KUMAMOTO.to_string());
             }
             {
-                let found = trie.find(TAMANA).unwrap().unwrap();
+                let found = trie.find(&TAMANA).unwrap().unwrap();
                 assert_eq!(*found, TAMANA.to_string());
             }
             {
-                let found = trie.find(UTO).unwrap();
+                let found = trie.find(&UTO).unwrap();
                 assert!(found.is_none());
             }
         }
@@ -729,7 +729,7 @@ mod tests {
         {
             let trie = Trie::<&str, String>::builder().build().unwrap();
 
-            let subtrie = trie.subtrie(TAMA).unwrap();
+            let subtrie = trie.subtrie(&TAMA).unwrap();
             assert!(subtrie.is_none());
         }
         {
@@ -738,7 +738,7 @@ mod tests {
                 .build()
                 .unwrap();
 
-            let subtrie = trie.subtrie(TAMA).unwrap();
+            let subtrie = trie.subtrie(&TAMA).unwrap();
             assert!(subtrie.is_none());
         }
         {
@@ -753,7 +753,7 @@ mod tests {
                 .build()
                 .unwrap();
 
-            let subtrie = trie.subtrie(TAMA).unwrap().unwrap();
+            let subtrie = trie.subtrie(&TAMA).unwrap().unwrap();
 
             let mut iterator = subtrie.iter();
             assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
@@ -779,7 +779,7 @@ mod tests {
                 .downcast_ref::<MemoryStorage<String>>()
                 .unwrap();
 
-            let subtrie = trie.subtrie(TAMA).unwrap().unwrap();
+            let subtrie = trie.subtrie(&TAMA).unwrap().unwrap();
 
             let mut iterator = subtrie.iter();
             assert_eq!(*iterator.next().unwrap(), TAMANA.to_string());
@@ -790,7 +790,7 @@ mod tests {
         {
             let trie = Trie::<&str, i32>::builder().build().unwrap();
 
-            let subtrie = trie.subtrie("Kuma").unwrap();
+            let subtrie = trie.subtrie(&"Kuma").unwrap();
             assert!(subtrie.is_none());
         }
         {
@@ -799,7 +799,7 @@ mod tests {
                 .build()
                 .unwrap();
 
-            let subtrie = trie.subtrie("Kuma").unwrap().unwrap();
+            let subtrie = trie.subtrie(&"Kuma").unwrap().unwrap();
 
             let mut iterator = subtrie.iter();
             assert_eq!(*iterator.next().unwrap(), 42);
@@ -809,7 +809,7 @@ mod tests {
         {
             let trie = Trie::<&str, String>::builder().build().unwrap();
 
-            let subtrie = trie.subtrie("Kuma").unwrap();
+            let subtrie = trie.subtrie(&"Kuma").unwrap();
             assert!(subtrie.is_none());
         }
         {
@@ -824,7 +824,7 @@ mod tests {
                 .build()
                 .unwrap();
 
-            let subtrie = trie.subtrie("Kuma").unwrap().unwrap();
+            let subtrie = trie.subtrie(&"Kuma").unwrap().unwrap();
 
             let mut iterator = subtrie.iter();
             assert_eq!(*iterator.next().unwrap(), KUMAMOTO.to_string());

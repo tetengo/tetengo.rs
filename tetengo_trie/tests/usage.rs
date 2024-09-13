@@ -55,15 +55,15 @@ mod usage {
 
         // Searches the trie.
         // If a perfect-matching key is found, its value is returned.
-        let found_for_gionbashi = trie.find("gionbashi").unwrap().unwrap();
+        let found_for_gionbashi = trie.find(&"gionbashi").unwrap().unwrap();
         assert_eq!(*found_for_gionbashi, 5);
 
         // If not found, None is returned.
-        let found_for_hanabatachou = trie.find("hanabatachou").unwrap();
+        let found_for_hanabatachou = trie.find(&"hanabatachou").unwrap();
         assert!(found_for_hanabatachou.is_none());
 
         // Creates a subtrie consisting of the elements with the common key prefix.
-        let subtrie = trie.subtrie("ka").unwrap().unwrap();
+        let subtrie = trie.subtrie(&"ka").unwrap().unwrap();
 
         // Enumerates the values in the subtrie.
         let subtrie_values = subtrie.iter().map(|v| *v).collect::<Vec<_>>();

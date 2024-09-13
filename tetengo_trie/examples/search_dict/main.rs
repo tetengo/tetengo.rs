@@ -44,7 +44,7 @@ fn main_core() -> Result<()> {
         }
 
         line = line.trim_end().to_string();
-        let found = match trie.find(line)? {
+        let found = match trie.find(&line)? {
             Some(found) => found,
             None => {
                 println!("ERROR: Not found.");
