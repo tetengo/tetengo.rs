@@ -108,7 +108,7 @@ mod tests {
     use super::*;
 
     #[derive(Debug)]
-    struct AnotherInput {}
+    struct AnotherInput;
 
     impl Input for AnotherInput {
         fn equal_to(&self, _: &dyn Input) -> bool {
@@ -182,7 +182,7 @@ mod tests {
         }
         {
             let input1 = StringInput::new(String::from("hoge"));
-            let input2 = AnotherInput {};
+            let input2 = AnotherInput;
 
             assert!(!input1.equal_to(&input2));
         }
