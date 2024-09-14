@@ -56,7 +56,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
      */
     pub fn new_with_reader(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<Self> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
@@ -76,7 +76,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn serialize_value_array(
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
         value_array: &[ValueArrayElement<Value>],
     ) -> Result<()> {
         debug_assert!(value_array.len() < u32::MAX as usize);
@@ -123,7 +123,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn deserialize(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<(Vec<u32>, Vec<ValueArrayElement<Value>>)> {
         let base_check_array = Self::deserialize_base_check_array(reader)?;
         let value_array = Self::deserialize_value_array(reader, value_deserializer)?;
@@ -141,7 +141,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn deserialize_value_array(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<Vec<ValueArrayElement<Value>>> {
         let size = Self::read_u32(reader)? as usize;
 
@@ -260,7 +260,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
     ) -> Result<()> {
         Self::serialize_base_check_array(writer, &self.base_check_array.borrow())?;
         Self::serialize_value_array(writer, value_serializer, &self.value_array)?;
@@ -366,12 +366,12 @@ mod tests {
     fn new_with_reader() {
         {
             let mut reader = create_input_stream();
-            let deserializer = ValueDeserializer::new(|serialized| {
+            let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
+            }));
+            let storage = MemoryStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(storage.value_at(4).unwrap().unwrap().as_ref(), "hoge");
@@ -380,12 +380,12 @@ mod tests {
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
-            let deserializer = ValueDeserializer::new(|serialized| {
+            let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::<u32>::new(false));
                 U32_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
+            }));
+            let storage = MemoryStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3);
@@ -394,12 +394,12 @@ mod tests {
         }
         {
             let mut reader = create_input_stream_broken();
-            let deserializer = ValueDeserializer::new(|serialized| {
+            let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let result = MemoryStorage::new_with_reader(&mut reader, &deserializer);
+            }));
+            let result = MemoryStorage::new_with_reader(&mut reader, &mut deserializer);
             assert!(result.is_err());
         }
     }
@@ -525,15 +525,15 @@ mod tests {
             storage.add_value_at(1, String::from("piyo")).unwrap();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
-            let serializer = ValueSerializer::<String>::new(
-                |value| {
+            let mut serializer = ValueSerializer::<String>::new(
+                Box::new(|value: &String| {
                     static STR_SERIALIZER: LazyLock<StrSerializer> =
                         LazyLock::new(|| StrSerializer::new(false));
                     STR_SERIALIZER.serialize(&value.as_str())
-                },
+                }),
                 0,
             );
-            let result = storage.serialize(&mut writer, &serializer);
+            let result = storage.serialize(&mut writer, &mut serializer);
             assert!(result.is_ok());
 
             #[rustfmt::skip]
@@ -567,15 +567,15 @@ mod tests {
             storage.add_value_at(1, 159).unwrap();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
-            let serializer = ValueSerializer::<u32>::new(
-                |value| {
+            let mut serializer = ValueSerializer::<u32>::new(
+                Box::new(|value| {
                     static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
                         LazyLock::new(|| IntegerSerializer::new(false));
                     INTEGER_SERIALIZER.serialize(value)
-                },
+                }),
                 size_of::<u32>(),
             );
-            let result = storage.serialize(&mut writer, &serializer);
+            let result = storage.serialize(&mut writer, &mut serializer);
             assert!(result.is_ok());
 
             #[rustfmt::skip]

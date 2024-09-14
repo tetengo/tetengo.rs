@@ -166,8 +166,8 @@ fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<()> {
     eprintln!("Serializing trie...");
     let file = File::create(trie_bin_path)?;
     let mut buf_writer = BufWriter::new(file);
-    let serializer = ValueSerializer::new(serialize_value, SERIALIZED_VALUE_SIZE);
-    trie.storage().serialize(&mut buf_writer, &serializer)?;
+    let mut serializer = ValueSerializer::new(Box::new(serialize_value), SERIALIZED_VALUE_SIZE);
+    trie.storage().serialize(&mut buf_writer, &mut serializer)?;
     eprintln!("Done.        ");
     Ok(())
 }

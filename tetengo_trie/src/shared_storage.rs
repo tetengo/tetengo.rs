@@ -49,7 +49,7 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
      */
     pub fn new_with_reader(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<Self> {
         let entity = MemoryStorage::<Value>::new_with_reader(reader, value_deserializer)?;
         Ok(Self {
@@ -101,7 +101,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
     ) -> Result<()> {
         self.entity.serialize(writer, value_serializer)
     }
@@ -187,12 +187,12 @@ mod tests {
     fn new_with_reader() {
         {
             let mut reader = create_input_stream();
-            let deserializer = ValueDeserializer::<String>::new(|serialized| {
+            let mut deserializer = ValueDeserializer::<String>::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = SharedStorage::new_with_reader(&mut reader, &deserializer).unwrap();
+            }));
+            let storage = SharedStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(storage.value_at(4).unwrap().unwrap().as_ref(), "hoge");
@@ -201,12 +201,12 @@ mod tests {
         }
         {
             let mut reader = create_input_stream_broken();
-            let deserializer = ValueDeserializer::<String>::new(|serialized| {
+            let mut deserializer = ValueDeserializer::<String>::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let result = SharedStorage::new_with_reader(&mut reader, &deserializer);
+            }));
+            let result = SharedStorage::new_with_reader(&mut reader, &mut deserializer);
             assert!(result.is_err());
         }
     }
@@ -331,15 +331,15 @@ mod tests {
         storage.add_value_at(1, String::from("piyo")).unwrap();
 
         let mut writer = Cursor::new(Vec::<u8>::new());
-        let serializer = ValueSerializer::<String>::new(
-            |value| {
+        let mut serializer = ValueSerializer::<String>::new(
+            Box::new(|value| {
                 static STR_SERIALIZER: LazyLock<StrSerializer> =
                     LazyLock::new(|| StrSerializer::new(false));
                 STR_SERIALIZER.serialize(&value.as_str())
-            },
+            }),
             0,
         );
-        let result = storage.serialize(&mut writer, &serializer);
+        let result = storage.serialize(&mut writer, &mut serializer);
         assert!(result.is_ok());
 
         #[rustfmt::skip]
