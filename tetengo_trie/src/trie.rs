@@ -554,25 +554,27 @@ mod tests {
     fn builder_with_storage() {
         {
             let mut reader = create_input_stream();
-            let value_deserializer = ValueDeserializer::new(|serialized| {
+            let mut value_deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let storage =
-                Box::new(MemoryStorage::new_with_reader(&mut reader, &value_deserializer).unwrap());
+            }));
+            let storage = Box::new(
+                MemoryStorage::new_with_reader(&mut reader, &mut value_deserializer).unwrap(),
+            );
             let _trie = Trie::<&str, String>::builder_with_storage(storage).build();
         }
 
         {
             let mut reader = create_input_stream();
-            let value_deserializer = ValueDeserializer::new(|serialized| {
+            let mut value_deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let storage =
-                Box::new(MemoryStorage::new_with_reader(&mut reader, &value_deserializer).unwrap());
+            }));
+            let storage = Box::new(
+                MemoryStorage::new_with_reader(&mut reader, &mut value_deserializer).unwrap(),
+            );
             let _trie = Trie::<&str, String>::builder_with_storage(storage)
                 .key_serializer(StrSerializer::new(true))
                 .build();
@@ -852,13 +854,14 @@ mod tests {
         }
         {
             let mut reader = create_input_stream();
-            let value_deserializer = ValueDeserializer::new(|serialized| {
+            let mut value_deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let storage =
-                Box::new(MemoryStorage::new_with_reader(&mut reader, &value_deserializer).unwrap());
+            }));
+            let storage = Box::new(
+                MemoryStorage::new_with_reader(&mut reader, &mut value_deserializer).unwrap(),
+            );
             let trie = Trie::<&str, String>::builder_with_storage(storage).build();
 
             let storage = trie.storage();

@@ -12,7 +12,7 @@ use anyhow::Result;
 /**
  * A serialize function type
  */
-type Serialize<Value> = Box<dyn FnMut(&Value) -> Vec<u8>>;
+pub type Serialize<Value> = Box<dyn FnMut(&Value) -> Vec<u8>>;
 
 /**
  * A value serializer.
@@ -74,14 +74,18 @@ impl<Value: ?Sized> Debug for ValueSerializer<Value> {
 }
 
 /**
+ * A deserialize function type
+ */
+pub type Deserialize<Value> = Box<dyn FnMut(&[u8]) -> Result<Value>>;
+
+/**
  * A value deserializer.
  *
  * # Type Parameters
  * * `Value` - A value type.
  */
-#[derive(Clone, Copy)]
 pub struct ValueDeserializer<Value: Clone> {
-    deserialize: fn(serialized: &[u8]) -> Result<Value>,
+    deserialize: Deserialize<Value>,
 }
 
 impl<Value: Clone> ValueDeserializer<Value> {
@@ -91,7 +95,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
      * # Arguments
      * * `deserialize` - A deserializing function.
      */
-    pub const fn new(deserialize: fn(serialized: &[u8]) -> Result<Value>) -> Self {
+    pub fn new(deserialize: Deserialize<Value>) -> Self {
         Self { deserialize }
     }
 
@@ -107,7 +111,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
      * # Errors
      * * When it fails to deserialize the value.
      */
-    pub fn deserialize(&self, serialized: &[u8]) -> Result<Value> {
+    pub fn deserialize(&mut self, serialized: &[u8]) -> Result<Value> {
         (self.deserialize)(serialized)
     }
 }
@@ -187,23 +191,24 @@ mod tests {
         use super::super::*;
 
         #[test]
-        const fn new() {
+        fn new() {
             {
-                let _ = ValueDeserializer::new(|serialized: &[u8]| {
+                let _deserializer = ValueDeserializer::new(Box::new(|serialized: &[u8]| {
                     IntegerDeserializer::<i32>::new(false).deserialize(serialized)
-                });
+                }));
             }
             {
-                let _ = ValueDeserializer::new(|_: &[u8]| Ok("hoge".to_string()));
+                let _deserializer =
+                    ValueDeserializer::new(Box::new(|_: &[u8]| Ok("hoge".to_string())));
             }
         }
 
         #[test]
         fn deserialize() {
             {
-                let deserializer = ValueDeserializer::new(|serialized: &[u8]| {
+                let mut deserializer = ValueDeserializer::new(Box::new(|serialized: &[u8]| {
                     IntegerDeserializer::<i32>::new(false).deserialize(serialized)
-                });
+                }));
 
                 let expected = 42;
                 let serialized = IntegerSerializer::<i32>::new(false).serialize(&expected);
@@ -211,7 +216,8 @@ mod tests {
                 assert_eq!(deserialized, expected);
             }
             {
-                let deserializer = ValueDeserializer::new(|_: &[u8]| Ok("hoge".to_string()));
+                let mut deserializer =
+                    ValueDeserializer::new(Box::new(|_: &[u8]| Ok("hoge".to_string())));
                 let expected = "hoge";
                 let serialized = vec![3, 1, 4];
                 let deserialized = deserializer.deserialize(&serialized).unwrap();

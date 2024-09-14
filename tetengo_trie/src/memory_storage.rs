@@ -56,7 +56,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
      */
     pub fn new_with_reader(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<Self> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
@@ -123,7 +123,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn deserialize(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<(Vec<u32>, Vec<ValueArrayElement<Value>>)> {
         let base_check_array = Self::deserialize_base_check_array(reader)?;
         let value_array = Self::deserialize_value_array(reader, value_deserializer)?;
@@ -141,7 +141,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn deserialize_value_array(
         reader: &mut dyn Read,
-        value_deserializer: &ValueDeserializer<Value>,
+        value_deserializer: &mut ValueDeserializer<Value>,
     ) -> Result<Vec<ValueArrayElement<Value>>> {
         let size = Self::read_u32(reader)? as usize;
 
@@ -366,12 +366,12 @@ mod tests {
     fn new_with_reader() {
         {
             let mut reader = create_input_stream();
-            let deserializer = ValueDeserializer::new(|serialized| {
+            let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
+            }));
+            let storage = MemoryStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(storage.value_at(4).unwrap().unwrap().as_ref(), "hoge");
@@ -380,12 +380,12 @@ mod tests {
         }
         {
             let mut reader = create_input_stream_fixed_value_size();
-            let deserializer = ValueDeserializer::new(|serialized| {
+            let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::<u32>::new(false));
                 U32_DESERIALIZER.deserialize(serialized)
-            });
-            let storage = MemoryStorage::new_with_reader(&mut reader, &deserializer).unwrap();
+            }));
+            let storage = MemoryStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
             assert_eq!(base_check_array_of(&storage), BASE_CHECK_ARRAY);
             assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3);
@@ -394,12 +394,12 @@ mod tests {
         }
         {
             let mut reader = create_input_stream_broken();
-            let deserializer = ValueDeserializer::new(|serialized| {
+            let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
                 STRING_DESERIALIZER.deserialize(serialized)
-            });
-            let result = MemoryStorage::new_with_reader(&mut reader, &deserializer);
+            }));
+            let result = MemoryStorage::new_with_reader(&mut reader, &mut deserializer);
             assert!(result.is_err());
         }
     }

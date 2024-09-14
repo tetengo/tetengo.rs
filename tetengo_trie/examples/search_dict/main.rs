@@ -84,10 +84,10 @@ type DictTrie = Trie<String, Vec<(usize, usize)>>;
 fn load_trie(trie_path: &Path) -> Result<DictTrie> {
     let mut file = File::open(trie_path)?;
 
-    let value_deserializer = ValueDeserializer::new(deserialize_value);
+    let mut value_deserializer = ValueDeserializer::new(Box::new(deserialize_value));
     let storage = Box::new(MemoryStorage::new_with_reader(
         &mut file,
-        &value_deserializer,
+        &mut value_deserializer,
     )?);
     let trie = DictTrie::builder_with_storage(storage).build();
     Ok(trie)
