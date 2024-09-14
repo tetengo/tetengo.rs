@@ -864,15 +864,15 @@ mod tests {
             let storage = trie.storage();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
-            let serializer = ValueSerializer::<String>::new(
-                |value| {
+            let mut serializer = ValueSerializer::<String>::new(
+                Box::new(|value| {
                     static STR_SERIALIZER: LazyLock<StrSerializer> =
                         LazyLock::new(|| StrSerializer::new(false));
                     STR_SERIALIZER.serialize(&value.as_str())
-                },
+                }),
                 0,
             );
-            storage.serialize(&mut writer, &serializer).unwrap();
+            storage.serialize(&mut writer, &mut serializer).unwrap();
             let storage_serialized = writer.get_ref();
 
             assert_eq!(storage_serialized.as_slice(), SERIALIZED);

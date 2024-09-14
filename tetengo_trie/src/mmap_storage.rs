@@ -308,7 +308,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
         Ok(1.0 - (empty_count as f64) / (base_check_count as f64))
     }
 
-    fn serialize(&self, _: &mut dyn Write, _: &ValueSerializer<Value>) -> Result<()> {
+    fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<Value>) -> Result<()> {
         unreachable!("Unsupported operation.");
     }
 
@@ -837,16 +837,16 @@ mod tests {
                 .expect("Can't create a storage.");
 
             let mut writer = Cursor::new(Vec::new());
-            let serializer = ValueSerializer::<u32>::new(
-                |value| {
+            let mut serializer = ValueSerializer::<u32>::new(
+                Box::new(|value| {
                     static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
                         LazyLock::new(|| IntegerSerializer::new(false));
                     INTEGER_SERIALIZER.serialize(value)
-                },
+                }),
                 size_of::<u32>(),
             );
 
-            let _result = storage.serialize(&mut writer, &serializer);
+            let _result = storage.serialize(&mut writer, &mut serializer);
         }
 
         #[test]

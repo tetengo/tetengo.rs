@@ -10,14 +10,18 @@ use std::fmt::{self, Debug, Formatter};
 use anyhow::Result;
 
 /**
+ * A serialize function type
+ */
+type Serialize<Value> = Box<dyn FnMut(&Value) -> Vec<u8>>;
+
+/**
  * A value serializer.
  *
  * # Type Parameters
  * * `Value` - A value type.
  */
-#[derive(Clone, Copy)]
 pub struct ValueSerializer<Value: ?Sized> {
-    serialize: fn(value: &Value) -> Vec<u8>,
+    serialize: Serialize<Value>,
     fixed_value_size: usize,
 }
 
@@ -29,7 +33,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * * `serialize`        - A serializing function.
      * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
      */
-    pub const fn new(serialize: fn(value: &Value) -> Vec<u8>, fixed_value_size: usize) -> Self {
+    pub fn new(serialize: Serialize<Value>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
             fixed_value_size,
@@ -45,7 +49,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * # Returns
      * The serialized value.
      */
-    pub fn serialize(&self, value: &Value) -> Vec<u8> {
+    pub fn serialize(&mut self, value: &Value) -> Vec<u8> {
         (self.serialize)(value)
     }
 
@@ -125,23 +129,23 @@ mod tests {
         use super::super::*;
 
         #[test]
-        const fn new() {
+        fn new() {
             {
-                let _ = ValueSerializer::new(
-                    |value: &i32| IntegerSerializer::new(false).serialize(value),
+                let _serializer = ValueSerializer::new(
+                    Box::new(|value: &i32| IntegerSerializer::new(false).serialize(value)),
                     size_of::<i32>(),
                 );
             }
             {
-                let _ = ValueSerializer::new(|_: &str| vec![3, 1, 4], 0);
+                let _serializer = ValueSerializer::new(Box::new(|_: &str| vec![3, 1, 4]), 0);
             }
         }
 
         #[test]
         fn serialize() {
             {
-                let serializer = ValueSerializer::new(
-                    |value: &i32| IntegerSerializer::new(false).serialize(value),
+                let mut serializer = ValueSerializer::new(
+                    Box::new(|value: &i32| IntegerSerializer::new(false).serialize(value)),
                     size_of::<i32>(),
                 );
 
@@ -150,7 +154,7 @@ mod tests {
                 assert_eq!(serialized, expected);
             }
             {
-                let serializer = ValueSerializer::new(|_: &str| vec![3, 1, 4], 0);
+                let mut serializer = ValueSerializer::new(Box::new(|_: &str| vec![3, 1, 4]), 0);
 
                 let expected = vec![3, 1, 4];
                 let serialized = serializer.serialize("hoge");
@@ -162,14 +166,14 @@ mod tests {
         fn fixed_value_size() {
             {
                 let serializer = ValueSerializer::new(
-                    |value: &i32| IntegerSerializer::new(false).serialize(value),
+                    Box::new(|value: &i32| IntegerSerializer::new(false).serialize(value)),
                     size_of::<i32>(),
                 );
 
                 assert_eq!(serializer.fixed_value_size(), size_of::<i32>());
             }
             {
-                let serializer = ValueSerializer::new(|_: &str| vec![3, 1, 4], 0);
+                let serializer = ValueSerializer::new(Box::new(|_: &str| vec![3, 1, 4]), 0);
 
                 assert_eq!(serializer.fixed_value_size(), 0);
             }

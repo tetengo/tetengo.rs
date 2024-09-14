@@ -101,7 +101,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
     ) -> Result<()> {
         self.entity.serialize(writer, value_serializer)
     }
@@ -331,15 +331,15 @@ mod tests {
         storage.add_value_at(1, String::from("piyo")).unwrap();
 
         let mut writer = Cursor::new(Vec::<u8>::new());
-        let serializer = ValueSerializer::<String>::new(
-            |value| {
+        let mut serializer = ValueSerializer::<String>::new(
+            Box::new(|value| {
                 static STR_SERIALIZER: LazyLock<StrSerializer> =
                     LazyLock::new(|| StrSerializer::new(false));
                 STR_SERIALIZER.serialize(&value.as_str())
-            },
+            }),
             0,
         );
-        let result = storage.serialize(&mut writer, &serializer);
+        let result = storage.serialize(&mut writer, &mut serializer);
         assert!(result.is_ok());
 
         #[rustfmt::skip]

@@ -76,7 +76,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn serialize_value_array(
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
         value_array: &[ValueArrayElement<Value>],
     ) -> Result<()> {
         debug_assert!(value_array.len() < u32::MAX as usize);
@@ -260,7 +260,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
     ) -> Result<()> {
         Self::serialize_base_check_array(writer, &self.base_check_array.borrow())?;
         Self::serialize_value_array(writer, value_serializer, &self.value_array)?;
@@ -525,15 +525,15 @@ mod tests {
             storage.add_value_at(1, String::from("piyo")).unwrap();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
-            let serializer = ValueSerializer::<String>::new(
-                |value| {
+            let mut serializer = ValueSerializer::<String>::new(
+                Box::new(|value: &String| {
                     static STR_SERIALIZER: LazyLock<StrSerializer> =
                         LazyLock::new(|| StrSerializer::new(false));
                     STR_SERIALIZER.serialize(&value.as_str())
-                },
+                }),
                 0,
             );
-            let result = storage.serialize(&mut writer, &serializer);
+            let result = storage.serialize(&mut writer, &mut serializer);
             assert!(result.is_ok());
 
             #[rustfmt::skip]
@@ -567,15 +567,15 @@ mod tests {
             storage.add_value_at(1, 159).unwrap();
 
             let mut writer = Cursor::new(Vec::<u8>::new());
-            let serializer = ValueSerializer::<u32>::new(
-                |value| {
+            let mut serializer = ValueSerializer::<u32>::new(
+                Box::new(|value| {
                     static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
                         LazyLock::new(|| IntegerSerializer::new(false));
                     INTEGER_SERIALIZER.serialize(value)
-                },
+                }),
                 size_of::<u32>(),
             );
-            let result = storage.serialize(&mut writer, &serializer);
+            let result = storage.serialize(&mut writer, &mut serializer);
             assert!(result.is_ok());
 
             #[rustfmt::skip]

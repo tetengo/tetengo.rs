@@ -150,7 +150,7 @@ pub trait Storage<Value>: Debug {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<Value>,
     ) -> Result<()>;
 
     /**
