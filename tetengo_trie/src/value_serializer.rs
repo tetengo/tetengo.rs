@@ -12,7 +12,7 @@ use anyhow::Result;
 /**
  * A serialize function type
  */
-pub type Serialize<Value> = Box<dyn FnMut(&Value) -> Vec<u8>>;
+pub type Serialize<'a, Value> = Box<dyn FnMut(&Value) -> Vec<u8> + 'a>;
 
 /**
  * A value serializer.
@@ -20,12 +20,12 @@ pub type Serialize<Value> = Box<dyn FnMut(&Value) -> Vec<u8>>;
  * # Type Parameters
  * * `Value` - A value type.
  */
-pub struct ValueSerializer<Value: ?Sized> {
-    serialize: Serialize<Value>,
+pub struct ValueSerializer<'a, Value: ?Sized> {
+    serialize: Serialize<'a, Value>,
     fixed_value_size: usize,
 }
 
-impl<Value: ?Sized> ValueSerializer<Value> {
+impl<'a, Value: ?Sized> ValueSerializer<'a, Value> {
     /**
      * Creates a value serializer.
      *
@@ -33,7 +33,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
      * * `serialize`        - A serializing function.
      * * `fixed_value_size` - The value size if it is fixed. Or 0 if the size is variable.
      */
-    pub fn new(serialize: Serialize<Value>, fixed_value_size: usize) -> Self {
+    pub fn new(serialize: Serialize<'a, Value>, fixed_value_size: usize) -> Self {
         Self {
             serialize,
             fixed_value_size,
@@ -64,7 +64,7 @@ impl<Value: ?Sized> ValueSerializer<Value> {
     }
 }
 
-impl<Value: ?Sized> Debug for ValueSerializer<Value> {
+impl<Value: ?Sized> Debug for ValueSerializer<'_, Value> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ValueSerializer")
             .field("serialize", &type_name_of_val(&self.serialize))
@@ -127,6 +127,8 @@ impl<Value: Clone> Debug for ValueDeserializer<Value> {
 #[cfg(test)]
 mod tests {
     mod value_serializer {
+        use std::cell::RefCell;
+
         use crate::integer_serializer::IntegerSerializer;
         use crate::serializer::Serializer;
 
@@ -163,6 +165,21 @@ mod tests {
                 let expected = vec![3, 1, 4];
                 let serialized = serializer.serialize("hoge");
                 assert_eq!(serialized, expected);
+            }
+            {
+                let modified_in_closure = RefCell::new(0);
+                let mut serializer = ValueSerializer::new(
+                    Box::new(|_: &str| {
+                        *modified_in_closure.borrow_mut() = 42;
+                        vec![4, 2]
+                    }),
+                    0,
+                );
+
+                let expected = vec![4, 2];
+                let serialized = serializer.serialize("hoge");
+                assert_eq!(serialized, expected);
+                assert_eq!(*modified_in_closure.borrow(), 42);
             }
         }
 
