@@ -21,7 +21,7 @@ mod double_array_iterator;
 
 pub use integer_serializer::{IntegerDeserializer, IntegerSerializer};
 pub use memory_storage::MemoryStorage;
-pub use mmap_storage::{FileMapping, MmapStorage};
+pub use mmap_storage::{FileMapping, FileMappingError, MmapStorage, MmapStorageError};
 pub use serializer::{
     DeserializationError, Deserializer, DeserializerOf, Serializer, SerializerOf,
 };
