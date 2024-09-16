@@ -76,7 +76,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
     fn serialize_value_array(
         writer: &mut dyn Write,
-        value_serializer: &mut ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<'_, Value>,
         value_array: &[ValueArrayElement<Value>],
     ) -> Result<()> {
         debug_assert!(value_array.len() < u32::MAX as usize);
@@ -260,7 +260,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &mut ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<'_, Value>,
     ) -> Result<()> {
         Self::serialize_base_check_array(writer, &self.base_check_array.borrow())?;
         Self::serialize_value_array(writer, value_serializer, &self.value_array)?;

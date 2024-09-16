@@ -311,7 +311,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
         Ok(1.0 - (empty_count as f64) / (base_check_count as f64))
     }
 
-    fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<Value>) -> Result<()> {
+    fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<'_, Value>) -> Result<()> {
         unreachable!("Unsupported operation.");
     }
 

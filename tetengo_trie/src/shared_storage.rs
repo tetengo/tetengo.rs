@@ -101,7 +101,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     fn serialize(
         &self,
         writer: &mut dyn Write,
-        value_serializer: &mut ValueSerializer<Value>,
+        value_serializer: &mut ValueSerializer<'_, Value>,
     ) -> Result<()> {
         self.entity.serialize(writer, value_serializer)
     }
