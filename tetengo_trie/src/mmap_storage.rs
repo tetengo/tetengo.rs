@@ -9,6 +9,7 @@ use std::cell::RefCell;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
+use std::ops::Range;
 use std::rc::Rc;
 use std::sync::LazyLock;
 
@@ -21,6 +22,18 @@ use crate::integer_serializer::IntegerDeserializer;
 use crate::serializer::Deserializer;
 use crate::storage::{Storage, StorageError};
 use crate::value_serializer::{ValueDeserializer, ValueSerializer};
+
+/**
+ * A file mapping error.
+ */
+#[derive(Clone, Copy, Debug, thiserror::Error)]
+pub enum FileMappingError {
+    /**
+     * The range is out of the mmap.
+     */
+    #[error("the range is out of the mmap")]
+    RangeOutOfMmap,
+}
 
 /**
  * A file mapping.
@@ -45,8 +58,32 @@ impl FileMapping {
         Ok(Self { mmap })
     }
 
-    const fn mmap(&self) -> &Mmap {
-        &self.mmap
+    /**
+     * Returns the size.
+     *
+     * # Returns
+     * The size.
+     */
+    pub fn size(&self) -> usize {
+        self.mmap.len()
+    }
+
+    /**
+     * Returns the region.
+     *
+     * # Arguments
+     * * `range` - A range.
+     *
+     * # Returns
+     * The region.
+     *
+     * # Errors
+     * * When the range is out of the mmap.
+     */
+    pub fn region(&self, range: Range<usize>) -> Result<&[u8]> {
+        self.mmap
+            .get(range)
+            .ok_or(FileMappingError::RangeOutOfMmap.into())
     }
 }
 
@@ -92,19 +129,19 @@ pub enum MmapStorageError {
     /**
      * content_size is greater than file_size.
      */
-    #[error("content_offset is greater than file_size.")]
+    #[error("content_offset is greater than file_size")]
     InvalidContentSize,
 
     /**
      * The value size is not fixed.
      */
-    #[error("the value size is not fixed.")]
+    #[error("the value size is not fixed")]
     ValueSizeNotFixed,
 
     /**
      * The mmap region is out of the file size.
      */
-    #[error("the mmap region is out of the file size.")]
+    #[error("the mmap region is out of the file size")]
     MmapRegionOutOfFileSize,
 }
 
@@ -247,8 +284,8 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
             return Err(MmapStorageError::MmapRegionOutOfFileSize.into());
         }
 
-        Ok(&self.file_mapping.mmap()
-            [self.content_offset + offset..self.content_offset + offset + size])
+        self.file_mapping
+            .region(self.content_offset + offset..self.content_offset + offset + size)
     }
     fn read_u32(&self, offset: usize) -> Result<u32> {
         static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
@@ -442,12 +479,30 @@ mod tests {
         }
 
         #[test]
-        fn mmap() {
+        fn size() {
             let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-            let file_mapping =
-                Rc::new(FileMapping::new(&file).expect("Can't create a file mapping."));
-            let mmap = file_mapping.mmap();
-            assert_eq!(&mmap[..], &SERIALIZED_FIXED_VALUE_SIZE);
+            let file_mapping = FileMapping::new(&file).expect("Can't create a file mapping.");
+
+            assert_eq!(file_mapping.size(), SERIALIZED_FIXED_VALUE_SIZE.len());
+        }
+
+        #[test]
+        fn region() {
+            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file_mapping = FileMapping::new(&file).expect("Can't create a file mapping.");
+
+            {
+                let region = file_mapping.region(3..24).unwrap();
+                assert_eq!(region, &SERIALIZED_FIXED_VALUE_SIZE[3..24]);
+            }
+            {
+                let region = file_mapping.region(0..file_mapping.size()).unwrap();
+                assert_eq!(region, &SERIALIZED_FIXED_VALUE_SIZE);
+            }
+            {
+                let region = file_mapping.region(0..file_mapping.size() + 1);
+                assert!(region.is_err());
+            }
         }
     }
 
