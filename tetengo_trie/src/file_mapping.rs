@@ -25,7 +25,7 @@ pub enum FileMappingError {
  */
 #[derive(Debug)]
 pub struct FileMapping {
-    _file: File,
+    file: File,
     mmap: Mmap,
 }
 
@@ -41,7 +41,17 @@ impl FileMapping {
      */
     pub fn new(file: File) -> Result<Self> {
         let mmap = unsafe { Mmap::map(&file)? };
-        Ok(Self { _file: file, mmap })
+        Ok(Self { file, mmap })
+    }
+
+    /**
+     * Returns the file.
+     *
+     * # Returns
+     * The file.
+     */
+    pub fn file(&self) -> &File {
+        &self.file
     }
 
     /**
@@ -110,6 +120,17 @@ mod tests {
         let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
         let file_mapping = FileMapping::new(file);
         assert!(file_mapping.is_ok());
+    }
+
+    #[test]
+    fn file() {
+        let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+        let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+
+        assert_eq!(
+            file_mapping.file().metadata().unwrap().len(),
+            SERIALIZED_FIXED_VALUE_SIZE.len() as u64
+        );
     }
 
     #[test]
