@@ -25,6 +25,7 @@ pub enum FileMappingError {
  */
 #[derive(Debug)]
 pub struct FileMapping {
+    _file: File,
     mmap: Mmap,
 }
 
@@ -38,9 +39,9 @@ impl FileMapping {
      * # Errors
      * * When it fails to memory-map the file.
      */
-    pub fn new(file: &File) -> Result<Self> {
-        let mmap = unsafe { Mmap::map(file)? };
-        Ok(Self { mmap })
+    pub fn new(file: File) -> Result<Self> {
+        let mmap = unsafe { Mmap::map(&file)? };
+        Ok(Self { _file: file, mmap })
     }
 
     /**
@@ -107,14 +108,14 @@ mod tests {
     #[test]
     fn new() {
         let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        let file_mapping = FileMapping::new(&file);
+        let file_mapping = FileMapping::new(file);
         assert!(file_mapping.is_ok());
     }
 
     #[test]
     fn size() {
         let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        let file_mapping = FileMapping::new(&file).expect("Can't create a file mapping.");
+        let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
 
         assert_eq!(file_mapping.size(), SERIALIZED_FIXED_VALUE_SIZE.len());
     }
@@ -122,7 +123,7 @@ mod tests {
     #[test]
     fn region() {
         let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        let file_mapping = FileMapping::new(&file).expect("Can't create a file mapping.");
+        let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
 
         {
             let region = file_mapping.region(3..24).unwrap();
