@@ -319,7 +319,7 @@ mod tests {
     use super::*;
 
     #[rustfmt::skip]
-    const SERIALIZED: [u8; 52] = [
+    const SERIALIZED: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -336,7 +336,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE: [u8; 40] = [
+    const SERIALIZED_FIXED_VALUE_SIZE: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -350,7 +350,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER: [u8; 45] = [
+    const SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER: &[u8] = &[
         // header
         0x01u8, 0x23u8, 0x45u8, 0x67u8, 0x89u8,
 
@@ -368,7 +368,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE: [u8; 20] = [
+    const SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE: &[u8] = &[
             0x00u8, 0x00u8, 0x00u8, 0x02u8,
             0x00u8, 0x00u8, 0x00u8, 0xFFu8,
             0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -377,7 +377,7 @@ mod tests {
         ];
 
     #[rustfmt::skip]
-    const SERIALIZED_BROKEN: [u8; 9] = [
+    const SERIALIZED_BROKEN: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8,
@@ -422,7 +422,7 @@ mod tests {
         #[test]
         fn builder() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -436,7 +436,7 @@ mod tests {
                 assert!(storage.is_ok());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -450,7 +450,7 @@ mod tests {
                 assert!(storage.is_ok());
             }
             {
-                let file = make_temporary_file(&SERIALIZED);
+                let file = make_temporary_file(SERIALIZED);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -464,7 +464,7 @@ mod tests {
                 assert!(storage.is_err());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_BROKEN);
+                let file = make_temporary_file(SERIALIZED_BROKEN);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -478,7 +478,7 @@ mod tests {
                 assert!(storage.is_err());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -493,7 +493,7 @@ mod tests {
                 assert!(storage.is_err());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -512,7 +512,7 @@ mod tests {
         #[test]
         fn base_check_size() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -528,7 +528,7 @@ mod tests {
                 assert_eq!(storage.base_check_size().unwrap(), 2);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -548,7 +548,7 @@ mod tests {
         #[test]
         fn base_at() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -565,7 +565,7 @@ mod tests {
                 assert_eq!(storage.base_at(1).unwrap(), 0xFE);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -586,7 +586,7 @@ mod tests {
         #[test]
         #[should_panic]
         fn set_base_at() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -605,7 +605,7 @@ mod tests {
         #[test]
         fn check_at() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -622,7 +622,7 @@ mod tests {
                 assert_eq!(storage.check_at(1).unwrap(), 24);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -643,7 +643,7 @@ mod tests {
         #[test]
         #[should_panic]
         fn set_check_at() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -662,7 +662,7 @@ mod tests {
         #[test]
         fn value_count() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -678,7 +678,7 @@ mod tests {
                 assert_eq!(storage.value_count().unwrap(), 5);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -698,7 +698,7 @@ mod tests {
         #[test]
         fn value_at() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -718,7 +718,7 @@ mod tests {
                 assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -742,7 +742,7 @@ mod tests {
         #[test]
         #[should_panic]
         fn add_value_at() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -761,7 +761,7 @@ mod tests {
         #[test]
         fn filling_rate() {
             let file =
-                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+                make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -780,7 +780,7 @@ mod tests {
         #[test]
         #[should_panic]
         fn serialize() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -809,7 +809,7 @@ mod tests {
         #[test]
         fn clone() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -830,7 +830,7 @@ mod tests {
                 assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
                 let file_mapping =
                     Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -855,7 +855,7 @@ mod tests {
         #[test]
         fn as_any() {
             let file =
-                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+                make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
@@ -874,7 +874,7 @@ mod tests {
         #[test]
         fn as_any_mut() {
             let file =
-                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+                make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
             let file_mapping =
                 Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));

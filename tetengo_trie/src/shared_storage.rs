@@ -138,7 +138,7 @@ mod tests {
     }
 
     #[rustfmt::skip]
-    const SERIALIZED: [u8; 52] = [
+    const SERIALIZED: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -159,7 +159,7 @@ mod tests {
     }
 
     #[rustfmt::skip]
-    const SERIALIZED_BROKEN: [u8; 9] = [
+    const SERIALIZED_BROKEN: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x01u8, 0x23u8, 0x45u8, 0x67u8,
         0x89u8,
@@ -343,7 +343,7 @@ mod tests {
         assert!(result.is_ok());
 
         #[rustfmt::skip]
-        const EXPECTED: [u8; 52] = [
+        const EXPECTED: &[u8] = &[
             0x00u8, 0x00u8, 0x00u8, 0x02u8,
             0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
             0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -383,8 +383,8 @@ mod tests {
 
         let base_check_array = base_check_array_of(clone.as_ref());
 
-        const EXPECTED: [u32; 2] = [0x00002AFFu32, 0x0000FE18u32];
-        assert_eq!(base_check_array, &EXPECTED);
+        const EXPECTED: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
+        assert_eq!(base_check_array, EXPECTED);
 
         // Rust forbids to modify the object shared with others.
         // clone.set_base_at(0, 2424);
