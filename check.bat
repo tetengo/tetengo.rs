@@ -2,7 +2,7 @@
 rem Checks this package
 rem Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
 
-call kogyan\scripts/check.bat
+call kogyan\scripts\check.bat
 if errorlevel 1 exit /b 1
 
 kogyan\scripts\sort_derive_attributes.py .
