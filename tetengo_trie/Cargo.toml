@@ -22,8 +22,8 @@ categories = [
 ]
 
 [dependencies]
-anyhow = "1.0.89"
+anyhow = "1.0.93"
 hashlink = "0.9.1"
 memmap2 = "0.9.5"
-tempfile = "3.13.0"
-thiserror = "1.0.64"
+tempfile = "3.14.0"
+thiserror = "2.0.1"
