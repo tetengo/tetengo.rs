@@ -87,14 +87,14 @@ mod tests {
     use crate::double_array::{DoubleArray, DoubleArrayElement};
 
     #[rustfmt::skip]
-    const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
+    const EXPECTED_VALUES3 : &[DoubleArrayElement<'_>] = &[
         (b"UTIGOSI", 24),
         (b"UTO", 2424),
         (b"SETA", 42),
     ];
 
     #[rustfmt::skip]
-    const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
+    const EXPECTED_VALUES4 : &[DoubleArrayElement<'_>] = &[
         ("赤瀬".as_bytes(), 24),
         ("赤水".as_bytes(), 42),
     ];

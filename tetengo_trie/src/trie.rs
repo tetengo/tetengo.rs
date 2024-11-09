@@ -408,7 +408,7 @@ mod tests {
     const UTO: &str = "宇土";
 
     #[rustfmt::skip]
-    const SERIALIZED: [u8;76] = [
+    const SERIALIZED: &[u8] = &[
         // base check array
         0x00u8, 0x00u8, 0x00u8, 0x0Bu8,
         0xFFu8, 0xFFu8, 0x90u8, 0xFFu8,

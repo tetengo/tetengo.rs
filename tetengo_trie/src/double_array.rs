@@ -177,7 +177,7 @@ mod tests {
     use super::*;
 
     #[rustfmt::skip]
-    const EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY: [u32; 1] = [
+    const EXPECTED_EMPTY_BASE_CHECK_ARRAY_EMPTY: &[u32] = &[
     //                  BASE  CHECK  BYTECHECK
     0x000000FF, // [ 0]    0,    -1,        -1
     ];
@@ -191,13 +191,13 @@ mod tests {
     */
 
     #[rustfmt::skip]
-    const EXPECTED_VALUES0: [DoubleArrayElement<'_>; 2] = [
+    const EXPECTED_VALUES0: &[DoubleArrayElement<'_>] = &[
         (b"", 42),
         (b" ", 24),
     ];
 
     #[rustfmt::skip]
-    const EXPECTED_BASE_CHECK_ARRAY0: [u32; 35] = [
+    const EXPECTED_BASE_CHECK_ARRAY0: &[u32] = &[
         //                  BASE  CHECK  BYTECHECK
         0x000001FF, // [ 0]    1,    -1,        -1
         0x00002A00, // [ 1]   42,     0,         0
@@ -248,14 +248,14 @@ mod tests {
     */
 
     #[rustfmt::skip]
-    const EXPECTED_VALUES3 : [DoubleArrayElement<'_>; 3] = [
+    const EXPECTED_VALUES3 : &[DoubleArrayElement<'_>] = &[
         (b"UTIGOSI", 24),
         (b"UTO", 2424),
         (b"SETA", 42),
     ];
 
     #[rustfmt::skip]
-    const EXPECTED_BASE_CHECK_ARRAY3: [u32; 16] = [
+    const EXPECTED_BASE_CHECK_ARRAY3: &[u32] = &[
         //                  BASE  CHECK  BYTECHECK
         0xFFFFAEFF, // [ 0]  -82,    -1,        -1
         0xFFFFBD53, // [ 1]  -67,     0,        83
@@ -284,13 +284,13 @@ mod tests {
     */
 
     #[rustfmt::skip]
-    const EXPECTED_VALUES4 : [DoubleArrayElement<'_>; 2] = [
+    const EXPECTED_VALUES4 : &[DoubleArrayElement<'_>] = &[
         ("赤瀬".as_bytes(), 24),
         ("赤水".as_bytes(), 42),
     ];
 
     #[rustfmt::skip]
-    const EXPECTED_BASE_CHECK_ARRAY4: [u32; 12] = [
+    const EXPECTED_BASE_CHECK_ARRAY4: &[u32] = &[
         //                  BASE  CHECK  BYTECHECK
         0xFFFF19FF, // [ 0] -231,    -1,        -1
         0xFFFF4DE8, // [ 1] -179,     0,       232

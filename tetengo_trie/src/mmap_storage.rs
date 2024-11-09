@@ -319,7 +319,7 @@ mod tests {
     use super::*;
 
     #[rustfmt::skip]
-    const SERIALIZED: [u8; 52] = [
+    const SERIALIZED: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -336,7 +336,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE: [u8; 40] = [
+    const SERIALIZED_FIXED_VALUE_SIZE: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -350,7 +350,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER: [u8; 45] = [
+    const SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER: &[u8] = &[
         // header
         0x01u8, 0x23u8, 0x45u8, 0x67u8, 0x89u8,
 
@@ -368,7 +368,7 @@ mod tests {
     ];
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE: [u8; 20] = [
+    const SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE: &[u8] = &[
             0x00u8, 0x00u8, 0x00u8, 0x02u8,
             0x00u8, 0x00u8, 0x00u8, 0xFFu8,
             0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -377,7 +377,7 @@ mod tests {
         ];
 
     #[rustfmt::skip]
-    const SERIALIZED_BROKEN: [u8; 9] = [
+    const SERIALIZED_BROKEN: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8,
@@ -396,12 +396,9 @@ mod tests {
     }
 
     fn make_temporary_file(initial_content: &[u8]) -> File {
-        let mut file = tempfile().expect("Can't create a temporary file.");
-        file.write_all(initial_content)
-            .expect("Can't write to the temporary file.");
-        let _ = file
-            .seek(SeekFrom::Start(0))
-            .expect("Can't seek the temporary file.");
+        let mut file = tempfile().unwrap();
+        file.write_all(initial_content).unwrap();
+        let _ = file.seek(SeekFrom::Start(0)).unwrap();
         file
     }
 
@@ -416,16 +413,15 @@ mod tests {
         use super::*;
 
         fn file_size_of(file: &File) -> usize {
-            file.metadata().expect("Can't get the file size.").len() as usize
+            file.metadata().unwrap().len() as usize
         }
 
         #[test]
         fn builder() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -436,10 +432,9 @@ mod tests {
                 assert!(storage.is_ok());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -450,10 +445,9 @@ mod tests {
                 assert!(storage.is_ok());
             }
             {
-                let file = make_temporary_file(&SERIALIZED);
+                let file = make_temporary_file(SERIALIZED);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -464,10 +458,9 @@ mod tests {
                 assert!(storage.is_err());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_BROKEN);
+                let file = make_temporary_file(SERIALIZED_BROKEN);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -478,10 +471,9 @@ mod tests {
                 assert!(storage.is_err());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -493,10 +485,9 @@ mod tests {
                 assert!(storage.is_err());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -512,10 +503,9 @@ mod tests {
         #[test]
         fn base_check_size() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -523,15 +513,14 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.base_check_size().unwrap(), 2);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -539,7 +528,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.base_check_size().unwrap(), 2);
             }
@@ -548,10 +537,9 @@ mod tests {
         #[test]
         fn base_at() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -559,16 +547,15 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.base_at(0).unwrap(), 42);
                 assert_eq!(storage.base_at(1).unwrap(), 0xFE);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -576,7 +563,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.base_at(0).unwrap(), 42);
                 assert_eq!(storage.base_at(1).unwrap(), 0xFE);
@@ -586,10 +573,9 @@ mod tests {
         #[test]
         #[should_panic]
         fn set_base_at() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -597,7 +583,7 @@ mod tests {
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             let _result = storage.set_base_at(42, 4242);
         }
@@ -605,10 +591,9 @@ mod tests {
         #[test]
         fn check_at() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -616,16 +601,15 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.check_at(0).unwrap(), VACANT_CHECK_VALUE);
                 assert_eq!(storage.check_at(1).unwrap(), 24);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -633,7 +617,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.check_at(0).unwrap(), VACANT_CHECK_VALUE);
                 assert_eq!(storage.check_at(1).unwrap(), 24);
@@ -643,10 +627,9 @@ mod tests {
         #[test]
         #[should_panic]
         fn set_check_at() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -654,7 +637,7 @@ mod tests {
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             let _result = storage.set_check_at(24, 124);
         }
@@ -662,10 +645,9 @@ mod tests {
         #[test]
         fn value_count() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -673,15 +655,14 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.value_count().unwrap(), 5);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -689,7 +670,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert_eq!(storage.value_count().unwrap(), 5);
             }
@@ -698,10 +679,9 @@ mod tests {
         #[test]
         fn value_at() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -709,7 +689,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert!(storage.value_at(0).unwrap().is_none());
                 assert_eq!(*storage.value_at(1).unwrap().unwrap(), 159);
@@ -718,10 +698,9 @@ mod tests {
                 assert_eq!(*storage.value_at(4).unwrap().unwrap(), 3);
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -729,7 +708,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 assert!(storage.value_at(0).unwrap().is_none());
                 assert_eq!(*storage.value_at(1).unwrap().unwrap(), 159);
@@ -742,10 +721,9 @@ mod tests {
         #[test]
         #[should_panic]
         fn add_value_at() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -753,7 +731,7 @@ mod tests {
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             let _result = storage.add_value_at(24, 124);
         }
@@ -761,10 +739,9 @@ mod tests {
         #[test]
         fn filling_rate() {
             let file =
-                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+                make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -772,7 +749,7 @@ mod tests {
             }));
             let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             assert!((storage.filling_rate().unwrap() - 1.0 / 2.0).abs() < 0.1);
         }
@@ -780,10 +757,9 @@ mod tests {
         #[test]
         #[should_panic]
         fn serialize() {
-            let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+            let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -791,7 +767,7 @@ mod tests {
             }));
             let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             let mut writer = Cursor::new(Vec::new());
             let mut serializer = ValueSerializer::<u32>::new(
@@ -809,10 +785,9 @@ mod tests {
         #[test]
         fn clone() {
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -820,7 +795,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 let clone = storage.clone_box();
                 assert_eq!(
@@ -830,10 +805,9 @@ mod tests {
                 assert_eq!(clone.value_count().unwrap(), storage.value_count().unwrap());
             }
             {
-                let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
+                let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_WITH_HEADER);
                 let file_size = file_size_of(&file);
-                let file_mapping =
-                    Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+                let file_mapping = Rc::new(FileMapping::new(file).unwrap());
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
@@ -841,7 +815,7 @@ mod tests {
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
-                    .expect("Can't create a storage.");
+                    .unwrap();
 
                 let clone = storage.clone_box();
                 assert_eq!(
@@ -855,10 +829,9 @@ mod tests {
         #[test]
         fn as_any() {
             let file =
-                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+                make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -866,7 +839,7 @@ mod tests {
             }));
             let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             let _ = storage.as_any();
         }
@@ -874,10 +847,9 @@ mod tests {
         #[test]
         fn as_any_mut() {
             let file =
-                make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
+                make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE_FOR_CALCULATING_FILLING_RATE);
             let file_size = file_size_of(&file);
-            let file_mapping =
-                Rc::new(FileMapping::new(file).expect("Can't create a file mapping."));
+            let file_mapping = Rc::new(FileMapping::new(file).unwrap());
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
@@ -885,7 +857,7 @@ mod tests {
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
-                .expect("Can't create a storage.");
+                .unwrap();
 
             let _ = storage.as_any_mut();
         }

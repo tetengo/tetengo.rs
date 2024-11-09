@@ -92,7 +92,7 @@ mod tests {
     use super::*;
 
     #[rustfmt::skip]
-    const SERIALIZED_FIXED_VALUE_SIZE: [u8; 40] = [
+    const SERIALIZED_FIXED_VALUE_SIZE: &[u8] = &[
         0x00u8, 0x00u8, 0x00u8, 0x02u8,
         0x00u8, 0x00u8, 0x2Au8, 0xFFu8,
         0x00u8, 0x00u8, 0xFEu8, 0x18u8,
@@ -106,26 +106,23 @@ mod tests {
     ];
 
     fn make_temporary_file(initial_content: &[u8]) -> File {
-        let mut file = tempfile().expect("Can't create a temporary file.");
-        file.write_all(initial_content)
-            .expect("Can't write to the temporary file.");
-        let _ = file
-            .seek(SeekFrom::Start(0))
-            .expect("Can't seek the temporary file.");
+        let mut file = tempfile().unwrap();
+        file.write_all(initial_content).unwrap();
+        let _ = file.seek(SeekFrom::Start(0)).unwrap();
         file
     }
 
     #[test]
     fn new() {
-        let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
+        let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
         let file_mapping = FileMapping::new(file);
         assert!(file_mapping.is_ok());
     }
 
     #[test]
     fn file() {
-        let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+        let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
+        let file_mapping = FileMapping::new(file).unwrap();
 
         assert_eq!(
             file_mapping.file().metadata().unwrap().len(),
@@ -135,16 +132,16 @@ mod tests {
 
     #[test]
     fn size() {
-        let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+        let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
+        let file_mapping = FileMapping::new(file).unwrap();
 
         assert_eq!(file_mapping.size(), SERIALIZED_FIXED_VALUE_SIZE.len());
     }
 
     #[test]
     fn region() {
-        let file = make_temporary_file(&SERIALIZED_FIXED_VALUE_SIZE);
-        let file_mapping = FileMapping::new(file).expect("Can't create a file mapping.");
+        let file = make_temporary_file(SERIALIZED_FIXED_VALUE_SIZE);
+        let file_mapping = FileMapping::new(file).unwrap();
 
         {
             let region = file_mapping.region(3..24).unwrap();
@@ -152,7 +149,7 @@ mod tests {
         }
         {
             let region = file_mapping.region(0..file_mapping.size()).unwrap();
-            assert_eq!(region, &SERIALIZED_FIXED_VALUE_SIZE);
+            assert_eq!(region, SERIALIZED_FIXED_VALUE_SIZE);
         }
         {
             let region = file_mapping.region(0..file_mapping.size() + 1);
