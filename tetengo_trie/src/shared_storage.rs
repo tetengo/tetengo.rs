@@ -68,7 +68,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     }
 
     fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {
-        let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
+        let entity = Rc::get_mut(&mut self.entity).unwrap();
         entity.set_base_at(base_check_index, base)
     }
 
@@ -77,7 +77,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     }
 
     fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()> {
-        let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
+        let entity = Rc::get_mut(&mut self.entity).unwrap();
         entity.set_check_at(base_check_index, check)
     }
 
@@ -90,7 +90,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
     }
 
     fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
-        let entity = Rc::get_mut(&mut self.entity).expect("Must not be called when shared.");
+        let entity = Rc::get_mut(&mut self.entity).unwrap();
         entity.add_value_at(value_index, value)
     }
 

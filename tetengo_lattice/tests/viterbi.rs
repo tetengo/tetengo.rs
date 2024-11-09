@@ -40,9 +40,7 @@ mod usage {
         let _ignored = lattice.push_back(Box::new(StringInput::new(String::from("b"))));
 
         // Finishes the lattice construction.
-        let eos = lattice
-            .settle()
-            .unwrap_or_else(|e| unreachable!("Error: {}", e));
+        let eos = lattice.settle().unwrap();
 
         // Creates an iterator to enumerate the paths in the lattice.
         let iterator = NBestIterator::new(&lattice, eos, Box::new(Constraint::new()));
@@ -156,11 +154,7 @@ mod usage {
     fn value_of_node(node: &Node<'_>, first: bool) -> String {
         if let Some(value) = node.value() {
             // The value is stored in the Any object.
-            value
-                .as_any()
-                .downcast_ref::<String>()
-                .expect("The value must have a String value.")
-                .clone()
+            value.as_any().downcast_ref::<String>().unwrap().clone()
         } else if first {
             String::from("BOS")
         } else {
@@ -171,11 +165,7 @@ mod usage {
     fn value_of_entry(entry: &EntryView<'_>) -> String {
         // The value is stored in the Any object.
         if let Some(value) = entry.value() {
-            value
-                .as_any()
-                .downcast_ref::<String>()
-                .expect("The value must have a String value.")
-                .clone()
+            value.as_any().downcast_ref::<String>().unwrap().clone()
         } else {
             String::new()
         }
