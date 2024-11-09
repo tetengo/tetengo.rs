@@ -1,4 +1,4 @@
-tetengo Lattice 1.2.3
+tetengo Lattice 1.2.4
 =====================
 
 A Viterbi search library.
@@ -9,7 +9,7 @@ It finds the most likely path in a lattice consisting of observed event nodes.
 This library also provides the A* search algorithm for the lattice created by
 the Viterbi search.
 
-- [Detailed description](https://docs.rs/tetengo_lattice/1.2.3/tetengo_lattice/)
+- [Detailed description](https://docs.rs/tetengo_lattice/1.2.4/tetengo_lattice/)
 
 How to Use
 ----------
