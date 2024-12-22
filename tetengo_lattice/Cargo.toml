@@ -1,6 +1,6 @@
 [package]
 name = "tetengo_lattice"
-version = "1.2.4"
+version = "1.2.5"
 authors = ["kaoru"]
 edition = "2021"
 description = "A library for Viterbi search and A* algorithm implementation"
