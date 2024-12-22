@@ -1,3 +1,7 @@
+/*!
+ * The usage of tetengo_trie
+ */
+
 mod usage {
     use std::cell::RefCell;
 

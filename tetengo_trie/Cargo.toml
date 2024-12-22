@@ -3,6 +3,7 @@ name = "tetengo_trie"
 version = "1.2.5"
 authors = ["kaoru"]
 edition = "2021"
+rust-version = "1.83"
 description = "A trie library implemented with a double array"
 readme = "README.md"
 homepage = "https://www.tetengo.org/"
@@ -22,8 +23,8 @@ categories = [
 ]
 
 [dependencies]
-anyhow = "1.0.93"
+anyhow = "1.0.94"
 hashlink = "0.9.1"
 memmap2 = "0.9.5"
 tempfile = "3.14.0"
-thiserror = "2.0.1"
+thiserror = "2.0.9"

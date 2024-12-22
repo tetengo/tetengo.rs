@@ -1,3 +1,7 @@
+/*!
+ * The usage of tetengo_lattice
+ */
+
 mod usage {
     use std::hash::{DefaultHasher, Hash, Hasher};
 

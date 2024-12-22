@@ -9,6 +9,8 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
+use anyhow::Result;
+
 use crate::connection::Connection;
 use crate::entry::{Entry, EntryView};
 use crate::node::Node;
@@ -196,25 +198,25 @@ impl<'a> HashMapVocabulary<'a> {
 }
 
 impl Vocabulary for HashMapVocabulary<'_> {
-    fn find_entries(&self, key: &dyn crate::Input) -> Vec<EntryView<'_>> {
+    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<EntryView<'_>>> {
         let Some(key) = key.as_any().downcast_ref::<StringInput>() else {
-            return Vec::new();
+            return Ok(Vec::new());
         };
         let Some(found) = self.entry_map.get(key.value()) else {
-            return Vec::new();
+            return Ok(Vec::new());
         };
 
-        found.iter().map(|entry| entry.as_view()).collect()
+        Ok(found.iter().map(|entry| entry.as_view()).collect())
     }
 
-    fn find_connection(&self, from: &Node<'_>, to: &EntryView<'_>) -> Connection {
+    fn find_connection(&self, from: &Node<'_>, to: &EntryView<'_>) -> Result<Connection> {
         let from_entry_view = match from {
             Node::Middle(_) => {
                 let Some(from_key) = from.key() else {
-                    return Connection::new(i32::MAX);
+                    return Ok(Connection::new(i32::MAX));
                 };
                 let Some(from_value) = from.value() else {
-                    return Connection::new(i32::MAX);
+                    return Ok(Connection::new(i32::MAX));
                 };
                 EntryView::new(from_key, from_value, from.node_cost())
             }
@@ -226,9 +228,9 @@ impl Vocabulary for HashMapVocabulary<'_> {
             HashableEntry::from_view(to.clone(), self.entry_hash_value, self.entry_equal),
         );
         let Some(found) = self.connection_map.get(&key) else {
-            return Connection::new(i32::MAX);
+            return Ok(Connection::new(i32::MAX));
         };
-        Connection::new(*found)
+        Ok(Connection::new(*found))
     }
 }
 
@@ -332,11 +334,15 @@ mod tests {
                 HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
             {
-                let found = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
+                let found = vocaburary
+                    .find_entries(&StringInput::new(String::from("みずほ")))
+                    .unwrap();
                 assert!(found.is_empty());
             }
             {
-                let found = vocaburary.find_entries(&StringInput::new(String::from("さくら")));
+                let found = vocaburary
+                    .find_entries(&StringInput::new(String::from("さくら")))
+                    .unwrap();
                 assert!(found.is_empty());
             }
         }
@@ -385,7 +391,9 @@ mod tests {
                 HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
             {
-                let found = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
+                let found = vocaburary
+                    .find_entries(&StringInput::new(String::from("みずほ")))
+                    .unwrap();
                 assert_eq!(found.len(), 1);
                 assert_eq!(
                     found[0]
@@ -409,7 +417,9 @@ mod tests {
                 assert_eq!(found[0].cost(), 42);
             }
             {
-                let found = vocaburary.find_entries(&StringInput::new(String::from("さくら")));
+                let found = vocaburary
+                    .find_entries(&StringInput::new(String::from("さくら")))
+                    .unwrap();
                 assert_eq!(found.len(), 2);
                 assert_eq!(
                     found[0]
@@ -504,26 +514,33 @@ mod tests {
             let vocaburary =
                 HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
 
-            let entries_mizuho = vocaburary.find_entries(&StringInput::new(String::from("みずほ")));
+            let entries_mizuho = vocaburary
+                .find_entries(&StringInput::new(String::from("みずほ")))
+                .unwrap();
             assert_eq!(entries_mizuho.len(), 1);
-            let entries_sakura = vocaburary.find_entries(&StringInput::new(String::from("さくら")));
+            let entries_sakura = vocaburary
+                .find_entries(&StringInput::new(String::from("さくら")))
+                .unwrap();
             assert_eq!(entries_sakura.len(), 2);
 
             {
-                let connection =
-                    vocaburary.find_connection(&make_node(&entries_mizuho[0]), &entries_sakura[0]);
+                let connection = vocaburary
+                    .find_connection(&make_node(&entries_mizuho[0]), &entries_sakura[0])
+                    .unwrap();
 
                 assert_eq!(connection.cost(), 4242);
             }
             {
-                let connection =
-                    vocaburary.find_connection(&Node::bos(Rc::new(Vec::new())), &EntryView::BosEos);
+                let connection = vocaburary
+                    .find_connection(&Node::bos(Rc::new(Vec::new())), &EntryView::BosEos)
+                    .unwrap();
 
                 assert_eq!(connection.cost(), 999);
             }
             {
-                let connection =
-                    vocaburary.find_connection(&make_node(&entries_mizuho[0]), &entries_mizuho[0]);
+                let connection = vocaburary
+                    .find_connection(&make_node(&entries_mizuho[0]), &entries_mizuho[0])
+                    .unwrap();
 
                 assert_eq!(connection.cost(), i32::MAX);
             }
