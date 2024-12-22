@@ -151,11 +151,11 @@ impl<'a> Lattice<'a> {
                 Ok(node_key) => node_key,
                 Err(e) => return Err(e),
             };
-            let found = self.vocabulary.find_entries(node_key.as_ref());
+            let found = self.vocabulary.find_entries(node_key.as_ref())?;
 
             let mut preceding_edge_cost_indexes = Vec::new();
             for e in &found {
-                let preceding_edge_costs = self.preceding_edge_costs(step, e);
+                let preceding_edge_costs = self.preceding_edge_costs(step, e)?;
                 preceding_edge_cost_indexes.push(node_preceding_edge_costs.len());
                 node_preceding_edge_costs.push(preceding_edge_costs);
             }
@@ -209,7 +209,7 @@ impl<'a> Lattice<'a> {
         let Some(graph_last) = self.graph.last() else {
             return Err(LatticeError::NoInput.into());
         };
-        let preceding_edge_costs = self.preceding_edge_costs(graph_last, &EntryView::BosEos);
+        let preceding_edge_costs = self.preceding_edge_costs(graph_last, &EntryView::BosEos)?;
         let best_preceding_node_index =
             Self::best_preceding_node_index(graph_last, preceding_edge_costs.as_slice());
         let best_preceding_path_cost = Self::add_cost(
@@ -230,14 +230,14 @@ impl<'a> Lattice<'a> {
         &self,
         step: &GraphStep<'_>,
         next_entry: &EntryView<'_>,
-    ) -> Rc<Vec<i32>> {
+    ) -> Result<Rc<Vec<i32>>> {
         assert!(!step.nodes().is_empty());
-        let costs = step
-            .nodes()
-            .iter()
-            .map(|node| self.vocabulary.find_connection(node, next_entry).cost())
-            .collect::<Vec<_>>();
-        Rc::new(costs)
+        let mut costs = Vec::with_capacity(step.nodes().len());
+        for node in step.nodes() {
+            let cost = self.vocabulary.find_connection(node, next_entry)?.cost();
+            costs.push(cost);
+        }
+        Ok(Rc::new(costs))
     }
 
     fn best_preceding_node_index(step: &GraphStep<'_>, edge_costs: &[i32]) -> usize {
