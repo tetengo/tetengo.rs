@@ -10,12 +10,12 @@ use crate::node::Node;
  * A path.
  */
 #[derive(Debug, Default)]
-pub struct Path<'a> {
-    nodes: Vec<Node<'a>>,
+pub struct Path {
+    nodes: Vec<Node>,
     cost: i32,
 }
 
-impl<'a> Path<'a> {
+impl Path {
     /**
      * Creates a path.
      *
@@ -23,7 +23,7 @@ impl<'a> Path<'a> {
      * * `nodes` - Nodes.
      * * `cost`  - A cost.
      */
-    pub const fn new(nodes: Vec<Node<'a>>, cost: i32) -> Self {
+    pub const fn new(nodes: Vec<Node>, cost: i32) -> Self {
         Path { nodes, cost }
     }
 
@@ -43,7 +43,7 @@ impl<'a> Path<'a> {
      * # Returns
      * The nodes.
      */
-    pub fn nodes(&self) -> &[Node<'a>] {
+    pub fn nodes(&self) -> &[Node] {
         self.nodes.as_slice()
     }
 
@@ -73,7 +73,7 @@ mod tests {
 
     static PRECEDING_EDGE_COSTS: LazyLock<Vec<i32>> = LazyLock::new(|| vec![1]);
 
-    fn make_nodes() -> Vec<Node<'static>> {
+    fn make_nodes() -> Vec<Node> {
         static KEY_MIZUHO: LazyLock<StringInput> =
             LazyLock::new(|| StringInput::new(String::from("mizuho")));
         static KEY_SAKURA: LazyLock<StringInput> =
@@ -83,8 +83,8 @@ mod tests {
         vec![
             Node::bos(Rc::new(BOS_PRECEDING_EDGE_COSTS)),
             Node::new(
-                &*KEY_MIZUHO,
-                &NODE_VALUE,
+                Rc::new(KEY_MIZUHO.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 0,
                 Rc::new(PRECEDING_EDGE_COSTS.clone()),
@@ -93,8 +93,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_SAKURA,
-                &NODE_VALUE,
+                Rc::new(KEY_SAKURA.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 1,
                 Rc::new(PRECEDING_EDGE_COSTS.clone()),
@@ -103,8 +103,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_TSUBAME,
-                &NODE_VALUE,
+                Rc::new(KEY_TSUBAME.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 2,
                 Rc::new(PRECEDING_EDGE_COSTS.clone()),

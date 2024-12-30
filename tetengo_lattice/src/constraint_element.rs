@@ -23,5 +23,5 @@ pub trait ConstraintElement: Debug {
      * * 0 if this constraint element matches the specified node, and do not match its preceding nodes.
      * * negative if this constraint element does not match the specified node.
      */
-    fn matches(&self, node: &Node<'_>) -> i32;
+    fn matches(&self, node: &Node) -> i32;
 }

@@ -46,9 +46,9 @@ pub struct Eos {
  * A middle node.
  */
 #[derive(Clone, Debug)]
-pub struct Middle<'a> {
-    key: &'a dyn Input,
-    value: &'a dyn AnyValue,
+pub struct Middle {
+    key: Rc<dyn Input>,
+    value: Rc<dyn AnyValue>,
     index_in_step: usize,
     preceding_step: usize,
     preceding_edge_costs: Rc<Vec<i32>>,
@@ -57,11 +57,11 @@ pub struct Middle<'a> {
     path_cost: i32,
 }
 
-impl Eq for Middle<'_> {}
+impl Eq for Middle {}
 
-impl PartialEq for Middle<'_> {
+impl PartialEq for Middle {
     fn eq(&self, other: &Self) -> bool {
-        self.key.equal_to(other.key)
+        self.key.equal_to(other.key.as_ref())
             && self.index_in_step == other.index_in_step
             && self.preceding_step == other.preceding_step
             && self.preceding_edge_costs == other.preceding_edge_costs
@@ -75,7 +75,7 @@ impl PartialEq for Middle<'_> {
  * A node.
  */
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Node<'a> {
+pub enum Node {
     /// The BOS (Beginning of Sequence) node.
     Bos(Bos),
 
@@ -83,10 +83,10 @@ pub enum Node<'a> {
     Eos(Eos),
 
     /// The middle node.
-    Middle(Middle<'a>),
+    Middle(Middle),
 }
 
-impl<'a> Node<'a> {
+impl Node {
     /**
      * Creates a BOS (Beginning of Sequence).
      *
@@ -136,8 +136,8 @@ impl<'a> Node<'a> {
      * * path_cost            - A path cost.
      */
     pub const fn new(
-        key: &'a dyn Input,
-        value: &'a dyn AnyValue,
+        key: Rc<dyn Input>,
+        value: Rc<dyn AnyValue>,
         index_in_step: usize,
         preceding_step: usize,
         preceding_edge_costs: Rc<Vec<i32>>,
@@ -164,17 +164,17 @@ impl<'a> Node<'a> {
      * * When `entry` is BOS or EOS.
      */
     pub fn new_with_entry_view(
-        entry: &EntryView<'a>,
+        entry: &EntryView,
         index_in_step: usize,
         preceding_step: usize,
         preceding_edge_costs: Rc<Vec<i32>>,
         best_preceding_node: usize,
         path_cost: i32,
     ) -> Result<Self> {
-        let Some(key) = entry.key() else {
+        let Some(key) = entry.key_rc() else {
             return Err(NodeError::BosOrEosEntryNotAllowed.into());
         };
-        let Some(value) = entry.value() else {
+        let Some(value) = entry.value_rc() else {
             return Err(NodeError::BosOrEosEntryNotAllowed.into());
         };
         Ok(Node::Middle(Middle {
@@ -195,11 +195,11 @@ impl<'a> Node<'a> {
      * # Returns
      * The key.
      */
-    pub const fn key(&self) -> Option<&dyn Input> {
+    pub fn key(&self) -> Option<&dyn Input> {
         match self {
             Node::Bos(_) => EntryView::BosEos.key(),
             Node::Eos(_) => EntryView::BosEos.key(),
-            Node::Middle(middle) => Some(middle.key),
+            Node::Middle(middle) => Some(middle.key.as_ref()),
         }
     }
 
@@ -209,11 +209,11 @@ impl<'a> Node<'a> {
      * # Returns
      * The value.
      */
-    pub const fn value(&self) -> Option<&dyn AnyValue> {
+    pub fn value(&self) -> Option<&dyn AnyValue> {
         match self {
             Node::Bos(_) => EntryView::BosEos.value(),
             Node::Eos(_) => EntryView::BosEos.value(),
-            Node::Middle(middle) => Some(middle.value),
+            Node::Middle(middle) => Some(middle.value.as_ref()),
         }
     }
 
@@ -354,8 +354,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let _node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -370,7 +370,7 @@ mod tests {
         {
             let entry_key = StringInput::new(String::from("mizuho"));
             let entry_value = 42;
-            let entry = EntryView::new(&entry_key, &entry_value, 24);
+            let entry = EntryView::new(Rc::new(entry_key.clone()), Rc::new(entry_value), 24);
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node =
                 Node::new_with_entry_view(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
@@ -415,8 +415,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -442,8 +442,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -468,8 +468,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -487,8 +487,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -506,8 +506,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -525,8 +525,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -544,8 +544,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -563,8 +563,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            &key,
-            &value,
+            Rc::new(key),
+            Rc::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -591,8 +591,8 @@ mod tests {
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             assert!(!Node::new(
-                &key,
-                &value,
+                Rc::new(key),
+                Rc::new(value),
                 53,
                 1,
                 preceding_edge_costs.clone(),
@@ -617,8 +617,8 @@ mod tests {
         let value1 = 42;
         let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node1 = Node::new(
-            &key,
-            &value1,
+            Rc::new(key.clone()),
+            Rc::new(value1),
             53,
             1,
             preceding_edge_costs1.clone(),
@@ -630,8 +630,8 @@ mod tests {
         let value2 = 42;
         let preceding_edge_costs2 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node2 = Node::new(
-            &key,
-            &value2,
+            Rc::new(key),
+            Rc::new(value2),
             53,
             1,
             preceding_edge_costs2.clone(),

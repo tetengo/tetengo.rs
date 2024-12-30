@@ -8,6 +8,7 @@ use std::any::type_name_of_val;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
+use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -22,8 +23,8 @@ type EntryMap = HashMap<String, Vec<Entry>>;
 #[derive(Clone)]
 struct HashableEntryEntity<'a> {
     entry: Entry,
-    hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-    equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    hash_value: &'a dyn Fn(&EntryView) -> u64,
+    equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
 }
 
 impl Debug for HashableEntryEntity<'_> {
@@ -38,9 +39,9 @@ impl Debug for HashableEntryEntity<'_> {
 
 #[derive(Clone)]
 struct HashableEntryView<'a> {
-    entry_view: EntryView<'a>,
-    hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-    equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    entry_view: EntryView,
+    hash_value: &'a dyn Fn(&EntryView) -> u64,
+    equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
 }
 
 impl Debug for HashableEntryView<'_> {
@@ -62,8 +63,8 @@ enum HashableEntry<'a> {
 impl<'a> HashableEntry<'a> {
     const fn from_entity(
         entry: Entry,
-        hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        hash_value: &'a dyn Fn(&EntryView) -> u64,
+        equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
     ) -> Self {
         HashableEntry::Entity(HashableEntryEntity {
             entry,
@@ -73,9 +74,9 @@ impl<'a> HashableEntry<'a> {
     }
 
     const fn from_view(
-        entry_view: EntryView<'a>,
-        hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_view: EntryView,
+        hash_value: &'a dyn Fn(&EntryView) -> u64,
+        equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
     ) -> Self {
         HashableEntry::View(HashableEntryView {
             entry_view,
@@ -130,8 +131,8 @@ type ConnectionMap<'a> = HashMap<(HashableEntry<'a>, HashableEntry<'a>), i32>;
 pub struct HashMapVocabulary<'a> {
     entry_map: EntryMap,
     connection_map: ConnectionMap<'a>,
-    entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-    entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    entry_hash_value: &'a dyn Fn(&EntryView) -> u64,
+    entry_equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
 }
 
 impl Debug for HashMapVocabulary<'_> {
@@ -161,8 +162,8 @@ impl<'a> HashMapVocabulary<'a> {
     pub fn new(
         entries: Vec<(String, Vec<Entry>)>,
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_hash_value: &'a dyn Fn(&EntryView) -> u64,
+        entry_equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
     ) -> Self {
         let entry_map = Self::make_entry_map(entries);
         let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
@@ -184,8 +185,8 @@ impl<'a> HashMapVocabulary<'a> {
 
     fn make_connection_map(
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_hash_value: &'a dyn Fn(&EntryView) -> u64,
+        entry_equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
     ) -> ConnectionMap<'a> {
         let mut connection_map = ConnectionMap::new();
         for ((from, to), cost) in connections {
@@ -198,7 +199,7 @@ impl<'a> HashMapVocabulary<'a> {
 }
 
 impl Vocabulary for HashMapVocabulary<'_> {
-    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<EntryView<'_>>> {
+    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<EntryView>> {
         let Some(key) = key.as_any().downcast_ref::<StringInput>() else {
             return Ok(Vec::new());
         };
@@ -209,7 +210,7 @@ impl Vocabulary for HashMapVocabulary<'_> {
         Ok(found.iter().map(|entry| entry.as_view()).collect())
     }
 
-    fn find_connection(&self, from: &Node<'_>, to: &EntryView<'_>) -> Result<Connection> {
+    fn find_connection(&self, from: &Node, to: &EntryView) -> Result<Connection> {
         let from_entry_view = match from {
             Node::Middle(_) => {
                 let Some(from_key) = from.key() else {
@@ -218,7 +219,11 @@ impl Vocabulary for HashMapVocabulary<'_> {
                 let Some(from_value) = from.value() else {
                     return Ok(Connection::new(i32::MAX));
                 };
-                EntryView::new(from_key, from_value, from.node_cost())
+                EntryView::new(
+                    Rc::from(from_key.clone_box()),
+                    Rc::from(from_value.clone_box()),
+                    from.node_cost(),
+                )
             }
             Node::Bos(_) => EntryView::BosEos,
             Node::Eos(_) => EntryView::BosEos,
@@ -240,14 +245,14 @@ mod tests {
 
     use super::*;
 
-    fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
+    fn entry_hash_value(entry: &EntryView) -> u64 {
         let Some(key) = entry.key() else {
             return 0;
         };
         key.hash_value()
     }
 
-    fn entry_equal(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+    fn entry_equal(one: &EntryView, other: &EntryView) -> bool {
         match (one.key(), other.key()) {
             (Some(one_key), Some(other_key)) => one_key.equal_to(other_key),
             (None, None) => true,
@@ -255,7 +260,7 @@ mod tests {
         }
     }
 
-    fn make_node<'a>(entry: &'a EntryView<'_>) -> Node<'a> {
+    fn make_node(entry: &EntryView) -> Node {
         static PRECEDING_EDGE_COSTS: Vec<i32> = Vec::new();
         match entry {
             EntryView::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
@@ -284,8 +289,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -293,13 +298,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("さくら")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -308,13 +313,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Box::new(StringInput::new(String::from("さくら"))),
-                        Box::new(String::from("桜")),
+                        Rc::new(StringInput::new(String::from("さくら"))),
+                        Rc::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -351,8 +356,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -360,13 +365,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("さくら")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -375,13 +380,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Box::new(StringInput::new(String::from("さくら"))),
-                        Box::new(String::from("桜")),
+                        Rc::new(StringInput::new(String::from("さくら"))),
+                        Rc::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -472,8 +477,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -481,13 +486,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("さくら")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -497,13 +502,13 @@ mod tests {
                 (
                     (
                         Entry::new(
-                            Box::new(StringInput::new(String::from("みずほ"))),
-                            Box::new(String::from("瑞穂")),
+                            Rc::new(StringInput::new(String::from("みずほ"))),
+                            Rc::new(String::from("瑞穂")),
                             42,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                     ),

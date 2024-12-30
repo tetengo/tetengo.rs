@@ -175,7 +175,7 @@ struct Trip {
     pub(crate) cost: i32,
 }
 
-fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node<'_>, trip_capacity: usize) -> Vec<Trip> {
+fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node, trip_capacity: usize) -> Vec<Trip> {
     let iter = NBestIterator::new(lattice, eos_node, Box::new(Constraint::new()));
     let mut trips = Vec::with_capacity(trip_capacity);
     let mut duplication_checker = HashSet::<String>::new();

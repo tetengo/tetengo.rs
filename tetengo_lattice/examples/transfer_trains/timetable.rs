@@ -543,8 +543,8 @@ impl Timetable {
                     let found = map.entry(section_name.clone()).or_default();
                     let section = Section::new(Rc::new(train.clone()), from, to);
                     found.push(Entry::new(
-                        Box::new(StringInput::new(section_name)),
-                        Box::new(section),
+                        Rc::new(StringInput::new(section_name)),
+                        Rc::new(section),
                         Self::make_section_duration(train.stops(), from, to) as i32,
                     ));
                 }
@@ -678,7 +678,7 @@ impl Timetable {
         (time1 as isize + 1440 - time2 as isize) % 1440
     }
 
-    fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
+    fn entry_hash_value(entry: &EntryView) -> u64 {
         let mut hasher = DefaultHasher::new();
 
         hasher.write_u64(if let Some(key) = entry.key() {
@@ -705,7 +705,7 @@ impl Timetable {
         hasher.finish()
     }
 
-    fn entry_equal_to(one: &EntryView<'_>, another: &EntryView<'_>) -> bool {
+    fn entry_equal_to(one: &EntryView, another: &EntryView) -> bool {
         if let Some(one_value) = one.value() {
             if let Some(another_value) = another.value() {
                 let Some(one_section) = one_value.as_any().downcast_ref::<Section>() else {

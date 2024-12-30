@@ -46,7 +46,7 @@ impl<'a> Constraint<'a> {
      * # Returns
      * `true` if the path matches the pattern.
      */
-    pub fn matches(&self, reverse_path: &[Node<'_>]) -> bool {
+    pub fn matches(&self, reverse_path: &[Node]) -> bool {
         self.matches_impl(reverse_path) == 0
     }
 
@@ -59,11 +59,11 @@ impl<'a> Constraint<'a> {
      * # Returns
      * `true` if the tail path matches the tail of the pattern.
      */
-    pub fn matches_tail(&self, reverse_tail_path: &[Node<'_>]) -> bool {
+    pub fn matches_tail(&self, reverse_tail_path: &[Node]) -> bool {
         self.matches_impl(reverse_tail_path) != usize::MAX
     }
 
-    fn matches_impl(&self, reverse_path: &[Node<'_>]) -> usize {
+    fn matches_impl(&self, reverse_path: &[Node]) -> usize {
         if self.pattern.is_empty() {
             return 0;
         }
@@ -112,14 +112,14 @@ mod tests {
         Rc::new(vec![1])
     }
 
-    fn make_path_b_e() -> Vec<Node<'static>> {
+    fn make_path_b_e() -> Vec<Node> {
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::eos(0, preceding_edge_costs(), 0, 0),
         ]
     }
 
-    fn make_path_b_m_s_t_e() -> Vec<Node<'static>> {
+    fn make_path_b_m_s_t_e() -> Vec<Node> {
         static KEY_MIZUHO: LazyLock<StringInput> =
             LazyLock::new(|| StringInput::new(String::from("mizuho")));
         static KEY_SAKURA: LazyLock<StringInput> =
@@ -129,8 +129,8 @@ mod tests {
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                &*KEY_MIZUHO,
-                &NODE_VALUE,
+                Rc::new(KEY_MIZUHO.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -139,8 +139,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_SAKURA,
-                &NODE_VALUE,
+                Rc::new(KEY_SAKURA.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 1,
                 preceding_edge_costs(),
@@ -149,8 +149,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_TSUBAME,
-                &NODE_VALUE,
+                Rc::new(KEY_TSUBAME.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -162,7 +162,7 @@ mod tests {
         ]
     }
 
-    fn make_path_b_m_a_t_e() -> Vec<Node<'static>> {
+    fn make_path_b_m_a_t_e() -> Vec<Node> {
         static KEY_MIZUHO: LazyLock<StringInput> =
             LazyLock::new(|| StringInput::new(String::from("mizuho")));
         static KEY_ARIAKE: LazyLock<StringInput> =
@@ -172,8 +172,8 @@ mod tests {
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                &*KEY_MIZUHO,
-                &NODE_VALUE,
+                Rc::new(KEY_MIZUHO.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -182,8 +182,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_ARIAKE,
-                &NODE_VALUE,
+                Rc::new(KEY_ARIAKE.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 1,
                 preceding_edge_costs(),
@@ -192,8 +192,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_TSUBAME,
-                &NODE_VALUE,
+                Rc::new(KEY_TSUBAME.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -205,7 +205,7 @@ mod tests {
         ]
     }
 
-    fn make_path_b_h_t_e() -> Vec<Node<'static>> {
+    fn make_path_b_h_t_e() -> Vec<Node> {
         static KEY_HINOKUNI: LazyLock<StringInput> =
             LazyLock::new(|| StringInput::new(String::from("hinokuni")));
         static KEY_TSUBAME: LazyLock<StringInput> =
@@ -213,8 +213,8 @@ mod tests {
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                &*KEY_HINOKUNI,
-                &NODE_VALUE,
+                Rc::new(KEY_HINOKUNI.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -223,8 +223,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_TSUBAME,
-                &NODE_VALUE,
+                Rc::new(KEY_TSUBAME.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -236,7 +236,7 @@ mod tests {
         ]
     }
 
-    fn make_path_b_k_s_k_e() -> Vec<Node<'static>> {
+    fn make_path_b_k_s_k_e() -> Vec<Node> {
         static KEY_KAMOME: LazyLock<StringInput> =
             LazyLock::new(|| StringInput::new(String::from("kamome")));
         static KEY_SAKURA: LazyLock<StringInput> =
@@ -246,8 +246,8 @@ mod tests {
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                &*KEY_KAMOME,
-                &NODE_VALUE,
+                Rc::new(KEY_KAMOME.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -256,8 +256,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_SAKURA,
-                &NODE_VALUE,
+                Rc::new(KEY_SAKURA.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 1,
                 preceding_edge_costs(),
@@ -266,8 +266,8 @@ mod tests {
                 0,
             ),
             Node::new(
-                &*KEY_KUMAGAWA,
-                &NODE_VALUE,
+                Rc::new(KEY_KUMAGAWA.clone()),
+                Rc::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -279,7 +279,7 @@ mod tests {
         ]
     }
 
-    fn reverse_path(path: Vec<Node<'_>>) -> Vec<Node<'_>> {
+    fn reverse_path(path: Vec<Node>) -> Vec<Node> {
         path.into_iter().rev().collect()
     }
 
@@ -347,7 +347,7 @@ mod tests {
         vec![Box::new(WildcardConstraintElement::new(usize::MAX))]
     }
 
-    fn make_tail(path: Vec<Node<'_>>, node_count: usize) -> Vec<Node<'_>> {
+    fn make_tail(path: Vec<Node>, node_count: usize) -> Vec<Node> {
         assert!(0 < node_count && node_count <= path.len());
         path[path.len() - node_count..].to_vec()
     }

@@ -39,13 +39,13 @@ pub enum LatticeError {
 }
 
 #[derive(Debug)]
-struct GraphStep<'a> {
+struct GraphStep {
     input_tail: usize,
-    nodes: Vec<Node<'a>>,
+    nodes: Vec<Node>,
 }
 
-impl<'a> GraphStep<'a> {
-    const fn new(input_tail: usize, nodes: Vec<Node<'a>>) -> Self {
+impl GraphStep {
+    const fn new(input_tail: usize, nodes: Vec<Node>) -> Self {
         Self { input_tail, nodes }
     }
 
@@ -53,7 +53,7 @@ impl<'a> GraphStep<'a> {
         self.input_tail
     }
 
-    fn nodes(&self) -> &[Node<'a>] {
+    fn nodes(&self) -> &[Node] {
         &self.nodes
     }
 }
@@ -65,7 +65,7 @@ impl<'a> GraphStep<'a> {
 pub struct Lattice<'a> {
     vocabulary: &'a dyn Vocabulary,
     input: Option<Box<dyn Input>>,
-    graph: Vec<GraphStep<'a>>,
+    graph: Vec<GraphStep>,
 }
 
 impl<'a> Lattice<'a> {
@@ -85,7 +85,7 @@ impl<'a> Lattice<'a> {
         self_
     }
 
-    fn bos_step() -> GraphStep<'a> {
+    fn bos_step() -> GraphStep {
         let nodes = vec![Node::bos(Rc::new(Vec::new()))];
         GraphStep::new(0, nodes)
     }
@@ -112,7 +112,7 @@ impl<'a> Lattice<'a> {
      * # Errors
      * * When step is too large.
      */
-    pub fn nodes_at(&self, step: usize) -> Result<&[Node<'a>]> {
+    pub fn nodes_at(&self, step: usize) -> Result<&[Node]> {
         if step >= self.graph.len() {
             Err(LatticeError::StepIsTooLarge.into())
         } else {
@@ -205,7 +205,7 @@ impl<'a> Lattice<'a> {
      * # Errors
      * * When no input pushed yet.
      */
-    pub fn settle(&mut self) -> Result<Node<'a>> {
+    pub fn settle(&mut self) -> Result<Node> {
         let Some(graph_last) = self.graph.last() else {
             return Err(LatticeError::NoInput.into());
         };
@@ -228,8 +228,8 @@ impl<'a> Lattice<'a> {
 
     fn preceding_edge_costs(
         &self,
-        step: &GraphStep<'_>,
-        next_entry: &EntryView<'_>,
+        step: &GraphStep,
+        next_entry: &EntryView,
     ) -> Result<Rc<Vec<i32>>> {
         assert!(!step.nodes().is_empty());
         let mut costs = Vec::with_capacity(step.nodes().len());
@@ -240,7 +240,7 @@ impl<'a> Lattice<'a> {
         Ok(Rc::new(costs))
     }
 
-    fn best_preceding_node_index(step: &GraphStep<'_>, edge_costs: &[i32]) -> usize {
+    fn best_preceding_node_index(step: &GraphStep, edge_costs: &[i32]) -> usize {
         assert!(!step.nodes().is_empty());
         let mut min_index = 0;
         for i in 1..step.nodes().len() {
@@ -313,18 +313,18 @@ mod tests {
                 String::from("[HakataTosu][TosuOmuta][OmutaKumamoto]"),
                 vec![
                     Entry::new(
-                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
-                        Box::new("mizuho"),
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new("mizuho"),
                         3670,
                     ),
                     Entry::new(
-                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
-                        Box::new("sakura"),
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new("sakura"),
                         2620,
                     ),
                     Entry::new(
-                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
-                        Box::new("tsubame"),
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new("tsubame"),
                         2390,
                     ),
                 ],
@@ -332,38 +332,46 @@ mod tests {
             (
                 String::from("[HakataTosu][TosuOmuta]"),
                 vec![
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("ariake"), 2150),
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("rapid811"), 1310),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta")),
+                        Rc::new("ariake"),
+                        2150,
+                    ),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta")),
+                        Rc::new("rapid811"),
+                        1310,
+                    ),
                 ],
             ),
             (
                 String::from("[HakataTosu]"),
                 vec![
-                    Entry::new(to_input("Hakata-Tosu"), Box::new("kamome"), 840),
-                    Entry::new(to_input("Hakata-Tosu"), Box::new("local415"), 570),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new("kamome"), 840),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new("local415"), 570),
                 ],
             ),
             (
                 String::from("[TosuOmuta]"),
                 vec![Entry::new(
-                    to_input("Tosu-Omuta"),
-                    Box::new("local813"),
+                    Rc::from(to_input("Tosu-Omuta")),
+                    Rc::new("local813"),
                     860,
                 )],
             ),
             (
                 String::from("[TosuOmuta][OmutaKumamoto]"),
                 vec![Entry::new(
-                    to_input("Tosu-Omuta-Kumamoto"),
-                    Box::new("local815"),
+                    Rc::from(to_input("Tosu-Omuta-Kumamoto")),
+                    Rc::new("local815"),
                     1680,
                 )],
             ),
             (
                 String::from("[OmutaKumamoto]"),
                 vec![Entry::new(
-                    to_input("Omuta-Kumamoto"),
-                    Box::new("local817"),
+                    Rc::from(to_input("Omuta-Kumamoto")),
+                    Rc::new("local817"),
                     950,
                 )],
             ),
@@ -375,91 +383,99 @@ mod tests {
             (
                 (
                     Entry::BosEos,
-                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new(""),
+                        0,
+                    ),
                 ),
                 600,
             ),
             (
                 (
                     Entry::BosEos,
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
                 ),
                 700,
             ),
             (
                 (
                     Entry::BosEos,
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
                 ),
                 800,
             ),
             ((Entry::BosEos, Entry::BosEos), 8000),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
-                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta-Kumamoto")), Rc::new(""), 0),
                 ),
                 500,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
-                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
                 ),
                 600,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 6000,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
-                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
                 ),
                 200,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 2000,
             ),
             (
                 (
-                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
-                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
                 ),
                 300,
             ),
             (
                 (
-                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 3000,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new(""),
+                        0,
+                    ),
                     Entry::BosEos,
                 ),
                 400,
             ),
             (
                 (
-                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta-Kumamoto")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 500,
             ),
             (
                 (
-                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 600,
@@ -467,11 +483,11 @@ mod tests {
         ]
     }
 
-    fn entry_hash(entry: &EntryView<'_>) -> u64 {
+    fn entry_hash(entry: &EntryView) -> u64 {
         entry.key().map_or(0, |key| key.hash_value())
     }
 
-    fn entry_equal_to(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+    fn entry_equal_to(one: &EntryView, other: &EntryView) -> bool {
         if one.key().is_none() && other.key().is_none() {
             return true;
         }

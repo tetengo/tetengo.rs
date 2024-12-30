@@ -11,24 +11,24 @@ use crate::node::Node;
  * A node constraint element.
  */
 #[derive(Clone, Debug)]
-pub struct NodeConstraintElement<'a> {
-    node: Node<'a>,
+pub struct NodeConstraintElement {
+    node: Node,
 }
 
-impl<'a> NodeConstraintElement<'a> {
+impl NodeConstraintElement {
     /**
      * Creates a node constraint element.
      *
      * # Arguments
      * * `node` - A node.
      */
-    pub const fn new(node: Node<'a>) -> Self {
+    pub const fn new(node: Node) -> Self {
         Self { node }
     }
 }
 
-impl ConstraintElement for NodeConstraintElement<'_> {
-    fn matches(&self, node: &Node<'_>) -> i32 {
+impl ConstraintElement for NodeConstraintElement {
+    fn matches(&self, node: &Node) -> i32 {
         if *node == self.node {
             0
         } else {
@@ -51,8 +51,8 @@ mod tests {
         let element_node_value = 42;
         let element_node_preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let element_node = Node::new(
-            &element_node_key,
-            &element_node_value,
+            Rc::new(element_node_key),
+            Rc::new(element_node_value),
             0,
             1,
             element_node_preceding_edge_costs,
@@ -69,8 +69,8 @@ mod tests {
         let element_node_value = 42;
         let element_node_preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let element_node = Node::new(
-            &element_node_key,
-            &element_node_value,
+            Rc::new(element_node_key),
+            Rc::new(element_node_value),
             0,
             1,
             element_node_preceding_edge_costs,
@@ -84,7 +84,16 @@ mod tests {
             let key = StringInput::new(String::from("mizuho"));
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            let node = Node::new(&key, &value, 0, 1, preceding_edge_costs, 5, 24, 2424);
+            let node = Node::new(
+                Rc::new(key),
+                Rc::new(value),
+                0,
+                1,
+                preceding_edge_costs,
+                5,
+                24,
+                2424,
+            );
 
             assert_eq!(element.matches(&node), 0);
         }
@@ -92,7 +101,16 @@ mod tests {
             let key = StringInput::new(String::from("sakura"));
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            let node = Node::new(&key, &value, 0, 1, preceding_edge_costs, 5, 24, 2424);
+            let node = Node::new(
+                Rc::new(key),
+                Rc::new(value),
+                0,
+                1,
+                preceding_edge_costs,
+                5,
+                24,
+                2424,
+            );
 
             assert!(element.matches(&node) < 0);
         }

@@ -29,7 +29,7 @@ pub trait Vocabulary: Debug {
      * # Errors
      * * When finding entries fails.
      */
-    fn find_entries(&self, key: &dyn Input) -> Result<Vec<EntryView<'_>>>;
+    fn find_entries(&self, key: &dyn Input) -> Result<Vec<EntryView>>;
 
     /**
      * Finds a connection between an origin node and a destination entry.
@@ -44,5 +44,5 @@ pub trait Vocabulary: Debug {
      * # Errors
      * * When finding a connection fails.
      */
-    fn find_connection(&self, from: &Node<'_>, to: &EntryView<'_>) -> Result<Connection>;
+    fn find_connection(&self, from: &Node, to: &EntryView) -> Result<Connection>;
 }

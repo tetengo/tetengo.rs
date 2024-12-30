@@ -82,12 +82,8 @@ impl Entry {
      * * `value` - A box of a value.
      * * `cost`  - A cost.
      */
-    pub fn new(key: Box<dyn Input>, value: Box<dyn AnyValue>, cost: i32) -> Self {
-        Entry::Middle(Middle {
-            key: Rc::from(key),
-            value: Rc::from(value),
-            cost,
-        })
+    pub fn new(key: Rc<dyn Input>, value: Rc<dyn AnyValue>, cost: i32) -> Self {
+        Entry::Middle(Middle { key, value, cost })
     }
 
     /**
@@ -96,11 +92,11 @@ impl Entry {
      * # Arguments
      * * `entry` - An entry.
      */
-    pub fn as_view(&self) -> EntryView<'_> {
+    pub fn as_view(&self) -> EntryView {
         match self {
             Entry::BosEos => EntryView::BosEos,
             Entry::Middle(middle) => {
-                EntryView::new(middle.key.as_ref(), middle.value.as_ref(), middle.cost)
+                EntryView::new(middle.key.clone(), middle.value.clone(), middle.cost)
             }
         }
     }
@@ -119,6 +115,19 @@ impl Entry {
     }
 
     /**
+     * Returns the Rc of the key.
+     *
+     * # Returns
+     * The key.
+     */
+    pub fn key_rc(&self) -> Option<Rc<dyn Input>> {
+        match self {
+            Entry::BosEos => None,
+            Entry::Middle(entry) => Some(entry.key.clone()),
+        }
+    }
+
+    /**
      * Returns the value.
      *
      * # Returns
@@ -128,6 +137,19 @@ impl Entry {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
+        }
+    }
+
+    /**
+     * Returns the Rc of the value.
+     *
+     * # Returns
+     * The value.
+     */
+    pub fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+        match self {
+            Entry::BosEos => None,
+            Entry::Middle(entry) => Some(entry.value.clone()),
         }
     }
 
@@ -149,9 +171,9 @@ impl Entry {
  * An middle entry view.
  */
 #[derive(Clone, Debug)]
-pub struct MiddleView<'a> {
-    key: &'a dyn Input,
-    value: &'a dyn AnyValue,
+pub struct MiddleView {
+    key: Rc<dyn Input>,
+    value: Rc<dyn AnyValue>,
     cost: i32,
 }
 
@@ -159,15 +181,15 @@ pub struct MiddleView<'a> {
  * An entry view.
  */
 #[derive(Clone, Debug)]
-pub enum EntryView<'a> {
+pub enum EntryView {
     /// The BOS/EOS (Beginning/Ending of Sequence) entry.
     BosEos,
 
     /// The middle entry.
-    Middle(MiddleView<'a>),
+    Middle(MiddleView),
 }
 
-impl<'a> EntryView<'a> {
+impl EntryView {
     /**
      * Creates an entry view.
      *
@@ -176,7 +198,7 @@ impl<'a> EntryView<'a> {
      * * `value` - A value.
      * * `cost`  - A cost.
      */
-    pub const fn new(key: &'a dyn Input, value: &'a dyn AnyValue, cost: i32) -> Self {
+    pub const fn new(key: Rc<dyn Input>, value: Rc<dyn AnyValue>, cost: i32) -> Self {
         EntryView::Middle(MiddleView { key, value, cost })
     }
 
@@ -190,8 +212,8 @@ impl<'a> EntryView<'a> {
         match self {
             EntryView::BosEos => Entry::BosEos,
             EntryView::Middle(middle_view) => Entry::new(
-                middle_view.key.clone_box(),
-                middle_view.value.clone_box(),
+                middle_view.key.clone(),
+                middle_view.value.clone(),
                 middle_view.cost,
             ),
         }
@@ -203,10 +225,23 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The key.
      */
-    pub const fn key(&self) -> Option<&'a dyn Input> {
+    pub fn key(&self) -> Option<&dyn Input> {
         match self {
             EntryView::BosEos => None,
-            EntryView::Middle(middle_view) => Some(middle_view.key),
+            EntryView::Middle(middle_view) => Some(middle_view.key.as_ref()),
+        }
+    }
+
+    /**
+     * Returns the Rc of the key.
+     *
+     * # Returns
+     * The key.
+     */
+    pub fn key_rc(&self) -> Option<Rc<dyn Input>> {
+        match self {
+            EntryView::BosEos => None,
+            EntryView::Middle(entry) => Some(entry.key.clone()),
         }
     }
 
@@ -216,10 +251,23 @@ impl<'a> EntryView<'a> {
      * # Returns
      * The value.
      */
-    pub const fn value(&self) -> Option<&'a dyn AnyValue> {
+    pub fn value(&self) -> Option<&dyn AnyValue> {
         match self {
             EntryView::BosEos => None,
-            EntryView::Middle(middle_view) => Some(middle_view.value),
+            EntryView::Middle(middle_view) => Some(middle_view.value.as_ref()),
+        }
+    }
+
+    /**
+     * Returns the Rc of the value.
+     *
+     * # Returns
+     * The value.
+     */
+    pub fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+        match self {
+            EntryView::BosEos => None,
+            EntryView::Middle(entry) => Some(entry.value.clone()),
         }
     }
 
@@ -265,15 +313,15 @@ mod tests {
     fn new() {
         {
             let _entry = Entry::new(
-                Box::new(StringInput::new(String::from("みずほ"))),
-                Box::new(String::from("瑞穂")),
+                Rc::new(StringInput::new(String::from("みずほ"))),
+                Rc::new(String::from("瑞穂")),
                 42,
             );
         }
         {
             let _view = EntryView::new(
-                &StringInput::new(String::from("みずほ")),
-                &String::from("瑞穂"),
+                Rc::new(StringInput::new(String::from("みずほ"))),
+                Rc::new(String::from("瑞穂")),
                 42,
             );
         }
@@ -282,8 +330,8 @@ mod tests {
     #[test]
     fn as_view_and_to_entry() {
         let entry1 = Entry::new(
-            Box::new(StringInput::new(String::from("みずほ"))),
-            Box::new(String::from("瑞穂")),
+            Rc::new(StringInput::new(String::from("みずほ"))),
+            Rc::new(String::from("瑞穂")),
             42,
         );
         let view = entry1.as_view();
@@ -313,8 +361,8 @@ mod tests {
     fn clone() {
         {
             let entry1 = Entry::new(
-                Box::new(StringInput::new(String::from("みずほ"))),
-                Box::new(String::from("瑞穂")),
+                Rc::new(StringInput::new(String::from("みずほ"))),
+                Rc::new(String::from("瑞穂")),
                 42,
             );
             let entry2 = entry1.clone();
@@ -332,7 +380,7 @@ mod tests {
         {
             let key = StringInput::new(String::from("みずほ"));
             let value = String::from("瑞穂");
-            let view1 = EntryView::new(&key, &value, 42);
+            let view1 = EntryView::new(Rc::new(key), Rc::new(value), 42);
             let view2 = view1.clone();
 
             assert_eq!(
@@ -351,8 +399,8 @@ mod tests {
     fn key() {
         {
             let entry = Entry::new(
-                Box::new(StringInput::new(String::from("みずほ"))),
-                Box::new(String::from("瑞穂")),
+                Rc::new(StringInput::new(String::from("みずほ"))),
+                Rc::new(String::from("瑞穂")),
                 42,
             );
 
@@ -372,7 +420,7 @@ mod tests {
         {
             let key = StringInput::new(String::from("みずほ"));
             let value = String::from("瑞穂");
-            let view = EntryView::new(&key, &value, 42);
+            let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
 
             assert!(view.key().is_some());
             assert!(view.key().unwrap().as_any().is::<StringInput>());
@@ -392,8 +440,8 @@ mod tests {
     fn value() {
         {
             let entry = Entry::new(
-                Box::new(StringInput::new(String::from("みずほ"))),
-                Box::new(String::from("瑞穂")),
+                Rc::new(StringInput::new(String::from("みずほ"))),
+                Rc::new(String::from("瑞穂")),
                 42,
             );
 
@@ -412,7 +460,7 @@ mod tests {
         {
             let key = StringInput::new(String::from("みずほ"));
             let value = String::from("瑞穂");
-            let view = EntryView::new(&key, &value, 42);
+            let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
 
             assert!(view.value().is_some());
             assert!(view.value().unwrap().as_any().is::<String>());
@@ -431,8 +479,8 @@ mod tests {
     fn cost() {
         {
             let entry = Entry::new(
-                Box::new(StringInput::new(String::from("みずほ"))),
-                Box::new(String::from("瑞穂")),
+                Rc::new(StringInput::new(String::from("みずほ"))),
+                Rc::new(String::from("瑞穂")),
                 42,
             );
 
@@ -441,7 +489,7 @@ mod tests {
         {
             let key = StringInput::new(String::from("みずほ"));
             let value = String::from("瑞穂");
-            let view = EntryView::new(&key, &value, 42);
+            let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
 
             assert_eq!(view.cost(), 42);
         }
