@@ -6,6 +6,7 @@
 
 use std::any::Any;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 use crate::input::Input;
 
@@ -45,16 +46,16 @@ impl<T: Clone + Debug + 'static> AnyValue for T {
  */
 #[derive(Debug)]
 pub struct Middle {
-    key: Box<dyn Input>,
-    value: Box<dyn AnyValue>,
+    key: Rc<dyn Input>,
+    value: Rc<dyn AnyValue>,
     cost: i32,
 }
 
 impl Clone for Middle {
     fn clone(&self) -> Self {
         Self {
-            key: self.key.clone_box(),
-            value: self.value.clone_box(),
+            key: self.key.clone(),
+            value: self.value.clone(),
             cost: self.cost,
         }
     }
@@ -81,8 +82,12 @@ impl Entry {
      * * `value` - A box of a value.
      * * `cost`  - A cost.
      */
-    pub const fn new(key: Box<dyn Input>, value: Box<dyn AnyValue>, cost: i32) -> Self {
-        Entry::Middle(Middle { key, value, cost })
+    pub fn new(key: Box<dyn Input>, value: Box<dyn AnyValue>, cost: i32) -> Self {
+        Entry::Middle(Middle {
+            key: Rc::from(key),
+            value: Rc::from(value),
+            cost,
+        })
     }
 
     /**
