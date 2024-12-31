@@ -30,7 +30,7 @@ pub enum InputError {
 /**
  * An input.
  */
-pub trait Input: Debug {
+pub trait Input: Debug + 'static {
     /**
      * Returns `true` if this input is equal to the other.
      *
@@ -99,4 +99,26 @@ pub trait Input: Debug {
      * This mutable object as 'Any'.
      */
     fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl dyn Input {
+    /**
+     * Downcasts this object to a concrete type.
+     *
+     * # Returns
+     * The object of the concrete type.
+     */
+    pub fn downcast_ref<T: Input>(&self) -> Option<&T> {
+        self.as_any().downcast_ref::<T>()
+    }
+
+    /**
+     * Downcasts this mutable object to a concrete type.
+     *
+     * # Returns
+     * The mutable object of the concrete type.
+     */
+    pub fn downcast_mut<T: Input>(&mut self) -> Option<&mut T> {
+        self.as_any_mut().downcast_mut::<T>()
+    }
 }

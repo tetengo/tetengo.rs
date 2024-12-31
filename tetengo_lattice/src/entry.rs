@@ -283,12 +283,12 @@ mod tests {
         let entry2 = view.to_entry();
 
         assert_eq!(
-            entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
-            view.key().unwrap().as_any().downcast_ref::<StringInput>()
+            entry1.key().unwrap().downcast_ref::<StringInput>(),
+            view.key().unwrap().downcast_ref::<StringInput>()
         );
         assert_eq!(
-            entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
-            entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
+            entry1.key().unwrap().downcast_ref::<StringInput>(),
+            entry2.key().unwrap().downcast_ref::<StringInput>()
         );
         assert_eq!(
             entry1.value().unwrap().downcast_ref::<String>(),
@@ -313,8 +313,8 @@ mod tests {
             let entry2 = entry1.clone();
 
             assert_eq!(
-                entry1.key().unwrap().as_any().downcast_ref::<StringInput>(),
-                entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
+                entry1.key().unwrap().downcast_ref::<StringInput>(),
+                entry2.key().unwrap().downcast_ref::<StringInput>()
             );
             assert_eq!(
                 entry1.value().unwrap().downcast_ref::<String>(),
@@ -329,8 +329,8 @@ mod tests {
             let view2 = view1.clone();
 
             assert_eq!(
-                view1.key().unwrap().as_any().downcast_ref::<StringInput>(),
-                view2.key().unwrap().as_any().downcast_ref::<StringInput>()
+                view1.key().unwrap().downcast_ref::<StringInput>(),
+                view2.key().unwrap().downcast_ref::<StringInput>()
             );
             assert_eq!(
                 view1.value().unwrap().downcast_ref::<String>(),
@@ -355,7 +355,6 @@ mod tests {
                 entry
                     .key()
                     .unwrap()
-                    .as_any()
                     .downcast_ref::<StringInput>()
                     .unwrap()
                     .value(),
@@ -372,7 +371,6 @@ mod tests {
             assert_eq!(
                 view.key()
                     .unwrap()
-                    .as_any()
                     .downcast_ref::<StringInput>()
                     .unwrap()
                     .value(),

@@ -795,14 +795,12 @@ mod tests {
                         assert!(constrained_path.nodes()[2]
                             .key()
                             .unwrap()
-                            .as_any()
                             .downcast_ref::<StringInput>()
                             .is_some());
                         assert_eq!(
                             constrained_path.nodes()[2]
                                 .key()
                                 .unwrap()
-                                .as_any()
                                 .downcast_ref::<StringInput>()
                                 .unwrap()
                                 .value(),
@@ -812,14 +810,12 @@ mod tests {
                         assert!(constrained_path.nodes()[3]
                             .key()
                             .unwrap()
-                            .as_any()
                             .downcast_ref::<StringInput>()
                             .is_some());
                         assert_eq!(
                             constrained_path.nodes()[3]
                                 .key()
                                 .unwrap()
-                                .as_any()
                                 .downcast_ref::<StringInput>()
                                 .unwrap()
                                 .value(),

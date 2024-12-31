@@ -54,7 +54,7 @@ impl StringInput {
 
 impl Input for StringInput {
     fn equal_to(&self, other: &dyn Input) -> bool {
-        let Some(other) = other.as_any().downcast_ref::<StringInput>() else {
+        let Some(other) = other.downcast_ref::<StringInput>() else {
             return false;
         };
         self == other
@@ -81,7 +81,7 @@ impl Input for StringInput {
     }
 
     fn append(&mut self, another: Box<dyn Input>) -> Result<()> {
-        let Some(another) = another.as_any().downcast_ref::<StringInput>() else {
+        let Some(another) = another.downcast_ref::<StringInput>() else {
             return Err(InputError::MismatchConcreteType.into());
         };
 
@@ -211,11 +211,7 @@ mod tests {
             let subrange = input.create_subrange(0, 4).unwrap();
             assert!(subrange.as_any().is::<StringInput>());
             assert_eq!(
-                subrange
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
+                subrange.downcast_ref::<StringInput>().unwrap().value(),
                 "hoge"
             );
         }
@@ -225,11 +221,7 @@ mod tests {
             let subrange = input.create_subrange(1, 2).unwrap();
             assert!(subrange.as_any().is::<StringInput>());
             assert_eq!(
-                subrange
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
+                subrange.downcast_ref::<StringInput>().unwrap().value(),
                 "og"
             );
         }
@@ -238,14 +230,7 @@ mod tests {
 
             let subrange = input.create_subrange(4, 0).unwrap();
             assert!(subrange.as_any().is::<StringInput>());
-            assert_eq!(
-                subrange
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
-                ""
-            );
+            assert_eq!(subrange.downcast_ref::<StringInput>().unwrap().value(), "");
         }
         {
             let input = StringInput::new(String::from("hoge"));

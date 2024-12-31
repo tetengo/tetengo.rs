@@ -199,7 +199,7 @@ impl<'a> HashMapVocabulary<'a> {
 
 impl Vocabulary for HashMapVocabulary<'_> {
     fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<EntryView>> {
-        let Some(key) = key.as_any().downcast_ref::<StringInput>() else {
+        let Some(key) = key.downcast_ref::<StringInput>() else {
             return Ok(Vec::new());
         };
         let Some(found) = self.entry_map.get(key.value()) else {
@@ -399,7 +399,6 @@ mod tests {
                     found[0]
                         .key()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<StringInput>()
                         .unwrap()
                         .value(),
@@ -420,7 +419,6 @@ mod tests {
                     found[0]
                         .key()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<StringInput>()
                         .unwrap()
                         .value(),
@@ -435,7 +433,6 @@ mod tests {
                     found[1]
                         .key()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<StringInput>()
                         .unwrap()
                         .value(),

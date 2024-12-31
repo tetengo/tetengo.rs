@@ -394,11 +394,7 @@ mod tests {
 
             let node = node.unwrap();
             assert_eq!(
-                node.key()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap(),
+                node.key().unwrap().downcast_ref::<StringInput>().unwrap(),
                 &entry_key
             );
             assert_eq!(node.value().unwrap().downcast_ref::<i32>().unwrap(), &42);
@@ -438,7 +434,6 @@ mod tests {
         assert_eq!(
             node.key()
                 .unwrap()
-                .as_any()
                 .downcast_ref::<StringInput>()
                 .unwrap()
                 .value(),
