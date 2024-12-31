@@ -8,7 +8,6 @@ use std::any::type_name_of_val;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
-use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -213,17 +212,13 @@ impl Vocabulary for HashMapVocabulary<'_> {
     fn find_connection(&self, from: &Node, to: &EntryView) -> Result<Connection> {
         let from_entry_view = match from {
             Node::Middle(_) => {
-                let Some(from_key) = from.key() else {
+                let Some(from_key) = from.key_rc() else {
                     return Ok(Connection::new(i32::MAX));
                 };
-                let Some(from_value) = from.value() else {
+                let Some(from_value) = from.value_rc() else {
                     return Ok(Connection::new(i32::MAX));
                 };
-                EntryView::new(
-                    Rc::from(from_key.clone_box()),
-                    Rc::from(from_value.clone_box()),
-                    from.node_cost(),
-                )
+                EntryView::new(from_key, from_value, from.node_cost())
             }
             Node::Bos(_) => EntryView::BosEos,
             Node::Eos(_) => EntryView::BosEos,

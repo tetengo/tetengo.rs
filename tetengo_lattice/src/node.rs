@@ -203,6 +203,14 @@ impl Node {
         }
     }
 
+    pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
+        match self {
+            Node::Bos(_) => EntryView::BosEos.key_rc(),
+            Node::Eos(_) => EntryView::BosEos.key_rc(),
+            Node::Middle(middle) => Some(middle.key.clone()),
+        }
+    }
+
     /**
      * Returns the value.
      *
@@ -214,6 +222,14 @@ impl Node {
             Node::Bos(_) => EntryView::BosEos.value(),
             Node::Eos(_) => EntryView::BosEos.value(),
             Node::Middle(middle) => Some(middle.value.as_ref()),
+        }
+    }
+
+    pub(crate) fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+        match self {
+            Node::Bos(_) => EntryView::BosEos.value_rc(),
+            Node::Eos(_) => EntryView::BosEos.value_rc(),
+            Node::Middle(middle) => Some(middle.value.clone()),
         }
     }
 
