@@ -70,10 +70,6 @@ impl Input for StringInput {
         self.value.len()
     }
 
-    fn clone_box(&self) -> Box<dyn Input> {
-        Box::new(self.clone())
-    }
-
     fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>> {
         if offset + length > self.value.len() {
             return Err(InputError::RangeOutOfBounds.into());
@@ -120,10 +116,6 @@ mod tests {
         }
 
         fn length(&self) -> usize {
-            unimplemented!()
-        }
-
-        fn clone_box(&self) -> Box<dyn Input> {
             unimplemented!()
         }
 
@@ -209,22 +201,6 @@ mod tests {
         let input = StringInput::new(String::from("hoge"));
 
         assert_eq!(input.length(), 4);
-    }
-
-    #[test]
-    fn clone_box() {
-        let input = StringInput::new(String::from("hoge"));
-
-        let clone = input.clone_box();
-        assert!(clone.as_any().is::<StringInput>());
-        assert_eq!(
-            clone
-                .as_any()
-                .downcast_ref::<StringInput>()
-                .unwrap()
-                .value(),
-            "hoge"
-        );
     }
 
     #[test]

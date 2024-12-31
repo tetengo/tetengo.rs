@@ -15,14 +15,6 @@ use crate::input::Input;
  */
 pub trait AnyValue: Any + Debug {
     /**
-     * Clones this object.
-     *
-     * # Returns
-     * A box of a clone of this object.
-     */
-    fn clone_box(&self) -> Box<dyn AnyValue>;
-
-    /**
      * Returns this object as 'Any'.
      *
      * # Returns
@@ -32,10 +24,6 @@ pub trait AnyValue: Any + Debug {
 }
 
 impl<T: Clone + Debug + 'static> AnyValue for T {
-    fn clone_box(&self) -> Box<dyn AnyValue> {
-        Box::new(self.clone())
-    }
-
     fn as_any(&self) -> &dyn Any {
         self
     }

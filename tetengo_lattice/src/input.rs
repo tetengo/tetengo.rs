@@ -59,14 +59,6 @@ pub trait Input: Debug {
     fn length(&self) -> usize;
 
     /**
-     * Clones this storage as `Box`.
-     *
-     * # Returns
-     * A Box of a clone of this input.
-     */
-    fn clone_box(&self) -> Box<dyn Input>;
-
-    /**
      * Creates a subrange.
      *
      * # Arguments
