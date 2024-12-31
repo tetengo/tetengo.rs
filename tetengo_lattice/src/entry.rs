@@ -114,13 +114,7 @@ impl Entry {
         }
     }
 
-    /**
-     * Returns the Rc of the key.
-     *
-     * # Returns
-     * The key.
-     */
-    pub fn key_rc(&self) -> Option<Rc<dyn Input>> {
+    pub(crate) fn _key_rc(&self) -> Option<Rc<dyn Input>> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.key.clone()),
@@ -140,13 +134,7 @@ impl Entry {
         }
     }
 
-    /**
-     * Returns the Rc of the value.
-     *
-     * # Returns
-     * The value.
-     */
-    pub fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+    pub(crate) fn _value_rc(&self) -> Option<Rc<dyn AnyValue>> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.clone()),
@@ -232,13 +220,7 @@ impl EntryView {
         }
     }
 
-    /**
-     * Returns the Rc of the key.
-     *
-     * # Returns
-     * The key.
-     */
-    pub fn key_rc(&self) -> Option<Rc<dyn Input>> {
+    pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(entry) => Some(entry.key.clone()),
@@ -258,13 +240,7 @@ impl EntryView {
         }
     }
 
-    /**
-     * Returns the Rc of the value.
-     *
-     * # Returns
-     * The value.
-     */
-    pub fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+    pub(crate) fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(entry) => Some(entry.value.clone()),
