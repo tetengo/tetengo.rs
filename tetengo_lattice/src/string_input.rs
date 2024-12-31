@@ -209,7 +209,7 @@ mod tests {
             let input = StringInput::new(String::from("hoge"));
 
             let subrange = input.create_subrange(0, 4).unwrap();
-            assert!(subrange.as_any().is::<StringInput>());
+            assert!(subrange.is::<StringInput>());
             assert_eq!(
                 subrange.downcast_ref::<StringInput>().unwrap().value(),
                 "hoge"
@@ -219,7 +219,7 @@ mod tests {
             let input = StringInput::new(String::from("hoge"));
 
             let subrange = input.create_subrange(1, 2).unwrap();
-            assert!(subrange.as_any().is::<StringInput>());
+            assert!(subrange.is::<StringInput>());
             assert_eq!(
                 subrange.downcast_ref::<StringInput>().unwrap().value(),
                 "og"
@@ -229,7 +229,7 @@ mod tests {
             let input = StringInput::new(String::from("hoge"));
 
             let subrange = input.create_subrange(4, 0).unwrap();
-            assert!(subrange.as_any().is::<StringInput>());
+            assert!(subrange.is::<StringInput>());
             assert_eq!(subrange.downcast_ref::<StringInput>().unwrap().value(), "");
         }
         {

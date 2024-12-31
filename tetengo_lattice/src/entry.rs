@@ -350,7 +350,7 @@ mod tests {
             );
 
             assert!(entry.key().is_some());
-            assert!(entry.key().unwrap().as_any().is::<StringInput>());
+            assert!(entry.key().unwrap().is::<StringInput>());
             assert_eq!(
                 entry
                     .key()
@@ -367,7 +367,7 @@ mod tests {
             let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
 
             assert!(view.key().is_some());
-            assert!(view.key().unwrap().as_any().is::<StringInput>());
+            assert!(view.key().unwrap().is::<StringInput>());
             assert_eq!(
                 view.key()
                     .unwrap()
