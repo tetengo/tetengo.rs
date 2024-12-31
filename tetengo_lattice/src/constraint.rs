@@ -94,7 +94,6 @@ impl<'a> Constraint<'a> {
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-    use std::sync::LazyLock;
 
     use crate::node_constraint_element::NodeConstraintElement;
     use crate::string_input::StringInput;
@@ -120,16 +119,13 @@ mod tests {
     }
 
     fn make_path_b_m_s_t_e() -> Vec<Node> {
-        static KEY_MIZUHO: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("mizuho")));
-        static KEY_SAKURA: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("sakura")));
-        static KEY_TSUBAME: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("tsubame")));
+        let key_mizuho = Rc::new(StringInput::new(String::from("mizuho")));
+        let key_sakura = Rc::new(StringInput::new(String::from("sakura")));
+        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                Rc::new(KEY_MIZUHO.clone()),
+                key_mizuho,
                 Rc::new(NODE_VALUE),
                 0,
                 0,
@@ -139,7 +135,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_SAKURA.clone()),
+                key_sakura.clone(),
                 Rc::new(NODE_VALUE),
                 0,
                 1,
@@ -149,7 +145,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_TSUBAME.clone()),
+                key_tsubame.clone(),
                 Rc::new(NODE_VALUE),
                 0,
                 2,
@@ -163,16 +159,13 @@ mod tests {
     }
 
     fn make_path_b_m_a_t_e() -> Vec<Node> {
-        static KEY_MIZUHO: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("mizuho")));
-        static KEY_ARIAKE: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("ariake")));
-        static KEY_TSUBAME: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("tsubame")));
+        let key_mizuho = Rc::new(StringInput::new(String::from("mizuho")));
+        let key_ariake = Rc::new(StringInput::new(String::from("ariake")));
+        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                Rc::new(KEY_MIZUHO.clone()),
+                key_mizuho,
                 Rc::new(NODE_VALUE),
                 0,
                 0,
@@ -182,7 +175,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_ARIAKE.clone()),
+                key_ariake,
                 Rc::new(NODE_VALUE),
                 0,
                 1,
@@ -192,7 +185,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_TSUBAME.clone()),
+                key_tsubame,
                 Rc::new(NODE_VALUE),
                 0,
                 2,
@@ -206,14 +199,12 @@ mod tests {
     }
 
     fn make_path_b_h_t_e() -> Vec<Node> {
-        static KEY_HINOKUNI: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("hinokuni")));
-        static KEY_TSUBAME: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("tsubame")));
+        let key_hinokuni = Rc::new(StringInput::new(String::from("hinokuni")));
+        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                Rc::new(KEY_HINOKUNI.clone()),
+                key_hinokuni,
                 Rc::new(NODE_VALUE),
                 0,
                 0,
@@ -223,7 +214,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_TSUBAME.clone()),
+                key_tsubame,
                 Rc::new(NODE_VALUE),
                 0,
                 2,
@@ -237,16 +228,13 @@ mod tests {
     }
 
     fn make_path_b_k_s_k_e() -> Vec<Node> {
-        static KEY_KAMOME: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("kamome")));
-        static KEY_SAKURA: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("sakura")));
-        static KEY_KUMAGAWA: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("kumagawa")));
+        let key_kamome = Rc::new(StringInput::new(String::from("kamome")));
+        let key_sakura = Rc::new(StringInput::new(String::from("sakura")));
+        let key_kumagawa = Rc::new(StringInput::new(String::from("kumagawa")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
-                Rc::new(KEY_KAMOME.clone()),
+                key_kamome,
                 Rc::new(NODE_VALUE),
                 0,
                 0,
@@ -256,7 +244,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_SAKURA.clone()),
+                key_sakura,
                 Rc::new(NODE_VALUE),
                 0,
                 1,
@@ -266,7 +254,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_KUMAGAWA.clone()),
+                key_kumagawa.clone(),
                 Rc::new(NODE_VALUE),
                 0,
                 2,

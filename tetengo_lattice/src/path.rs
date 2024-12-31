@@ -74,16 +74,13 @@ mod tests {
     static PRECEDING_EDGE_COSTS: LazyLock<Vec<i32>> = LazyLock::new(|| vec![1]);
 
     fn make_nodes() -> Vec<Node> {
-        static KEY_MIZUHO: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("mizuho")));
-        static KEY_SAKURA: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("sakura")));
-        static KEY_TSUBAME: LazyLock<StringInput> =
-            LazyLock::new(|| StringInput::new(String::from("tsubame")));
+        let key_mizuho = Rc::new(StringInput::new(String::from("mizuho")));
+        let key_sakura = Rc::new(StringInput::new(String::from("sakura")));
+        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(Rc::new(BOS_PRECEDING_EDGE_COSTS)),
             Node::new(
-                Rc::new(KEY_MIZUHO.clone()),
+                key_mizuho,
                 Rc::new(NODE_VALUE),
                 0,
                 0,
@@ -93,7 +90,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_SAKURA.clone()),
+                key_sakura,
                 Rc::new(NODE_VALUE),
                 0,
                 1,
@@ -103,7 +100,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                Rc::new(KEY_TSUBAME.clone()),
+                key_tsubame,
                 Rc::new(NODE_VALUE),
                 0,
                 2,
