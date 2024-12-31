@@ -406,12 +406,7 @@ mod tests {
                     "みずほ"
                 );
                 assert_eq!(
-                    found[0]
-                        .value()
-                        .unwrap()
-                        .as_any()
-                        .downcast_ref::<String>()
-                        .unwrap(),
+                    found[0].value().unwrap().downcast_ref::<String>().unwrap(),
                     "瑞穂"
                 );
                 assert_eq!(found[0].cost(), 42);
@@ -432,12 +427,7 @@ mod tests {
                     "さくら"
                 );
                 assert_eq!(
-                    found[0]
-                        .value()
-                        .unwrap()
-                        .as_any()
-                        .downcast_ref::<String>()
-                        .unwrap(),
+                    found[0].value().unwrap().downcast_ref::<String>().unwrap(),
                     "桜"
                 );
                 assert_eq!(found[0].cost(), 24);
@@ -452,12 +442,7 @@ mod tests {
                     "さくら"
                 );
                 assert_eq!(
-                    found[1]
-                        .value()
-                        .unwrap()
-                        .as_any()
-                        .downcast_ref::<String>()
-                        .unwrap(),
+                    found[1].value().unwrap().downcast_ref::<String>().unwrap(),
                     "さくら"
                 );
                 assert_eq!(found[1].cost(), 2424);

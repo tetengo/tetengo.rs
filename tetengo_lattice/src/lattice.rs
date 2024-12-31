@@ -572,21 +572,11 @@ mod tests {
 
             assert_eq!(nodes.len(), 2);
             assert_eq!(
-                nodes[0]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[0].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"kamome"
             );
             assert_eq!(
-                nodes[1]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[1].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"local415"
             );
             for (i, n) in nodes.iter().enumerate() {
@@ -600,30 +590,15 @@ mod tests {
 
             assert_eq!(nodes.len(), 3);
             assert_eq!(
-                nodes[0]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[0].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"ariake"
             );
             assert_eq!(
-                nodes[1]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[1].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"rapid811"
             );
             assert_eq!(
-                nodes[2]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[2].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"local813"
             );
             for (i, n) in nodes.iter().enumerate() {
@@ -637,48 +612,23 @@ mod tests {
 
             assert_eq!(nodes.len(), 5);
             assert_eq!(
-                nodes[0]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[0].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"mizuho"
             );
             assert_eq!(
-                nodes[1]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[1].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"sakura"
             );
             assert_eq!(
-                nodes[2]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[2].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"tsubame"
             );
             assert_eq!(
-                nodes[3]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[3].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"local815"
             );
             assert_eq!(
-                nodes[4]
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<&str>()
-                    .unwrap(),
+                nodes[4].value().unwrap().downcast_ref::<&str>().unwrap(),
                 &"local817"
             );
             for (i, n) in nodes.iter().enumerate() {

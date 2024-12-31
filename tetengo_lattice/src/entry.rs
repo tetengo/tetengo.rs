@@ -11,31 +11,12 @@ use std::rc::Rc;
 use crate::input::Input;
 
 /**
- * An any value.
- */
-pub trait AnyValue: Any + Debug {
-    /**
-     * Returns this object as 'Any'.
-     *
-     * # Returns
-     * This object as 'Any'.
-     */
-    fn as_any(&self) -> &dyn Any;
-}
-
-impl<T: Clone + Debug + 'static> AnyValue for T {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
-/**
  * A middle entry.
  */
 #[derive(Debug)]
 pub struct Middle {
     key: Rc<dyn Input>,
-    value: Rc<dyn AnyValue>,
+    value: Rc<dyn Any>,
     cost: i32,
 }
 
@@ -70,7 +51,7 @@ impl Entry {
      * * `value` - A box of a value.
      * * `cost`  - A cost.
      */
-    pub fn new(key: Rc<dyn Input>, value: Rc<dyn AnyValue>, cost: i32) -> Self {
+    pub fn new(key: Rc<dyn Input>, value: Rc<dyn Any>, cost: i32) -> Self {
         Entry::Middle(Middle { key, value, cost })
     }
 
@@ -115,14 +96,14 @@ impl Entry {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&dyn AnyValue> {
+    pub fn value(&self) -> Option<&dyn Any> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
         }
     }
 
-    pub(crate) fn _value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+    pub(crate) fn _value_rc(&self) -> Option<Rc<dyn Any>> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.clone()),
@@ -149,7 +130,7 @@ impl Entry {
 #[derive(Clone, Debug)]
 pub struct MiddleView {
     key: Rc<dyn Input>,
-    value: Rc<dyn AnyValue>,
+    value: Rc<dyn Any>,
     cost: i32,
 }
 
@@ -174,7 +155,7 @@ impl EntryView {
      * * `value` - A value.
      * * `cost`  - A cost.
      */
-    pub const fn new(key: Rc<dyn Input>, value: Rc<dyn AnyValue>, cost: i32) -> Self {
+    pub const fn new(key: Rc<dyn Input>, value: Rc<dyn Any>, cost: i32) -> Self {
         EntryView::Middle(MiddleView { key, value, cost })
     }
 
@@ -221,14 +202,14 @@ impl EntryView {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&dyn AnyValue> {
+    pub fn value(&self) -> Option<&dyn Any> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(middle_view) => Some(middle_view.value.as_ref()),
         }
     }
 
-    pub(crate) fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+    pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
         match self {
             EntryView::BosEos => None,
             EntryView::Middle(entry) => Some(entry.value.clone()),
@@ -310,12 +291,12 @@ mod tests {
             entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
         );
         assert_eq!(
-            entry1.value().unwrap().as_any().downcast_ref::<String>(),
-            view.value().unwrap().as_any().downcast_ref::<String>()
+            entry1.value().unwrap().downcast_ref::<String>(),
+            view.value().unwrap().downcast_ref::<String>()
         );
         assert_eq!(
-            entry1.value().unwrap().as_any().downcast_ref::<String>(),
-            entry2.value().unwrap().as_any().downcast_ref::<String>()
+            entry1.value().unwrap().downcast_ref::<String>(),
+            entry2.value().unwrap().downcast_ref::<String>()
         );
         assert_eq!(entry1.cost(), view.cost());
         assert_eq!(entry1.cost(), entry2.cost());
@@ -336,8 +317,8 @@ mod tests {
                 entry2.key().unwrap().as_any().downcast_ref::<StringInput>()
             );
             assert_eq!(
-                entry1.value().unwrap().as_any().downcast_ref::<String>(),
-                entry2.value().unwrap().as_any().downcast_ref::<String>()
+                entry1.value().unwrap().downcast_ref::<String>(),
+                entry2.value().unwrap().downcast_ref::<String>()
             );
             assert_eq!(entry1.cost(), entry2.cost());
         }
@@ -352,8 +333,8 @@ mod tests {
                 view2.key().unwrap().as_any().downcast_ref::<StringInput>()
             );
             assert_eq!(
-                view1.value().unwrap().as_any().downcast_ref::<String>(),
-                view2.value().unwrap().as_any().downcast_ref::<String>()
+                view1.value().unwrap().downcast_ref::<String>(),
+                view2.value().unwrap().downcast_ref::<String>()
             );
             assert_eq!(view1.cost(), view2.cost());
         }
@@ -410,14 +391,9 @@ mod tests {
             );
 
             assert!(entry.value().is_some());
-            assert!(entry.value().unwrap().as_any().is::<String>());
+            assert!(entry.value().unwrap().is::<String>());
             assert_eq!(
-                entry
-                    .value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<String>()
-                    .unwrap(),
+                entry.value().unwrap().downcast_ref::<String>().unwrap(),
                 "瑞穂"
             );
         }
@@ -427,13 +403,9 @@ mod tests {
             let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
 
             assert!(view.value().is_some());
-            assert!(view.value().unwrap().as_any().is::<String>());
+            assert!(view.value().unwrap().is::<String>());
             assert_eq!(
-                view.value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<String>()
-                    .unwrap(),
+                view.value().unwrap().downcast_ref::<String>().unwrap(),
                 "瑞穂"
             );
         }

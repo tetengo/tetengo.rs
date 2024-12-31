@@ -4,12 +4,13 @@
  * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
  */
 
+use std::any::Any;
 use std::fmt::Debug;
 use std::rc::Rc;
 
 use anyhow::Result;
 
-use crate::entry::{AnyValue, EntryView};
+use crate::entry::EntryView;
 use crate::input::Input;
 
 /**
@@ -48,7 +49,7 @@ pub struct Eos {
 #[derive(Clone, Debug)]
 pub struct Middle {
     key: Rc<dyn Input>,
-    value: Rc<dyn AnyValue>,
+    value: Rc<dyn Any>,
     index_in_step: usize,
     preceding_step: usize,
     preceding_edge_costs: Rc<Vec<i32>>,
@@ -137,7 +138,7 @@ impl Node {
      */
     pub const fn new(
         key: Rc<dyn Input>,
-        value: Rc<dyn AnyValue>,
+        value: Rc<dyn Any>,
         index_in_step: usize,
         preceding_step: usize,
         preceding_edge_costs: Rc<Vec<i32>>,
@@ -217,7 +218,7 @@ impl Node {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> Option<&dyn AnyValue> {
+    pub fn value(&self) -> Option<&dyn Any> {
         match self {
             Node::Bos(_) => EntryView::BosEos.value(),
             Node::Eos(_) => EntryView::BosEos.value(),
@@ -225,7 +226,7 @@ impl Node {
         }
     }
 
-    pub(crate) fn value_rc(&self) -> Option<Rc<dyn AnyValue>> {
+    pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
         match self {
             Node::Bos(_) => EntryView::BosEos.value_rc(),
             Node::Eos(_) => EntryView::BosEos.value_rc(),
@@ -400,14 +401,7 @@ mod tests {
                     .unwrap(),
                 &entry_key
             );
-            assert_eq!(
-                node.value()
-                    .unwrap()
-                    .as_any()
-                    .downcast_ref::<i32>()
-                    .unwrap(),
-                &42
-            );
+            assert_eq!(node.value().unwrap().downcast_ref::<i32>().unwrap(), &42);
             assert_eq!(node.index_in_step(), 53);
             assert_eq!(node.preceding_step(), 1);
             assert_eq!(node.preceding_edge_costs(), preceding_edge_costs.as_ref());
@@ -468,14 +462,7 @@ mod tests {
             2424,
         );
 
-        assert_eq!(
-            node.value()
-                .unwrap()
-                .as_any()
-                .downcast_ref::<i32>()
-                .unwrap(),
-            &42
-        );
+        assert_eq!(node.value().unwrap().downcast_ref::<i32>().unwrap(), &42);
     }
 
     #[test]

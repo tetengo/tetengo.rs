@@ -499,7 +499,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"tsubame"
@@ -517,7 +516,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"sakura"
@@ -535,7 +533,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"rapid811"
@@ -545,7 +542,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -563,7 +559,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local415"
@@ -573,7 +568,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local815"
@@ -591,7 +585,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"kamome"
@@ -601,7 +594,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local815"
@@ -619,7 +611,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"ariake"
@@ -629,7 +620,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -647,7 +637,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"mizuho"
@@ -665,7 +654,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local415"
@@ -675,7 +663,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local813"
@@ -685,7 +672,6 @@ mod tests {
                     path.nodes()[3]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -703,7 +689,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"kamome"
@@ -713,7 +698,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local813"
@@ -723,7 +707,6 @@ mod tests {
                     path.nodes()[3]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -866,7 +849,6 @@ mod tests {
                             constraint_path.nodes()[1]
                                 .value()
                                 .unwrap()
-                                .as_any()
                                 .downcast_ref::<&str>()
                                 .unwrap(),
                             &"local415"

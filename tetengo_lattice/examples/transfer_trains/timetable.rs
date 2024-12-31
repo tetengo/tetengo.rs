@@ -605,13 +605,11 @@ impl Timetable {
                             .unwrap_or_else(|| {
                                 unreachable!("from_entry.value() must not be empty.")
                             })
-                            .as_any()
                             .downcast_ref::<Section>()
                             .unwrap_or_else(|| unreachable!("from_entry.value() must be Section."));
                         let to_value = to_entry
                             .value()
                             .unwrap_or_else(|| unreachable!("to_entry.value() must not be empty."))
-                            .as_any()
                             .downcast_ref::<Section>()
                             .unwrap_or_else(|| unreachable!("to_entry.value() must be Section."));
                         if from_value.to() != to_value.from() {
@@ -647,7 +645,6 @@ impl Timetable {
                 let section = entry
                     .value()
                     .unwrap_or_else(|| unreachable!("entry.value() must not be empty."))
-                    .as_any()
                     .downcast_ref::<Section>()
                     .unwrap_or_else(|| unreachable!("entry.value() must be Section."));
                 let section_departure_time = section.train().stops()[section.from()]
@@ -687,7 +684,7 @@ impl Timetable {
             0
         });
         let section = if let Some(value) = entry.value() {
-            value.as_any().downcast_ref::<Section>()
+            value.downcast_ref::<Section>()
         } else {
             None
         };
@@ -708,10 +705,10 @@ impl Timetable {
     fn entry_equal_to(one: &EntryView, another: &EntryView) -> bool {
         if let Some(one_value) = one.value() {
             if let Some(another_value) = another.value() {
-                let Some(one_section) = one_value.as_any().downcast_ref::<Section>() else {
+                let Some(one_section) = one_value.downcast_ref::<Section>() else {
                     unreachable!("one.value() must be Section.");
                 };
-                let Some(another_section) = another_value.as_any().downcast_ref::<Section>() else {
+                let Some(another_section) = another_value.downcast_ref::<Section>() else {
                     unreachable!("another.value() must be Section.");
                 };
                 let is_equal = if let Some(one_key) = one.key() {

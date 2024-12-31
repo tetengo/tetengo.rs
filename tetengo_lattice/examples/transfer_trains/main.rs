@@ -190,7 +190,7 @@ fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node, trip_capacity: usize) 
         };
         for node in path.nodes() {
             let section = if let Some(node_value) = node.value() {
-                if let Some(section) = node_value.as_any().downcast_ref::<Section>() {
+                if let Some(section) = node_value.downcast_ref::<Section>() {
                     section
                 } else {
                     continue;

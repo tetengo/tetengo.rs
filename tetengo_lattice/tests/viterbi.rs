@@ -159,7 +159,7 @@ mod usage {
     fn value_of_node(node: &Node, first: bool) -> String {
         if let Some(value) = node.value() {
             // The value is stored in the Any object.
-            value.as_any().downcast_ref::<String>().unwrap().clone()
+            value.downcast_ref::<String>().unwrap().clone()
         } else if first {
             String::from("BOS")
         } else {
@@ -170,7 +170,7 @@ mod usage {
     fn value_of_entry(entry: &EntryView) -> String {
         // The value is stored in the Any object.
         if let Some(value) = entry.value() {
-            value.as_any().downcast_ref::<String>().unwrap().clone()
+            value.downcast_ref::<String>().unwrap().clone()
         } else {
             String::new()
         }
