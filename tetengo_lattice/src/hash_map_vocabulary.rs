@@ -12,7 +12,7 @@ use std::hash::{Hash, Hasher};
 use anyhow::Result;
 
 use crate::connection::Connection;
-use crate::entry::{Entry, EntryView};
+use crate::entry::Entry;
 use crate::node::Node;
 use crate::string_input::StringInput;
 use crate::vocabulary::Vocabulary;
@@ -22,8 +22,8 @@ type EntryMap = HashMap<String, Vec<Entry>>;
 #[derive(Clone)]
 struct HashableEntryEntity<'a> {
     entry: Entry,
-    hash_value: &'a dyn Fn(&EntryView) -> u64,
-    equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
+    hash_value: &'a dyn Fn(&Entry) -> u64,
+    equal: &'a dyn Fn(&Entry, &Entry) -> bool,
 }
 
 impl Debug for HashableEntryEntity<'_> {
@@ -36,49 +36,19 @@ impl Debug for HashableEntryEntity<'_> {
     }
 }
 
-#[derive(Clone)]
-struct HashableEntryView<'a> {
-    entry_view: EntryView,
-    hash_value: &'a dyn Fn(&EntryView) -> u64,
-    equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
-}
-
-impl Debug for HashableEntryView<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HashableEntryEntity")
-            .field("entry_view", &self.entry_view)
-            .field("hash_value", &type_name_of_val(&self.hash_value))
-            .field("equal", &type_name_of_val(&self.equal))
-            .finish()
-    }
-}
-
 #[derive(Clone, Debug)]
 enum HashableEntry<'a> {
     Entity(HashableEntryEntity<'a>),
-    View(HashableEntryView<'a>),
 }
 
 impl<'a> HashableEntry<'a> {
     const fn from_entity(
         entry: Entry,
-        hash_value: &'a dyn Fn(&EntryView) -> u64,
-        equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
+        hash_value: &'a dyn Fn(&Entry) -> u64,
+        equal: &'a dyn Fn(&Entry, &Entry) -> bool,
     ) -> Self {
         HashableEntry::Entity(HashableEntryEntity {
             entry,
-            hash_value,
-            equal,
-        })
-    }
-
-    const fn from_view(
-        entry_view: EntryView,
-        hash_value: &'a dyn Fn(&EntryView) -> u64,
-        equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
-    ) -> Self {
-        HashableEntry::View(HashableEntryView {
-            entry_view,
             hash_value,
             equal,
         })
@@ -91,12 +61,7 @@ impl Hash for HashableEntry<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
             HashableEntry::Entity(entity) => {
-                let entry_view = entity.entry.as_view();
-                let hash_value = (entity.hash_value)(&entry_view);
-                hash_value.hash(state);
-            }
-            HashableEntry::View(view) => {
-                let hash_value = (view.hash_value)(&view.entry_view);
+                let hash_value = (entity.hash_value)(&entity.entry);
                 hash_value.hash(state);
             }
         }
@@ -105,19 +70,16 @@ impl Hash for HashableEntry<'_> {
 
 impl PartialEq for HashableEntry<'_> {
     fn eq(&self, other: &Self) -> bool {
-        let self_entry_view = match self {
-            HashableEntry::Entity(entity) => entity.entry.as_view(),
-            HashableEntry::View(view) => view.entry_view.clone(),
+        let self_entry = match self {
+            HashableEntry::Entity(entity) => &entity.entry,
         };
-        let other_entry_view = match other {
-            HashableEntry::Entity(entity) => entity.entry.as_view(),
-            HashableEntry::View(view) => view.entry_view.clone(),
+        let other_entry = match other {
+            HashableEntry::Entity(entity) => &entity.entry,
         };
         let equal = match self {
             HashableEntry::Entity(entity) => entity.equal,
-            HashableEntry::View(view) => view.equal,
         };
-        equal(&self_entry_view, &other_entry_view)
+        equal(self_entry, other_entry)
     }
 }
 
@@ -130,8 +92,8 @@ type ConnectionMap<'a> = HashMap<(HashableEntry<'a>, HashableEntry<'a>), i32>;
 pub struct HashMapVocabulary<'a> {
     entry_map: EntryMap,
     connection_map: ConnectionMap<'a>,
-    entry_hash_value: &'a dyn Fn(&EntryView) -> u64,
-    entry_equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
+    entry_hash_value: &'a dyn Fn(&Entry) -> u64,
+    entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
 }
 
 impl Debug for HashMapVocabulary<'_> {
@@ -161,8 +123,8 @@ impl<'a> HashMapVocabulary<'a> {
     pub fn new(
         entries: Vec<(String, Vec<Entry>)>,
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: &'a dyn Fn(&EntryView) -> u64,
-        entry_equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
+        entry_hash_value: &'a dyn Fn(&Entry) -> u64,
+        entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
     ) -> Self {
         let entry_map = Self::make_entry_map(entries);
         let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
@@ -184,8 +146,8 @@ impl<'a> HashMapVocabulary<'a> {
 
     fn make_connection_map(
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: &'a dyn Fn(&EntryView) -> u64,
-        entry_equal: &'a dyn Fn(&EntryView, &EntryView) -> bool,
+        entry_hash_value: &'a dyn Fn(&Entry) -> u64,
+        entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
     ) -> ConnectionMap<'a> {
         let mut connection_map = ConnectionMap::new();
         for ((from, to), cost) in connections {
@@ -198,7 +160,7 @@ impl<'a> HashMapVocabulary<'a> {
 }
 
 impl Vocabulary for HashMapVocabulary<'_> {
-    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<EntryView>> {
+    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<Entry>> {
         let Some(key) = key.downcast_ref::<StringInput>() else {
             return Ok(Vec::new());
         };
@@ -206,11 +168,11 @@ impl Vocabulary for HashMapVocabulary<'_> {
             return Ok(Vec::new());
         };
 
-        Ok(found.iter().map(|entry| entry.as_view()).collect())
+        Ok(found.clone())
     }
 
-    fn find_connection(&self, from: &Node, to: &EntryView) -> Result<Connection> {
-        let from_entry_view = match from {
+    fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection> {
+        let from_entry = match from {
             Node::Middle(_) => {
                 let Some(from_key) = from.key_rc() else {
                     return Ok(Connection::new(i32::MAX));
@@ -218,14 +180,14 @@ impl Vocabulary for HashMapVocabulary<'_> {
                 let Some(from_value) = from.value_rc() else {
                     return Ok(Connection::new(i32::MAX));
                 };
-                EntryView::new(from_key, from_value, from.node_cost())
+                Entry::new(from_key, from_value, from.node_cost())
             }
-            Node::Bos(_) => EntryView::BosEos,
-            Node::Eos(_) => EntryView::BosEos,
+            Node::Bos(_) => Entry::BosEos,
+            Node::Eos(_) => Entry::BosEos,
         };
         let key = (
-            HashableEntry::from_view(from_entry_view, self.entry_hash_value, self.entry_equal),
-            HashableEntry::from_view(to.clone(), self.entry_hash_value, self.entry_equal),
+            HashableEntry::from_entity(from_entry, self.entry_hash_value, self.entry_equal),
+            HashableEntry::from_entity(to.clone(), self.entry_hash_value, self.entry_equal),
         );
         let Some(found) = self.connection_map.get(&key) else {
             return Ok(Connection::new(i32::MAX));
@@ -240,14 +202,14 @@ mod tests {
 
     use super::*;
 
-    fn entry_hash_value(entry: &EntryView) -> u64 {
+    fn entry_hash_value(entry: &Entry) -> u64 {
         let Some(key) = entry.key() else {
             return 0;
         };
         key.hash_value()
     }
 
-    fn entry_equal(one: &EntryView, other: &EntryView) -> bool {
+    fn entry_equal(one: &Entry, other: &Entry) -> bool {
         match (one.key(), other.key()) {
             (Some(one_key), Some(other_key)) => one_key.equal_to(other_key),
             (None, None) => true,
@@ -255,11 +217,11 @@ mod tests {
         }
     }
 
-    fn make_node(entry: &EntryView) -> Node {
+    fn make_node(entry: &Entry) -> Node {
         static PRECEDING_EDGE_COSTS: Vec<i32> = Vec::new();
         match entry {
-            EntryView::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
-            EntryView::Middle(_) => Node::new_with_entry_view(
+            Entry::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
+            Entry::Middle(_) => Node::new_with_entry(
                 entry,
                 0,
                 usize::MAX,
@@ -514,7 +476,7 @@ mod tests {
             }
             {
                 let connection = vocaburary
-                    .find_connection(&Node::bos(Rc::new(Vec::new())), &EntryView::BosEos)
+                    .find_connection(&Node::bos(Rc::new(Vec::new())), &Entry::BosEos)
                     .unwrap();
 
                 assert_eq!(connection.cost(), 999);

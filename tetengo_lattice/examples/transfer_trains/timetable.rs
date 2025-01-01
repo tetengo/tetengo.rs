@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use tetengo_lattice::{Entry, EntryView, HashMapVocabulary, StringInput, Vocabulary};
+use tetengo_lattice::{Entry, HashMapVocabulary, StringInput, Vocabulary};
 
 /**
  * A timetable error.
@@ -675,7 +675,7 @@ impl Timetable {
         (time1 as isize + 1440 - time2 as isize) % 1440
     }
 
-    fn entry_hash_value(entry: &EntryView) -> u64 {
+    fn entry_hash_value(entry: &Entry) -> u64 {
         let mut hasher = DefaultHasher::new();
 
         hasher.write_u64(if let Some(key) = entry.key() {
@@ -702,7 +702,7 @@ impl Timetable {
         hasher.finish()
     }
 
-    fn entry_equal_to(one: &EntryView, another: &EntryView) -> bool {
+    fn entry_equal_to(one: &Entry, another: &Entry) -> bool {
         if let Some(one_value) = one.value() {
             if let Some(another_value) = another.value() {
                 let Some(one_section) = one_value.downcast_ref::<Section>() else {

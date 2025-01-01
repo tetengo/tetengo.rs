@@ -22,7 +22,7 @@ pub mod wildcard_constraint_element;
 pub use connection::Connection;
 pub use constraint::Constraint;
 pub use constraint_element::ConstraintElement;
-pub use entry::{Entry, EntryView};
+pub use entry::Entry;
 pub use hash_map_vocabulary::HashMapVocabulary;
 pub use input::{Input, InputError};
 pub use lattice::Lattice;

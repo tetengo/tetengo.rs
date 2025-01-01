@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use crate::entry::EntryView;
+use crate::entry::Entry;
 use crate::input::Input;
 
 /**
@@ -159,13 +159,13 @@ impl Node {
     }
 
     /**
-     * Creates a node with a vocabulary entry view.
+     * Creates a node with a vocabulary entry.
      *
      * # Errors
      * * When `entry` is BOS or EOS.
      */
-    pub fn new_with_entry_view(
-        entry: &EntryView,
+    pub fn new_with_entry(
+        entry: &Entry,
         index_in_step: usize,
         preceding_step: usize,
         preceding_edge_costs: Rc<Vec<i32>>,
@@ -198,16 +198,16 @@ impl Node {
      */
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
-            Node::Bos(_) => EntryView::BosEos.key(),
-            Node::Eos(_) => EntryView::BosEos.key(),
+            Node::Bos(_) => Entry::BosEos.key(),
+            Node::Eos(_) => Entry::BosEos.key(),
             Node::Middle(middle) => Some(middle.key.as_ref()),
         }
     }
 
     pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
         match self {
-            Node::Bos(_) => EntryView::BosEos.key_rc(),
-            Node::Eos(_) => EntryView::BosEos.key_rc(),
+            Node::Bos(_) => Entry::BosEos.key_rc(),
+            Node::Eos(_) => Entry::BosEos.key_rc(),
             Node::Middle(middle) => Some(middle.key.clone()),
         }
     }
@@ -220,16 +220,16 @@ impl Node {
      */
     pub fn value(&self) -> Option<&dyn Any> {
         match self {
-            Node::Bos(_) => EntryView::BosEos.value(),
-            Node::Eos(_) => EntryView::BosEos.value(),
+            Node::Bos(_) => Entry::BosEos.value(),
+            Node::Eos(_) => Entry::BosEos.value(),
             Node::Middle(middle) => Some(middle.value.as_ref()),
         }
     }
 
     pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
         match self {
-            Node::Bos(_) => EntryView::BosEos.value_rc(),
-            Node::Eos(_) => EntryView::BosEos.value_rc(),
+            Node::Bos(_) => Entry::BosEos.value_rc(),
+            Node::Eos(_) => Entry::BosEos.value_rc(),
             Node::Middle(middle) => Some(middle.value.clone()),
         }
     }
@@ -298,8 +298,8 @@ impl Node {
      */
     pub const fn node_cost(&self) -> i32 {
         match self {
-            Node::Bos(_) => EntryView::BosEos.cost(),
-            Node::Eos(_) => EntryView::BosEos.cost(),
+            Node::Bos(_) => Entry::BosEos.cost(),
+            Node::Eos(_) => Entry::BosEos.cost(),
             Node::Middle(middle) => middle.node_cost,
         }
     }
@@ -346,7 +346,7 @@ mod tests {
         assert_eq!(bos.preceding_step(), usize::MAX);
         assert_eq!(bos.preceding_edge_costs(), preceding_edge_costs.as_ref());
         assert_eq!(bos.best_preceding_node(), usize::MAX);
-        assert_eq!(bos.node_cost(), EntryView::BosEos.cost());
+        assert_eq!(bos.node_cost(), Entry::BosEos.cost());
         assert_eq!(bos.path_cost(), 0);
     }
 
@@ -361,7 +361,7 @@ mod tests {
         assert_eq!(eos.preceding_step(), 1);
         assert_eq!(eos.preceding_edge_costs(), preceding_edge_costs.as_ref());
         assert_eq!(eos.best_preceding_node(), 5);
-        assert_eq!(eos.node_cost(), EntryView::BosEos.cost());
+        assert_eq!(eos.node_cost(), Entry::BosEos.cost());
         assert_eq!(eos.path_cost(), 42);
     }
 
@@ -383,14 +383,13 @@ mod tests {
     }
 
     #[test]
-    fn new_with_entry_view() {
+    fn new_with_entry() {
         {
             let entry_key = StringInput::new(String::from("mizuho"));
             let entry_value = 42;
-            let entry = EntryView::new(Rc::new(entry_key.clone()), Rc::new(entry_value), 24);
+            let entry = Entry::new(Rc::new(entry_key.clone()), Rc::new(entry_value), 24);
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            let node =
-                Node::new_with_entry_view(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
+            let node = Node::new_with_entry(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
 
             let node = node.unwrap();
             assert_eq!(
@@ -406,10 +405,9 @@ mod tests {
             assert_eq!(node.path_cost(), 2424);
         }
         {
-            let entry = EntryView::BosEos;
+            let entry = Entry::BosEos;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            let node =
-                Node::new_with_entry_view(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
+            let node = Node::new_with_entry(&entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
 
             assert!(node.is_err());
         }

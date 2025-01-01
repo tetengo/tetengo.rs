@@ -200,7 +200,7 @@ mod tests {
     use std::rc::Rc;
 
     use crate::constraint_element::ConstraintElement;
-    use crate::entry::{Entry, EntryView};
+    use crate::entry::Entry;
     use crate::hash_map_vocabulary::HashMapVocabulary;
     use crate::input::Input;
     use crate::node_constraint_element::NodeConstraintElement;
@@ -424,11 +424,11 @@ mod tests {
         ]
     }
 
-    fn entry_hash(entry: &EntryView) -> u64 {
+    fn entry_hash(entry: &Entry) -> u64 {
         entry.key().map_or(0, |key| key.hash_value())
     }
 
-    fn entry_equal_to(one: &EntryView, other: &EntryView) -> bool {
+    fn entry_equal_to(one: &Entry, other: &Entry) -> bool {
         if one.key().is_none() && other.key().is_none() {
             return true;
         }

@@ -56,21 +56,6 @@ impl Entry {
     }
 
     /**
-     * Casts this object to a view.
-     *
-     * # Arguments
-     * * `entry` - An entry.
-     */
-    pub fn as_view(&self) -> EntryView {
-        match self {
-            Entry::BosEos => EntryView::BosEos,
-            Entry::Middle(middle) => {
-                EntryView::new(middle.key.clone(), middle.value.clone(), middle.cost)
-            }
-        }
-    }
-
-    /**
      * Returns the key.
      *
      * # Returns
@@ -123,11 +108,6 @@ impl Entry {
         }
     }
 }
-
-/**
- * An entry view.
- */
-pub type EntryView = Entry;
 
 #[cfg(test)]
 mod tests {

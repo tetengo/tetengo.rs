@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use crate::entry::EntryView;
+use crate::entry::Entry;
 use crate::input::Input;
 use crate::node::Node;
 use crate::vocabulary::Vocabulary;
@@ -170,7 +170,7 @@ impl<'a> Lattice<'a> {
                     step.nodes[best_preceding_node_index_].path_cost(),
                     preceding_edge_costs[best_preceding_node_index_],
                 );
-                let new_node = match Node::new_with_entry_view(
+                let new_node = match Node::new_with_entry(
                     entry,
                     nodes.len(),
                     i,
@@ -209,7 +209,7 @@ impl<'a> Lattice<'a> {
         let Some(graph_last) = self.graph.last() else {
             return Err(LatticeError::NoInput.into());
         };
-        let preceding_edge_costs = self.preceding_edge_costs(graph_last, &EntryView::BosEos)?;
+        let preceding_edge_costs = self.preceding_edge_costs(graph_last, &Entry::BosEos)?;
         let best_preceding_node_index =
             Self::best_preceding_node_index(graph_last, preceding_edge_costs.as_slice());
         let best_preceding_path_cost = Self::add_cost(
@@ -226,11 +226,7 @@ impl<'a> Lattice<'a> {
         Ok(eos_node)
     }
 
-    fn preceding_edge_costs(
-        &self,
-        step: &GraphStep,
-        next_entry: &EntryView,
-    ) -> Result<Rc<Vec<i32>>> {
+    fn preceding_edge_costs(&self, step: &GraphStep, next_entry: &Entry) -> Result<Rc<Vec<i32>>> {
         assert!(!step.nodes().is_empty());
         let mut costs = Vec::with_capacity(step.nodes().len());
         for node in step.nodes() {
@@ -483,11 +479,11 @@ mod tests {
         ]
     }
 
-    fn entry_hash(entry: &EntryView) -> u64 {
+    fn entry_hash(entry: &Entry) -> u64 {
         entry.key().map_or(0, |key| key.hash_value())
     }
 
-    fn entry_equal_to(one: &EntryView, other: &EntryView) -> bool {
+    fn entry_equal_to(one: &Entry, other: &Entry) -> bool {
         if one.key().is_none() && other.key().is_none() {
             return true;
         }

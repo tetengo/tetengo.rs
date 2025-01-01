@@ -7,8 +7,7 @@ mod usage {
     use std::rc::Rc;
 
     use tetengo_lattice::{
-        Constraint, Entry, EntryView, HashMapVocabulary, NBestIterator, Node, Path, StringInput,
-        Vocabulary,
+        Constraint, Entry, HashMapVocabulary, NBestIterator, Node, Path, StringInput, Vocabulary,
     };
 
     #[test]
@@ -167,7 +166,7 @@ mod usage {
         }
     }
 
-    fn value_of_entry(entry: &EntryView) -> String {
+    fn value_of_entry(entry: &Entry) -> String {
         // The value is stored in the Any object.
         if let Some(value) = entry.value() {
             value.downcast_ref::<String>().unwrap().clone()
