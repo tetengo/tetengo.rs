@@ -20,15 +20,29 @@ use crate::vocabulary::Vocabulary;
 type EntryMap = HashMap<String, Vec<Entry>>;
 
 #[derive(Clone)]
-struct HashableEntryEntity<'a> {
+struct HashableEntry<'a> {
     entry: Entry,
     hash_value: &'a dyn Fn(&Entry) -> u64,
     equal: &'a dyn Fn(&Entry, &Entry) -> bool,
 }
 
-impl Debug for HashableEntryEntity<'_> {
+impl<'a> HashableEntry<'a> {
+    const fn new(
+        entry: Entry,
+        hash_value: &'a dyn Fn(&Entry) -> u64,
+        equal: &'a dyn Fn(&Entry, &Entry) -> bool,
+    ) -> Self {
+        Self {
+            entry,
+            hash_value,
+            equal,
+        }
+    }
+}
+
+impl Debug for HashableEntry<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HashableEntryEntity")
+        f.debug_struct("HashableEntry")
             .field("entry", &self.entry)
             .field("hash_value", &type_name_of_val(&self.hash_value))
             .field("equal", &type_name_of_val(&self.equal))
@@ -36,50 +50,18 @@ impl Debug for HashableEntryEntity<'_> {
     }
 }
 
-#[derive(Clone, Debug)]
-enum HashableEntry<'a> {
-    Entity(HashableEntryEntity<'a>),
-}
-
-impl<'a> HashableEntry<'a> {
-    const fn from_entity(
-        entry: Entry,
-        hash_value: &'a dyn Fn(&Entry) -> u64,
-        equal: &'a dyn Fn(&Entry, &Entry) -> bool,
-    ) -> Self {
-        HashableEntry::Entity(HashableEntryEntity {
-            entry,
-            hash_value,
-            equal,
-        })
-    }
-}
-
 impl Eq for HashableEntry<'_> {}
 
 impl Hash for HashableEntry<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            HashableEntry::Entity(entity) => {
-                let hash_value = (entity.hash_value)(&entity.entry);
-                hash_value.hash(state);
-            }
-        }
+        let hash_value = (self.hash_value)(&self.entry);
+        hash_value.hash(state);
     }
 }
 
 impl PartialEq for HashableEntry<'_> {
     fn eq(&self, other: &Self) -> bool {
-        let self_entry = match self {
-            HashableEntry::Entity(entity) => &entity.entry,
-        };
-        let other_entry = match other {
-            HashableEntry::Entity(entity) => &entity.entry,
-        };
-        let equal = match self {
-            HashableEntry::Entity(entity) => entity.equal,
-        };
-        equal(self_entry, other_entry)
+        (self.equal)(&self.entry, &other.entry)
     }
 }
 
@@ -98,7 +80,7 @@ pub struct HashMapVocabulary<'a> {
 
 impl Debug for HashMapVocabulary<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HashableEntryEntity")
+        f.debug_struct("HashMapVocabulary")
             .field("entry_map", &self.entry_map)
             .field("connection_map", &self.connection_map)
             .field(
@@ -151,8 +133,8 @@ impl<'a> HashMapVocabulary<'a> {
     ) -> ConnectionMap<'a> {
         let mut connection_map = ConnectionMap::new();
         for ((from, to), cost) in connections {
-            let from = HashableEntry::from_entity(from, entry_hash_value, entry_equal);
-            let to = HashableEntry::from_entity(to, entry_hash_value, entry_equal);
+            let from = HashableEntry::new(from, entry_hash_value, entry_equal);
+            let to = HashableEntry::new(to, entry_hash_value, entry_equal);
             let _prev_value = connection_map.insert((from, to), cost);
         }
         connection_map
@@ -186,8 +168,8 @@ impl Vocabulary for HashMapVocabulary<'_> {
             Node::Eos(_) => Entry::BosEos,
         };
         let key = (
-            HashableEntry::from_entity(from_entry, self.entry_hash_value, self.entry_equal),
-            HashableEntry::from_entity(to.clone(), self.entry_hash_value, self.entry_equal),
+            HashableEntry::new(from_entry, self.entry_hash_value, self.entry_equal),
+            HashableEntry::new(to.clone(), self.entry_hash_value, self.entry_equal),
         );
         let Some(found) = self.connection_map.get(&key) else {
             return Ok(Connection::new(i32::MAX));
