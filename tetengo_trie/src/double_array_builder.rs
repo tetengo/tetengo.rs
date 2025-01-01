@@ -45,7 +45,7 @@ pub(super) fn build<T: Clone + Debug + 'static>(
     Ok(storage)
 }
 
-fn build_iter<T>(
+fn build_iter<T: 'static>(
     elements: &[DoubleArrayElement<'_>],
     key_offset: usize,
     storage: &mut dyn Storage<T>,
@@ -97,7 +97,7 @@ fn build_iter<T>(
     Ok(())
 }
 
-fn calc_base<T>(
+fn calc_base<T: 'static>(
     firsts: &[usize],
     elements: &[DoubleArrayElement<'_>],
     key_offset: usize,

@@ -10,7 +10,7 @@ use crate::double_array;
 use crate::storage::Storage;
 
 #[derive(Clone, Debug)]
-pub(super) struct DoubleArrayIterator<'a, T> {
+pub(super) struct DoubleArrayIterator<'a, T: 'static> {
     storage: &'a dyn Storage<T>,
     base_check_index_key_stack: Vec<(usize, Vec<u8>)>,
 }
