@@ -238,194 +238,87 @@ mod tests {
 
     #[test]
     fn bos_eos() {
-        {
-            let bos_eos = Entry::BosEos;
+        let bos_eos = Entry::BosEos;
 
-            assert!(bos_eos.key().is_none());
-            assert!(bos_eos.value().is_none());
-            assert_eq!(bos_eos.cost(), 0);
-        }
-        {
-            let bos_eos = EntryView::BosEos;
-
-            assert!(bos_eos.key().is_none());
-            assert!(bos_eos.value().is_none());
-            assert_eq!(bos_eos.cost(), 0);
-        }
+        assert!(bos_eos.key().is_none());
+        assert!(bos_eos.value().is_none());
+        assert_eq!(bos_eos.cost(), 0);
     }
 
     #[test]
     fn new() {
-        {
-            let _entry = Entry::new(
-                Rc::new(StringInput::new(String::from("みずほ"))),
-                Rc::new(String::from("瑞穂")),
-                42,
-            );
-        }
-        {
-            let _view = EntryView::new(
-                Rc::new(StringInput::new(String::from("みずほ"))),
-                Rc::new(String::from("瑞穂")),
-                42,
-            );
-        }
+        let _entry = Entry::new(
+            Rc::new(StringInput::new(String::from("みずほ"))),
+            Rc::new(String::from("瑞穂")),
+            42,
+        );
     }
 
     #[test]
-    fn as_view_and_to_entry() {
+    fn clone() {
         let entry1 = Entry::new(
             Rc::new(StringInput::new(String::from("みずほ"))),
             Rc::new(String::from("瑞穂")),
             42,
         );
-        let view = entry1.as_view();
-        let entry2 = view.to_entry();
+        let entry2 = entry1.clone();
 
-        assert_eq!(
-            entry1.key().unwrap().downcast_ref::<StringInput>(),
-            view.key().unwrap().downcast_ref::<StringInput>()
-        );
         assert_eq!(
             entry1.key().unwrap().downcast_ref::<StringInput>(),
             entry2.key().unwrap().downcast_ref::<StringInput>()
         );
         assert_eq!(
             entry1.value().unwrap().downcast_ref::<String>(),
-            view.value().unwrap().downcast_ref::<String>()
-        );
-        assert_eq!(
-            entry1.value().unwrap().downcast_ref::<String>(),
             entry2.value().unwrap().downcast_ref::<String>()
         );
-        assert_eq!(entry1.cost(), view.cost());
         assert_eq!(entry1.cost(), entry2.cost());
     }
 
     #[test]
-    fn clone() {
-        {
-            let entry1 = Entry::new(
-                Rc::new(StringInput::new(String::from("みずほ"))),
-                Rc::new(String::from("瑞穂")),
-                42,
-            );
-            let entry2 = entry1.clone();
-
-            assert_eq!(
-                entry1.key().unwrap().downcast_ref::<StringInput>(),
-                entry2.key().unwrap().downcast_ref::<StringInput>()
-            );
-            assert_eq!(
-                entry1.value().unwrap().downcast_ref::<String>(),
-                entry2.value().unwrap().downcast_ref::<String>()
-            );
-            assert_eq!(entry1.cost(), entry2.cost());
-        }
-        {
-            let key = StringInput::new(String::from("みずほ"));
-            let value = String::from("瑞穂");
-            let view1 = EntryView::new(Rc::new(key), Rc::new(value), 42);
-            let view2 = view1.clone();
-
-            assert_eq!(
-                view1.key().unwrap().downcast_ref::<StringInput>(),
-                view2.key().unwrap().downcast_ref::<StringInput>()
-            );
-            assert_eq!(
-                view1.value().unwrap().downcast_ref::<String>(),
-                view2.value().unwrap().downcast_ref::<String>()
-            );
-            assert_eq!(view1.cost(), view2.cost());
-        }
-    }
-
-    #[test]
     fn key() {
-        {
-            let entry = Entry::new(
-                Rc::new(StringInput::new(String::from("みずほ"))),
-                Rc::new(String::from("瑞穂")),
-                42,
-            );
+        let entry = Entry::new(
+            Rc::new(StringInput::new(String::from("みずほ"))),
+            Rc::new(String::from("瑞穂")),
+            42,
+        );
 
-            assert!(entry.key().is_some());
-            assert!(entry.key().unwrap().is::<StringInput>());
-            assert_eq!(
-                entry
-                    .key()
-                    .unwrap()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
-                "みずほ"
-            );
-        }
-        {
-            let key = StringInput::new(String::from("みずほ"));
-            let value = String::from("瑞穂");
-            let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
-
-            assert!(view.key().is_some());
-            assert!(view.key().unwrap().is::<StringInput>());
-            assert_eq!(
-                view.key()
-                    .unwrap()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
-                "みずほ"
-            );
-        }
+        assert!(entry.key().is_some());
+        assert!(entry.key().unwrap().is::<StringInput>());
+        assert_eq!(
+            entry
+                .key()
+                .unwrap()
+                .downcast_ref::<StringInput>()
+                .unwrap()
+                .value(),
+            "みずほ"
+        );
     }
 
     #[test]
     fn value() {
-        {
-            let entry = Entry::new(
-                Rc::new(StringInput::new(String::from("みずほ"))),
-                Rc::new(String::from("瑞穂")),
-                42,
-            );
+        let entry = Entry::new(
+            Rc::new(StringInput::new(String::from("みずほ"))),
+            Rc::new(String::from("瑞穂")),
+            42,
+        );
 
-            assert!(entry.value().is_some());
-            assert!(entry.value().unwrap().is::<String>());
-            assert_eq!(
-                entry.value().unwrap().downcast_ref::<String>().unwrap(),
-                "瑞穂"
-            );
-        }
-        {
-            let key = StringInput::new(String::from("みずほ"));
-            let value = String::from("瑞穂");
-            let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
-
-            assert!(view.value().is_some());
-            assert!(view.value().unwrap().is::<String>());
-            assert_eq!(
-                view.value().unwrap().downcast_ref::<String>().unwrap(),
-                "瑞穂"
-            );
-        }
+        assert!(entry.value().is_some());
+        assert!(entry.value().unwrap().is::<String>());
+        assert_eq!(
+            entry.value().unwrap().downcast_ref::<String>().unwrap(),
+            "瑞穂"
+        );
     }
 
     #[test]
     fn cost() {
-        {
-            let entry = Entry::new(
-                Rc::new(StringInput::new(String::from("みずほ"))),
-                Rc::new(String::from("瑞穂")),
-                42,
-            );
+        let entry = Entry::new(
+            Rc::new(StringInput::new(String::from("みずほ"))),
+            Rc::new(String::from("瑞穂")),
+            42,
+        );
 
-            assert_eq!(entry.cost(), 42);
-        }
-        {
-            let key = StringInput::new(String::from("みずほ"));
-            let value = String::from("瑞穂");
-            let view = EntryView::new(Rc::new(key), Rc::new(value), 42);
-
-            assert_eq!(view.cost(), 42);
-        }
+        assert_eq!(entry.cost(), 42);
     }
 }
