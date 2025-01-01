@@ -1,6 +1,6 @@
 @echo off
 rem Checks this package
-rem Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
+rem Copyright (C) 2023-2025 kaoru  <https://www.tetengo.org/>
 
 call kogyan\scripts\check.bat
 if errorlevel 1 exit /b 1

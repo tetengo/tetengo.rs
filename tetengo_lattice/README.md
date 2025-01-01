@@ -45,7 +45,7 @@ The source files for this library are available on GitHub.
 
 ---
 
-Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
+Copyright (C) 2023-2025 kaoru  <https://www.tetengo.org/>
 
 This product is released under the MIT license.
 See [the LICENSE
