@@ -83,7 +83,7 @@ impl Entry {
         }
     }
 
-    pub(crate) fn _key_rc(&self) -> Option<Rc<dyn Input>> {
+    pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.key.clone()),
@@ -103,7 +103,7 @@ impl Entry {
         }
     }
 
-    pub(crate) fn _value_rc(&self) -> Option<Rc<dyn Any>> {
+    pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.clone()),
@@ -125,110 +125,9 @@ impl Entry {
 }
 
 /**
- * An middle entry view.
- */
-#[derive(Clone, Debug)]
-pub struct MiddleView {
-    key: Rc<dyn Input>,
-    value: Rc<dyn Any>,
-    cost: i32,
-}
-
-/**
  * An entry view.
  */
-#[derive(Clone, Debug)]
-pub enum EntryView {
-    /// The BOS/EOS (Beginning/Ending of Sequence) entry.
-    BosEos,
-
-    /// The middle entry.
-    Middle(MiddleView),
-}
-
-impl EntryView {
-    /**
-     * Creates an entry view.
-     *
-     * # Arguments
-     * * `key`   - A key.
-     * * `value` - A value.
-     * * `cost`  - A cost.
-     */
-    pub const fn new(key: Rc<dyn Input>, value: Rc<dyn Any>, cost: i32) -> Self {
-        EntryView::Middle(MiddleView { key, value, cost })
-    }
-
-    /**
-     * Creates an entry.
-     *
-     * # Arguments
-     * * `view` - An entry view.
-     */
-    pub fn to_entry(&self) -> Entry {
-        match self {
-            EntryView::BosEos => Entry::BosEos,
-            EntryView::Middle(middle_view) => Entry::new(
-                middle_view.key.clone(),
-                middle_view.value.clone(),
-                middle_view.cost,
-            ),
-        }
-    }
-
-    /**
-     * Returns the key.
-     *
-     * # Returns
-     * The key.
-     */
-    pub fn key(&self) -> Option<&dyn Input> {
-        match self {
-            EntryView::BosEos => None,
-            EntryView::Middle(middle_view) => Some(middle_view.key.as_ref()),
-        }
-    }
-
-    pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
-        match self {
-            EntryView::BosEos => None,
-            EntryView::Middle(entry) => Some(entry.key.clone()),
-        }
-    }
-
-    /**
-     * Returns the value.
-     *
-     * # Returns
-     * The value.
-     */
-    pub fn value(&self) -> Option<&dyn Any> {
-        match self {
-            EntryView::BosEos => None,
-            EntryView::Middle(middle_view) => Some(middle_view.value.as_ref()),
-        }
-    }
-
-    pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
-        match self {
-            EntryView::BosEos => None,
-            EntryView::Middle(entry) => Some(entry.value.clone()),
-        }
-    }
-
-    /**
-     * Returns the cost.
-     *
-     * # Returns
-     * The cost.
-     */
-    pub const fn cost(&self) -> i32 {
-        match self {
-            EntryView::BosEos => 0,
-            EntryView::Middle(middle_view) => middle_view.cost,
-        }
-    }
-}
+pub type EntryView = Entry;
 
 #[cfg(test)]
 mod tests {
