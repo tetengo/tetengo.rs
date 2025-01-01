@@ -777,7 +777,6 @@ mod tests {
             let _mem = trie
                 .double_array
                 .storage()
-                .as_any()
                 .downcast_ref::<MemoryStorage<String>>()
                 .unwrap();
 

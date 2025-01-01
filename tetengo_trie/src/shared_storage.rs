@@ -378,7 +378,7 @@ mod tests {
 
         let clone = storage.clone_box();
 
-        let clone_as_shared_storage = clone.as_any().downcast_ref::<SharedStorage<u32>>().unwrap();
+        let clone_as_shared_storage = clone.downcast_ref::<SharedStorage<u32>>().unwrap();
         assert!(clone_as_shared_storage.shared_with(&storage));
 
         let base_check_array = base_check_array_of(clone.as_ref());
