@@ -1,7 +1,7 @@
 /*!
  * A train transfer guide.
  *
- * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
+ * Copyright (C) 2023-2025 kaoru  <https://www.tetengo.org/>
  */
 
 mod timetable;

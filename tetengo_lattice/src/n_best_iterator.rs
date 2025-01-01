@@ -1,7 +1,7 @@
 /*!
  * An N-best lattice path iterator.
  *
- * Copyright (C) 2023-2024 kaoru  <https://www.tetengo.org/>
+ * Copyright (C) 2023-2025 kaoru  <https://www.tetengo.org/>
  */
 
 use std::cmp::{Ordering, Reverse};
