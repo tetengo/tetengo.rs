@@ -28,7 +28,7 @@ impl WildcardConstraintElement {
 }
 
 impl ConstraintElement for WildcardConstraintElement {
-    fn matches(&self, node: &Node<'_>) -> i32 {
+    fn matches(&self, node: &Node) -> i32 {
         if self.preceding_step == usize::MAX {
             if node.preceding_step() == usize::MAX {
                 0
@@ -65,7 +65,16 @@ mod tests {
                 let key = StringInput::new(String::from("mizuho"));
                 let value = 42;
                 let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-                let node = Node::new(&key, &value, 0, 1, preceding_edge_costs, 5, 24, 2424);
+                let node = Node::new(
+                    Rc::new(key),
+                    Rc::new(value),
+                    0,
+                    1,
+                    preceding_edge_costs,
+                    5,
+                    24,
+                    2424,
+                );
 
                 assert!(element.matches(&node) < 0);
             }
@@ -73,7 +82,16 @@ mod tests {
                 let key = StringInput::new(String::from("sakura"));
                 let value = 42;
                 let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-                let node = Node::new(&key, &value, 0, 3, preceding_edge_costs, 5, 24, 2424);
+                let node = Node::new(
+                    Rc::new(key),
+                    Rc::new(value),
+                    0,
+                    3,
+                    preceding_edge_costs,
+                    5,
+                    24,
+                    2424,
+                );
 
                 assert_eq!(element.matches(&node), 0);
             }
@@ -81,7 +99,16 @@ mod tests {
                 let key = StringInput::new(String::from("tsubame"));
                 let value = 42;
                 let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-                let node = Node::new(&key, &value, 0, 5, preceding_edge_costs, 5, 24, 2424);
+                let node = Node::new(
+                    Rc::new(key),
+                    Rc::new(value),
+                    0,
+                    5,
+                    preceding_edge_costs,
+                    5,
+                    24,
+                    2424,
+                );
 
                 assert!(element.matches(&node) > 0);
             }
@@ -99,7 +126,16 @@ mod tests {
                 let key = StringInput::new(String::from("mizuho"));
                 let value = 42;
                 let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-                let node = Node::new(&key, &value, 0, 1, preceding_edge_costs, 5, 24, 2424);
+                let node = Node::new(
+                    Rc::new(key),
+                    Rc::new(value),
+                    0,
+                    1,
+                    preceding_edge_costs,
+                    5,
+                    24,
+                    2424,
+                );
 
                 assert!(element.matches(&node) > 0);
             }

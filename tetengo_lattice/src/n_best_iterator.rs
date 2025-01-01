@@ -18,7 +18,7 @@ use crate::path::Path;
 #[derive(Debug)]
 pub struct NBestIterator<'a> {
     lattice: &'a Lattice<'a>,
-    caps: BinaryHeap<Reverse<Cap<'a>>>,
+    caps: BinaryHeap<Reverse<Cap>>,
     constraint: Box<Constraint<'a>>,
 }
 
@@ -31,11 +31,7 @@ impl<'a> NBestIterator<'a> {
      * * `eos_node`   - An EOS node.
      * * `constraint` - A constraint.
      */
-    pub fn new(
-        lattice: &'a Lattice<'a>,
-        eos_node: Node<'a>,
-        constraint: Box<Constraint<'a>>,
-    ) -> Self {
+    pub fn new(lattice: &'a Lattice<'a>, eos_node: Node, constraint: Box<Constraint<'a>>) -> Self {
         let mut caps = BinaryHeap::new();
         let tail_path_cost = eos_node.node_cost();
         let whole_path_cost = eos_node.path_cost();
@@ -53,9 +49,9 @@ impl<'a> NBestIterator<'a> {
 
     fn open_cap(
         lattice: &Lattice<'a>,
-        caps: &mut BinaryHeap<Reverse<Cap<'a>>>,
+        caps: &mut BinaryHeap<Reverse<Cap>>,
         constraint: &Constraint<'a>,
-    ) -> Option<Path<'a>> {
+    ) -> Option<Path> {
         let mut path = None;
         while !caps.is_empty() {
             let Some(opened) = caps.pop() else {
@@ -140,8 +136,8 @@ impl<'a> NBestIterator<'a> {
     }
 }
 
-impl<'a> Iterator for NBestIterator<'a> {
-    type Item = Path<'a>;
+impl Iterator for NBestIterator<'_> {
+    type Item = Path;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.caps.is_empty() {
@@ -153,14 +149,14 @@ impl<'a> Iterator for NBestIterator<'a> {
 }
 
 #[derive(Debug, Eq)]
-struct Cap<'a> {
-    tail_path: Vec<Node<'a>>,
+struct Cap {
+    tail_path: Vec<Node>,
     tail_path_cost: i32,
     whole_path_cost: i32,
 }
 
-impl<'a> Cap<'a> {
-    const fn new(tail_path: Vec<Node<'a>>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
+impl Cap {
+    const fn new(tail_path: Vec<Node>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
         Cap {
             tail_path,
             tail_path_cost,
@@ -168,7 +164,7 @@ impl<'a> Cap<'a> {
         }
     }
 
-    fn tail_path(&self) -> &[Node<'a>] {
+    fn tail_path(&self) -> &[Node] {
         self.tail_path.as_slice()
     }
 
@@ -181,19 +177,19 @@ impl<'a> Cap<'a> {
     }
 }
 
-impl Ord for Cap<'_> {
+impl Ord for Cap {
     fn cmp(&self, other: &Self) -> Ordering {
         self.whole_path_cost.cmp(&other.whole_path_cost)
     }
 }
 
-impl PartialEq for Cap<'_> {
+impl PartialEq for Cap {
     fn eq(&self, other: &Self) -> bool {
         self.whole_path_cost == other.whole_path_cost
     }
 }
 
-impl PartialOrd for Cap<'_> {
+impl PartialOrd for Cap {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.whole_path_cost.cmp(&other.whole_path_cost))
     }
@@ -204,7 +200,7 @@ mod tests {
     use std::rc::Rc;
 
     use crate::constraint_element::ConstraintElement;
-    use crate::entry::{Entry, EntryView};
+    use crate::entry::Entry;
     use crate::hash_map_vocabulary::HashMapVocabulary;
     use crate::input::Input;
     use crate::node_constraint_element::NodeConstraintElement;
@@ -258,18 +254,18 @@ mod tests {
                 String::from("[HakataTosu][TosuOmuta][OmutaKumamoto]"),
                 vec![
                     Entry::new(
-                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
-                        Box::new("mizuho"),
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new("mizuho"),
                         3670,
                     ),
                     Entry::new(
-                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
-                        Box::new("sakura"),
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new("sakura"),
                         2620,
                     ),
                     Entry::new(
-                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
-                        Box::new("tsubame"),
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new("tsubame"),
                         2390,
                     ),
                 ],
@@ -277,38 +273,46 @@ mod tests {
             (
                 String::from("[HakataTosu][TosuOmuta]"),
                 vec![
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("ariake"), 2150),
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("rapid811"), 1310),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta")),
+                        Rc::new("ariake"),
+                        2150,
+                    ),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta")),
+                        Rc::new("rapid811"),
+                        1310,
+                    ),
                 ],
             ),
             (
                 String::from("[HakataTosu]"),
                 vec![
-                    Entry::new(to_input("Hakata-Tosu"), Box::new("kamome"), 840),
-                    Entry::new(to_input("Hakata-Tosu"), Box::new("local415"), 570),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new("kamome"), 840),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new("local415"), 570),
                 ],
             ),
             (
                 String::from("[TosuOmuta]"),
                 vec![Entry::new(
-                    to_input("Tosu-Omuta"),
-                    Box::new("local813"),
+                    Rc::from(to_input("Tosu-Omuta")),
+                    Rc::new("local813"),
                     860,
                 )],
             ),
             (
                 String::from("[TosuOmuta][OmutaKumamoto]"),
                 vec![Entry::new(
-                    to_input("Tosu-Omuta-Kumamoto"),
-                    Box::new("local815"),
+                    Rc::from(to_input("Tosu-Omuta-Kumamoto")),
+                    Rc::new("local815"),
                     1680,
                 )],
             ),
             (
                 String::from("[OmutaKumamoto]"),
                 vec![Entry::new(
-                    to_input("Omuta-Kumamoto"),
-                    Box::new("local817"),
+                    Rc::from(to_input("Omuta-Kumamoto")),
+                    Rc::new("local817"),
                     950,
                 )],
             ),
@@ -320,91 +324,99 @@ mod tests {
             (
                 (
                     Entry::BosEos,
-                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new(""),
+                        0,
+                    ),
                 ),
                 600,
             ),
             (
                 (
                     Entry::BosEos,
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
                 ),
                 700,
             ),
             (
                 (
                     Entry::BosEos,
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
                 ),
                 800,
             ),
             ((Entry::BosEos, Entry::BosEos), 8000),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
-                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta-Kumamoto")), Rc::new(""), 0),
                 ),
                 500,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
-                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
                 ),
                 600,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 6000,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
-                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
                 ),
                 200,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 2000,
             ),
             (
                 (
-                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
-                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
                 ),
                 300,
             ),
             (
                 (
-                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 3000,
             ),
             (
                 (
-                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(
+                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
+                        Rc::new(""),
+                        0,
+                    ),
                     Entry::BosEos,
                 ),
                 400,
             ),
             (
                 (
-                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Tosu-Omuta-Kumamoto")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 500,
             ),
             (
                 (
-                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
+                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
                     Entry::BosEos,
                 ),
                 600,
@@ -412,11 +424,11 @@ mod tests {
         ]
     }
 
-    fn entry_hash(entry: &EntryView<'_>) -> u64 {
+    fn entry_hash(entry: &Entry) -> u64 {
         entry.key().map_or(0, |key| key.hash_value())
     }
 
-    fn entry_equal_to(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+    fn entry_equal_to(one: &Entry, other: &Entry) -> bool {
         if one.key().is_none() && other.key().is_none() {
             return true;
         }
@@ -437,14 +449,14 @@ mod tests {
         ))
     }
 
-    fn preceding_edge_cost(path: &Path<'_>, node_index: usize) -> i32 {
+    fn preceding_edge_cost(path: &Path, node_index: usize) -> i32 {
         let nodes = path.nodes();
         assert!(!nodes.is_empty());
         assert!(0 < node_index && node_index < nodes.len());
         nodes[node_index].preceding_edge_costs()[nodes[node_index - 1].index_in_step()]
     }
 
-    fn recalc_path_cost(path: &Path<'_>) -> i32 {
+    fn recalc_path_cost(path: &Path) -> i32 {
         let nodes = path.nodes();
         assert!(!nodes.is_empty());
         let mut cost = nodes[0].node_cost();
@@ -487,7 +499,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"tsubame"
@@ -505,7 +516,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"sakura"
@@ -523,7 +533,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"rapid811"
@@ -533,7 +542,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -551,7 +559,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local415"
@@ -561,7 +568,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local815"
@@ -579,7 +585,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"kamome"
@@ -589,7 +594,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local815"
@@ -607,7 +611,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"ariake"
@@ -617,7 +620,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -635,7 +637,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"mizuho"
@@ -653,7 +654,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local415"
@@ -663,7 +663,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local813"
@@ -673,7 +672,6 @@ mod tests {
                     path.nodes()[3]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -691,7 +689,6 @@ mod tests {
                     path.nodes()[1]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"kamome"
@@ -701,7 +698,6 @@ mod tests {
                     path.nodes()[2]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local813"
@@ -711,7 +707,6 @@ mod tests {
                     path.nodes()[3]
                         .value()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<&str>()
                         .unwrap(),
                     &"local817"
@@ -800,14 +795,12 @@ mod tests {
                         assert!(constrained_path.nodes()[2]
                             .key()
                             .unwrap()
-                            .as_any()
                             .downcast_ref::<StringInput>()
                             .is_some());
                         assert_eq!(
                             constrained_path.nodes()[2]
                                 .key()
                                 .unwrap()
-                                .as_any()
                                 .downcast_ref::<StringInput>()
                                 .unwrap()
                                 .value(),
@@ -817,14 +810,12 @@ mod tests {
                         assert!(constrained_path.nodes()[3]
                             .key()
                             .unwrap()
-                            .as_any()
                             .downcast_ref::<StringInput>()
                             .is_some());
                         assert_eq!(
                             constrained_path.nodes()[3]
                                 .key()
                                 .unwrap()
-                                .as_any()
                                 .downcast_ref::<StringInput>()
                                 .unwrap()
                                 .value(),
@@ -854,7 +845,6 @@ mod tests {
                             constraint_path.nodes()[1]
                                 .value()
                                 .unwrap()
-                                .as_any()
                                 .downcast_ref::<&str>()
                                 .unwrap(),
                             &"local415"

@@ -4,10 +4,10 @@
 
 mod usage {
     use std::hash::{DefaultHasher, Hash, Hasher};
+    use std::rc::Rc;
 
     use tetengo_lattice::{
-        Constraint, Entry, EntryView, HashMapVocabulary, NBestIterator, Node, Path, StringInput,
-        Vocabulary,
+        Constraint, Entry, HashMapVocabulary, NBestIterator, Node, Path, StringInput, Vocabulary,
     };
 
     #[test]
@@ -65,28 +65,28 @@ mod usage {
         // The contents of the vocabulary.
         let entries = [
             Entry::new(
-                Box::new(StringInput::new(String::from("a"))),
-                Box::new(String::from("Alpha")),
+                Rc::new(StringInput::new(String::from("a"))),
+                Rc::new(String::from("Alpha")),
                 2,
             ),
             Entry::new(
-                Box::new(StringInput::new(String::from("b"))),
-                Box::new(String::from("Bravo")),
+                Rc::new(StringInput::new(String::from("b"))),
+                Rc::new(String::from("Bravo")),
                 7,
             ),
             Entry::new(
-                Box::new(StringInput::new(String::from("a"))),
-                Box::new(String::from("Alice")),
+                Rc::new(StringInput::new(String::from("a"))),
+                Rc::new(String::from("Alice")),
                 1,
             ),
             Entry::new(
-                Box::new(StringInput::new(String::from("b"))),
-                Box::new(String::from("Bob")),
+                Rc::new(StringInput::new(String::from("b"))),
+                Rc::new(String::from("Bob")),
                 8,
             ),
             Entry::new(
-                Box::new(StringInput::new(String::from("ab"))),
-                Box::new(String::from("AwaBizan")),
+                Rc::new(StringInput::new(String::from("ab"))),
+                Rc::new(String::from("AwaBizan")),
                 9,
             ),
         ];
@@ -142,7 +142,7 @@ mod usage {
         ))
     }
 
-    fn to_string(path: &Path<'_>) -> String {
+    fn to_string(path: &Path) -> String {
         // Each path object holds the nodes that make up itself, and the whole cost.
         let mut result = String::new();
         for node in path.nodes() {
@@ -155,10 +155,10 @@ mod usage {
         result
     }
 
-    fn value_of_node(node: &Node<'_>, first: bool) -> String {
+    fn value_of_node(node: &Node, first: bool) -> String {
         if let Some(value) = node.value() {
             // The value is stored in the Any object.
-            value.as_any().downcast_ref::<String>().unwrap().clone()
+            value.downcast_ref::<String>().unwrap().clone()
         } else if first {
             String::from("BOS")
         } else {
@@ -166,10 +166,10 @@ mod usage {
         }
     }
 
-    fn value_of_entry(entry: &EntryView<'_>) -> String {
+    fn value_of_entry(entry: &Entry) -> String {
         // The value is stored in the Any object.
         if let Some(value) = entry.value() {
-            value.as_any().downcast_ref::<String>().unwrap().clone()
+            value.downcast_ref::<String>().unwrap().clone()
         } else {
             String::new()
         }

@@ -12,7 +12,7 @@ use std::hash::{Hash, Hasher};
 use anyhow::Result;
 
 use crate::connection::Connection;
-use crate::entry::{Entry, EntryView};
+use crate::entry::Entry;
 use crate::node::Node;
 use crate::string_input::StringInput;
 use crate::vocabulary::Vocabulary;
@@ -20,15 +20,29 @@ use crate::vocabulary::Vocabulary;
 type EntryMap = HashMap<String, Vec<Entry>>;
 
 #[derive(Clone)]
-struct HashableEntryEntity<'a> {
+struct HashableEntry<'a> {
     entry: Entry,
-    hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-    equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    hash_value: &'a dyn Fn(&Entry) -> u64,
+    equal: &'a dyn Fn(&Entry, &Entry) -> bool,
 }
 
-impl Debug for HashableEntryEntity<'_> {
+impl<'a> HashableEntry<'a> {
+    const fn new(
+        entry: Entry,
+        hash_value: &'a dyn Fn(&Entry) -> u64,
+        equal: &'a dyn Fn(&Entry, &Entry) -> bool,
+    ) -> Self {
+        Self {
+            entry,
+            hash_value,
+            equal,
+        }
+    }
+}
+
+impl Debug for HashableEntry<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HashableEntryEntity")
+        f.debug_struct("HashableEntry")
             .field("entry", &self.entry)
             .field("hash_value", &type_name_of_val(&self.hash_value))
             .field("equal", &type_name_of_val(&self.equal))
@@ -36,88 +50,18 @@ impl Debug for HashableEntryEntity<'_> {
     }
 }
 
-#[derive(Clone)]
-struct HashableEntryView<'a> {
-    entry_view: EntryView<'a>,
-    hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-    equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
-}
-
-impl Debug for HashableEntryView<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HashableEntryEntity")
-            .field("entry_view", &self.entry_view)
-            .field("hash_value", &type_name_of_val(&self.hash_value))
-            .field("equal", &type_name_of_val(&self.equal))
-            .finish()
-    }
-}
-
-#[derive(Clone, Debug)]
-enum HashableEntry<'a> {
-    Entity(HashableEntryEntity<'a>),
-    View(HashableEntryView<'a>),
-}
-
-impl<'a> HashableEntry<'a> {
-    const fn from_entity(
-        entry: Entry,
-        hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
-    ) -> Self {
-        HashableEntry::Entity(HashableEntryEntity {
-            entry,
-            hash_value,
-            equal,
-        })
-    }
-
-    const fn from_view(
-        entry_view: EntryView<'a>,
-        hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
-    ) -> Self {
-        HashableEntry::View(HashableEntryView {
-            entry_view,
-            hash_value,
-            equal,
-        })
-    }
-}
-
 impl Eq for HashableEntry<'_> {}
 
 impl Hash for HashableEntry<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            HashableEntry::Entity(entity) => {
-                let entry_view = entity.entry.as_view();
-                let hash_value = (entity.hash_value)(&entry_view);
-                hash_value.hash(state);
-            }
-            HashableEntry::View(view) => {
-                let hash_value = (view.hash_value)(&view.entry_view);
-                hash_value.hash(state);
-            }
-        }
+        let hash_value = (self.hash_value)(&self.entry);
+        hash_value.hash(state);
     }
 }
 
 impl PartialEq for HashableEntry<'_> {
     fn eq(&self, other: &Self) -> bool {
-        let self_entry_view = match self {
-            HashableEntry::Entity(entity) => entity.entry.as_view(),
-            HashableEntry::View(view) => view.entry_view.clone(),
-        };
-        let other_entry_view = match other {
-            HashableEntry::Entity(entity) => entity.entry.as_view(),
-            HashableEntry::View(view) => view.entry_view.clone(),
-        };
-        let equal = match self {
-            HashableEntry::Entity(entity) => entity.equal,
-            HashableEntry::View(view) => view.equal,
-        };
-        equal(&self_entry_view, &other_entry_view)
+        (self.equal)(&self.entry, &other.entry)
     }
 }
 
@@ -130,13 +74,13 @@ type ConnectionMap<'a> = HashMap<(HashableEntry<'a>, HashableEntry<'a>), i32>;
 pub struct HashMapVocabulary<'a> {
     entry_map: EntryMap,
     connection_map: ConnectionMap<'a>,
-    entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-    entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+    entry_hash_value: &'a dyn Fn(&Entry) -> u64,
+    entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
 }
 
 impl Debug for HashMapVocabulary<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HashableEntryEntity")
+        f.debug_struct("HashMapVocabulary")
             .field("entry_map", &self.entry_map)
             .field("connection_map", &self.connection_map)
             .field(
@@ -161,8 +105,8 @@ impl<'a> HashMapVocabulary<'a> {
     pub fn new(
         entries: Vec<(String, Vec<Entry>)>,
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_hash_value: &'a dyn Fn(&Entry) -> u64,
+        entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
     ) -> Self {
         let entry_map = Self::make_entry_map(entries);
         let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
@@ -184,13 +128,13 @@ impl<'a> HashMapVocabulary<'a> {
 
     fn make_connection_map(
         connections: Vec<((Entry, Entry), i32)>,
-        entry_hash_value: &'a dyn Fn(&EntryView<'_>) -> u64,
-        entry_equal: &'a dyn Fn(&EntryView<'_>, &EntryView<'_>) -> bool,
+        entry_hash_value: &'a dyn Fn(&Entry) -> u64,
+        entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
     ) -> ConnectionMap<'a> {
         let mut connection_map = ConnectionMap::new();
         for ((from, to), cost) in connections {
-            let from = HashableEntry::from_entity(from, entry_hash_value, entry_equal);
-            let to = HashableEntry::from_entity(to, entry_hash_value, entry_equal);
+            let from = HashableEntry::new(from, entry_hash_value, entry_equal);
+            let to = HashableEntry::new(to, entry_hash_value, entry_equal);
             let _prev_value = connection_map.insert((from, to), cost);
         }
         connection_map
@@ -198,34 +142,34 @@ impl<'a> HashMapVocabulary<'a> {
 }
 
 impl Vocabulary for HashMapVocabulary<'_> {
-    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<EntryView<'_>>> {
-        let Some(key) = key.as_any().downcast_ref::<StringInput>() else {
+    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<Entry>> {
+        let Some(key) = key.downcast_ref::<StringInput>() else {
             return Ok(Vec::new());
         };
         let Some(found) = self.entry_map.get(key.value()) else {
             return Ok(Vec::new());
         };
 
-        Ok(found.iter().map(|entry| entry.as_view()).collect())
+        Ok(found.clone())
     }
 
-    fn find_connection(&self, from: &Node<'_>, to: &EntryView<'_>) -> Result<Connection> {
-        let from_entry_view = match from {
+    fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection> {
+        let from_entry = match from {
             Node::Middle(_) => {
-                let Some(from_key) = from.key() else {
+                let Some(from_key) = from.key_rc() else {
                     return Ok(Connection::new(i32::MAX));
                 };
-                let Some(from_value) = from.value() else {
+                let Some(from_value) = from.value_rc() else {
                     return Ok(Connection::new(i32::MAX));
                 };
-                EntryView::new(from_key, from_value, from.node_cost())
+                Entry::new(from_key, from_value, from.node_cost())
             }
-            Node::Bos(_) => EntryView::BosEos,
-            Node::Eos(_) => EntryView::BosEos,
+            Node::Bos(_) => Entry::BosEos,
+            Node::Eos(_) => Entry::BosEos,
         };
         let key = (
-            HashableEntry::from_view(from_entry_view, self.entry_hash_value, self.entry_equal),
-            HashableEntry::from_view(to.clone(), self.entry_hash_value, self.entry_equal),
+            HashableEntry::new(from_entry, self.entry_hash_value, self.entry_equal),
+            HashableEntry::new(to.clone(), self.entry_hash_value, self.entry_equal),
         );
         let Some(found) = self.connection_map.get(&key) else {
             return Ok(Connection::new(i32::MAX));
@@ -240,14 +184,14 @@ mod tests {
 
     use super::*;
 
-    fn entry_hash_value(entry: &EntryView<'_>) -> u64 {
+    fn entry_hash_value(entry: &Entry) -> u64 {
         let Some(key) = entry.key() else {
             return 0;
         };
         key.hash_value()
     }
 
-    fn entry_equal(one: &EntryView<'_>, other: &EntryView<'_>) -> bool {
+    fn entry_equal(one: &Entry, other: &Entry) -> bool {
         match (one.key(), other.key()) {
             (Some(one_key), Some(other_key)) => one_key.equal_to(other_key),
             (None, None) => true,
@@ -255,11 +199,11 @@ mod tests {
         }
     }
 
-    fn make_node<'a>(entry: &'a EntryView<'_>) -> Node<'a> {
+    fn make_node(entry: &Entry) -> Node {
         static PRECEDING_EDGE_COSTS: Vec<i32> = Vec::new();
         match entry {
-            EntryView::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
-            EntryView::Middle(_) => Node::new_with_entry_view(
+            Entry::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
+            Entry::Middle(_) => Node::new_with_entry(
                 entry,
                 0,
                 usize::MAX,
@@ -284,8 +228,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -293,13 +237,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("さくら")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -308,13 +252,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Box::new(StringInput::new(String::from("さくら"))),
-                        Box::new(String::from("桜")),
+                        Rc::new(StringInput::new(String::from("さくら"))),
+                        Rc::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -351,8 +295,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -360,13 +304,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("さくら")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -375,13 +319,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Box::new(StringInput::new(String::from("さくら"))),
-                        Box::new(String::from("桜")),
+                        Rc::new(StringInput::new(String::from("さくら"))),
+                        Rc::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -399,19 +343,13 @@ mod tests {
                     found[0]
                         .key()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<StringInput>()
                         .unwrap()
                         .value(),
                     "みずほ"
                 );
                 assert_eq!(
-                    found[0]
-                        .value()
-                        .unwrap()
-                        .as_any()
-                        .downcast_ref::<String>()
-                        .unwrap(),
+                    found[0].value().unwrap().downcast_ref::<String>().unwrap(),
                     "瑞穂"
                 );
                 assert_eq!(found[0].cost(), 42);
@@ -425,19 +363,13 @@ mod tests {
                     found[0]
                         .key()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<StringInput>()
                         .unwrap()
                         .value(),
                     "さくら"
                 );
                 assert_eq!(
-                    found[0]
-                        .value()
-                        .unwrap()
-                        .as_any()
-                        .downcast_ref::<String>()
-                        .unwrap(),
+                    found[0].value().unwrap().downcast_ref::<String>().unwrap(),
                     "桜"
                 );
                 assert_eq!(found[0].cost(), 24);
@@ -445,19 +377,13 @@ mod tests {
                     found[1]
                         .key()
                         .unwrap()
-                        .as_any()
                         .downcast_ref::<StringInput>()
                         .unwrap()
                         .value(),
                     "さくら"
                 );
                 assert_eq!(
-                    found[1]
-                        .value()
-                        .unwrap()
-                        .as_any()
-                        .downcast_ref::<String>()
-                        .unwrap(),
+                    found[1].value().unwrap().downcast_ref::<String>().unwrap(),
                     "さくら"
                 );
                 assert_eq!(found[1].cost(), 2424);
@@ -472,8 +398,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Box::new(StringInput::new(String::from("みずほ"))),
-                        Box::new(String::from("瑞穂")),
+                        Rc::new(StringInput::new(String::from("みずほ"))),
+                        Rc::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -481,13 +407,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("さくら")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -497,13 +423,13 @@ mod tests {
                 (
                     (
                         Entry::new(
-                            Box::new(StringInput::new(String::from("みずほ"))),
-                            Box::new(String::from("瑞穂")),
+                            Rc::new(StringInput::new(String::from("みずほ"))),
+                            Rc::new(String::from("瑞穂")),
                             42,
                         ),
                         Entry::new(
-                            Box::new(StringInput::new(String::from("さくら"))),
-                            Box::new(String::from("桜")),
+                            Rc::new(StringInput::new(String::from("さくら"))),
+                            Rc::new(String::from("桜")),
                             24,
                         ),
                     ),
@@ -532,7 +458,7 @@ mod tests {
             }
             {
                 let connection = vocaburary
-                    .find_connection(&Node::bos(Rc::new(Vec::new())), &EntryView::BosEos)
+                    .find_connection(&Node::bos(Rc::new(Vec::new())), &Entry::BosEos)
                     .unwrap();
 
                 assert_eq!(connection.cost(), 999);

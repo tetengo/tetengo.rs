@@ -30,7 +30,7 @@ pub enum InputError {
 /**
  * An input.
  */
-pub trait Input: Debug {
+pub trait Input: Debug + 'static {
     /**
      * Returns `true` if this input is equal to the other.
      *
@@ -57,14 +57,6 @@ pub trait Input: Debug {
      * * The length.
      */
     fn length(&self) -> usize;
-
-    /**
-     * Clones this storage as `Box`.
-     *
-     * # Returns
-     * A Box of a clone of this input.
-     */
-    fn clone_box(&self) -> Box<dyn Input>;
 
     /**
      * Creates a subrange.
@@ -107,4 +99,134 @@ pub trait Input: Debug {
      * This mutable object as 'Any'.
      */
     fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl dyn Input {
+    /**
+     * Returns `true` if the concrete type of this input is `T`.
+     *
+     * # Returns
+     * `true` if the concrete type of this input is `T`.
+     */
+    pub fn is<T: Input>(&self) -> bool {
+        self.as_any().is::<T>()
+    }
+
+    /**
+     * Downcasts this object to a concrete type.
+     *
+     * # Returns
+     * The object of the concrete type.
+     */
+    pub fn downcast_ref<T: Input>(&self) -> Option<&T> {
+        self.as_any().downcast_ref::<T>()
+    }
+
+    /**
+     * Downcasts this mutable object to a concrete type.
+     *
+     * # Returns
+     * The mutable object of the concrete type.
+     */
+    pub fn downcast_mut<T: Input>(&mut self) -> Option<&mut T> {
+        self.as_any_mut().downcast_mut::<T>()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct ConcreteInput1;
+
+    impl Input for ConcreteInput1 {
+        fn equal_to(&self, _: &dyn Input) -> bool {
+            unimplemented!()
+        }
+
+        fn hash_value(&self) -> u64 {
+            unimplemented!()
+        }
+
+        fn length(&self) -> usize {
+            unimplemented!()
+        }
+
+        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>> {
+            unimplemented!()
+        }
+
+        fn append(&mut self, _: Box<dyn Input>) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
+        }
+    }
+
+    #[derive(Debug)]
+    struct ConcreteInput2;
+
+    impl Input for ConcreteInput2 {
+        fn equal_to(&self, _: &dyn Input) -> bool {
+            unimplemented!()
+        }
+
+        fn hash_value(&self) -> u64 {
+            unimplemented!()
+        }
+
+        fn length(&self) -> usize {
+            unimplemented!()
+        }
+
+        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>> {
+            unimplemented!()
+        }
+
+        fn append(&mut self, _: Box<dyn Input>) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
+        }
+    }
+
+    #[test]
+    fn is() {
+        let input = ConcreteInput1;
+        let input_ref: &dyn Input = &input;
+
+        assert!(input_ref.is::<ConcreteInput1>());
+        assert!(!input_ref.is::<ConcreteInput2>());
+    }
+
+    #[test]
+    fn downcast_ref() {
+        let input = ConcreteInput1;
+        let input_ref: &dyn Input = &input;
+
+        assert!(input_ref.downcast_ref::<ConcreteInput1>().is_some());
+        assert!(input_ref.downcast_ref::<ConcreteInput2>().is_none());
+    }
+
+    #[test]
+    fn downcast_mut() {
+        let mut input = ConcreteInput1;
+        let input_ref: &mut dyn Input = &mut input;
+
+        assert!(input_ref.downcast_mut::<ConcreteInput1>().is_some());
+        assert!(input_ref.downcast_mut::<ConcreteInput2>().is_none());
+    }
 }

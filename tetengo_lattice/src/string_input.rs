@@ -54,7 +54,7 @@ impl StringInput {
 
 impl Input for StringInput {
     fn equal_to(&self, other: &dyn Input) -> bool {
-        let Some(other) = other.as_any().downcast_ref::<StringInput>() else {
+        let Some(other) = other.downcast_ref::<StringInput>() else {
             return false;
         };
         self == other
@@ -70,10 +70,6 @@ impl Input for StringInput {
         self.value.len()
     }
 
-    fn clone_box(&self) -> Box<dyn Input> {
-        Box::new(self.clone())
-    }
-
     fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>> {
         if offset + length > self.value.len() {
             return Err(InputError::RangeOutOfBounds.into());
@@ -85,7 +81,7 @@ impl Input for StringInput {
     }
 
     fn append(&mut self, another: Box<dyn Input>) -> Result<()> {
-        let Some(another) = another.as_any().downcast_ref::<StringInput>() else {
+        let Some(another) = another.downcast_ref::<StringInput>() else {
             return Err(InputError::MismatchConcreteType.into());
         };
 
@@ -120,10 +116,6 @@ mod tests {
         }
 
         fn length(&self) -> usize {
-            unimplemented!()
-        }
-
-        fn clone_box(&self) -> Box<dyn Input> {
             unimplemented!()
         }
 
@@ -212,34 +204,14 @@ mod tests {
     }
 
     #[test]
-    fn clone_box() {
-        let input = StringInput::new(String::from("hoge"));
-
-        let clone = input.clone_box();
-        assert!(clone.as_any().is::<StringInput>());
-        assert_eq!(
-            clone
-                .as_any()
-                .downcast_ref::<StringInput>()
-                .unwrap()
-                .value(),
-            "hoge"
-        );
-    }
-
-    #[test]
     fn create_subrange() {
         {
             let input = StringInput::new(String::from("hoge"));
 
             let subrange = input.create_subrange(0, 4).unwrap();
-            assert!(subrange.as_any().is::<StringInput>());
+            assert!(subrange.is::<StringInput>());
             assert_eq!(
-                subrange
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
+                subrange.downcast_ref::<StringInput>().unwrap().value(),
                 "hoge"
             );
         }
@@ -247,13 +219,9 @@ mod tests {
             let input = StringInput::new(String::from("hoge"));
 
             let subrange = input.create_subrange(1, 2).unwrap();
-            assert!(subrange.as_any().is::<StringInput>());
+            assert!(subrange.is::<StringInput>());
             assert_eq!(
-                subrange
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
+                subrange.downcast_ref::<StringInput>().unwrap().value(),
                 "og"
             );
         }
@@ -261,15 +229,8 @@ mod tests {
             let input = StringInput::new(String::from("hoge"));
 
             let subrange = input.create_subrange(4, 0).unwrap();
-            assert!(subrange.as_any().is::<StringInput>());
-            assert_eq!(
-                subrange
-                    .as_any()
-                    .downcast_ref::<StringInput>()
-                    .unwrap()
-                    .value(),
-                ""
-            );
+            assert!(subrange.is::<StringInput>());
+            assert_eq!(subrange.downcast_ref::<StringInput>().unwrap().value(), "");
         }
         {
             let input = StringInput::new(String::from("hoge"));
