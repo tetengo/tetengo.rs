@@ -14,7 +14,7 @@ use crate::storage::Storage;
  * A trie iterator.
  */
 #[derive(Clone, Debug)]
-pub struct TrieIterator<'a, T> {
+pub struct TrieIterator<'a, T: 'static> {
     double_array_iterator: DoubleArrayIterator<'a, T>,
     storage: &'a dyn Storage<T>,
 }

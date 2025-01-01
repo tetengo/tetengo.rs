@@ -306,7 +306,7 @@ mod tests {
         0x00001800, // [11]   24,    10,         0
     ];
 
-    fn base_check_array_of<T>(storage: &dyn Storage<T>) -> Result<Vec<u32>> {
+    fn base_check_array_of<T: 'static>(storage: &dyn Storage<T>) -> Result<Vec<u32>> {
         let size = storage.base_check_size()?;
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {

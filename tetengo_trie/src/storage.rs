@@ -25,7 +25,7 @@ pub trait StorageError: error::Error {}
  * # Type Parameters
  * * `Value` - A value type.
  */
-pub trait Storage<Value>: Debug {
+pub trait Storage<Value: 'static>: Debug + 'static {
     /**
      * Returns the base-check size.
      *
@@ -176,4 +176,182 @@ pub trait Storage<Value>: Debug {
      * This mutable object as 'Any'.
      */
     fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl<Value: 'static> dyn Storage<Value> {
+    /**
+     * Returns `true` if the concrete type of this input is `T`.
+     *
+     * # Returns
+     * `true` if the concrete type of this input is `T`.
+     */
+    pub fn is<T: Storage<Value>>(&self) -> bool {
+        self.as_any().is::<T>()
+    }
+
+    /**
+     * Downcasts this object to a concrete type.
+     *
+     * # Returns
+     * The object of the concrete type.
+     */
+    pub fn downcast_ref<T: Storage<Value>>(&self) -> Option<&T> {
+        self.as_any().downcast_ref::<T>()
+    }
+
+    /**
+     * Downcasts this mutable object to a concrete type.
+     *
+     * # Returns
+     * The mutable object of the concrete type.
+     */
+    pub fn downcast_mut<T: Storage<Value>>(&mut self) -> Option<&mut T> {
+        self.as_any_mut().downcast_mut::<T>()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Debug)]
+    struct ConcreteStorage1;
+
+    impl Storage<i32> for ConcreteStorage1 {
+        fn base_check_size(&self) -> Result<usize> {
+            unimplemented!()
+        }
+
+        fn base_at(&self, _: usize) -> Result<i32> {
+            unimplemented!()
+        }
+
+        fn set_base_at(&mut self, _: usize, _: i32) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn check_at(&self, _: usize) -> Result<u8> {
+            unimplemented!()
+        }
+
+        fn set_check_at(&mut self, _: usize, _: u8) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn value_count(&self) -> Result<usize> {
+            unimplemented!()
+        }
+
+        fn value_at(&self, _: usize) -> Result<Option<Rc<i32>>> {
+            unimplemented!()
+        }
+
+        fn add_value_at(&mut self, _: usize, _: i32) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn filling_rate(&self) -> Result<f64> {
+            unimplemented!()
+        }
+
+        fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<'_, i32>) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn clone_box(&self) -> Box<dyn Storage<i32>> {
+            unimplemented!()
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
+        }
+    }
+
+    #[derive(Debug)]
+    struct ConcreteInput2;
+
+    impl Storage<i32> for ConcreteInput2 {
+        fn base_check_size(&self) -> Result<usize> {
+            unimplemented!()
+        }
+
+        fn base_at(&self, _: usize) -> Result<i32> {
+            unimplemented!()
+        }
+
+        fn set_base_at(&mut self, _: usize, _: i32) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn check_at(&self, _: usize) -> Result<u8> {
+            unimplemented!()
+        }
+
+        fn set_check_at(&mut self, _: usize, _: u8) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn value_count(&self) -> Result<usize> {
+            unimplemented!()
+        }
+
+        fn value_at(&self, _: usize) -> Result<Option<Rc<i32>>> {
+            unimplemented!()
+        }
+
+        fn add_value_at(&mut self, _: usize, _: i32) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn filling_rate(&self) -> Result<f64> {
+            unimplemented!()
+        }
+
+        fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<'_, i32>) -> Result<()> {
+            unimplemented!()
+        }
+
+        fn clone_box(&self) -> Box<dyn Storage<i32>> {
+            unimplemented!()
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+        fn as_any_mut(&mut self) -> &mut dyn Any {
+            self
+        }
+    }
+
+    #[test]
+    fn is() {
+        let input = ConcreteStorage1;
+        let input_ref: &dyn Storage<i32> = &input;
+
+        assert!(input_ref.is::<ConcreteStorage1>());
+        assert!(!input_ref.is::<ConcreteInput2>());
+    }
+
+    #[test]
+    fn downcast_ref() {
+        let input = ConcreteStorage1;
+        let input_ref: &dyn Storage<i32> = &input;
+
+        assert!(input_ref.downcast_ref::<ConcreteStorage1>().is_some());
+        assert!(input_ref.downcast_ref::<ConcreteInput2>().is_none());
+    }
+
+    #[test]
+    fn downcast_mut() {
+        let mut input = ConcreteStorage1;
+        let input_ref: &mut dyn Storage<i32> = &mut input;
+
+        assert!(input_ref.downcast_mut::<ConcreteStorage1>().is_some());
+        assert!(input_ref.downcast_mut::<ConcreteInput2>().is_none());
+    }
 }

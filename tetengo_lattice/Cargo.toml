@@ -22,6 +22,6 @@ categories = [
 ]
 
 [dependencies]
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 thiserror = "2.0.9"
 unicode-width = "0.2.0"

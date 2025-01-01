@@ -171,7 +171,7 @@ mod tests {
 
     const BASE_CHECK_ARRAY: &[u32] = &[0x00002AFFu32, 0x0000FE18u32];
 
-    fn base_check_array_of<Value>(storage: &dyn Storage<Value>) -> Vec<u32> {
+    fn base_check_array_of<Value: 'static>(storage: &dyn Storage<Value>) -> Vec<u32> {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
@@ -378,7 +378,7 @@ mod tests {
 
         let clone = storage.clone_box();
 
-        let clone_as_shared_storage = clone.as_any().downcast_ref::<SharedStorage<u32>>().unwrap();
+        let clone_as_shared_storage = clone.downcast_ref::<SharedStorage<u32>>().unwrap();
         assert!(clone_as_shared_storage.shared_with(&storage));
 
         let base_check_array = base_check_array_of(clone.as_ref());
