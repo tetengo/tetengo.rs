@@ -8,6 +8,7 @@ use std::any::type_name_of_val;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
+use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -17,7 +18,7 @@ use crate::node::Node;
 use crate::string_input::StringInput;
 use crate::vocabulary::Vocabulary;
 
-type EntryMap = HashMap<String, Vec<Entry>>;
+type EntryMap = HashMap<String, Vec<Rc<Entry>>>;
 
 #[derive(Clone)]
 struct HashableEntry<'a> {
@@ -97,18 +98,18 @@ impl<'a> HashMapVocabulary<'a> {
      * Creates a hash map vocabulary.
      *
      * # Arguments
-     * * `entries`          - Entries.
+     * * `entry_mappings`   - Entry mappings.
      * * `connections`      - Connections.
      * * `entry_hash_value` - A hash function for an entry.
      * * `entry_equal`      - An equality function for entries.
      */
     pub fn new(
-        entries: Vec<(String, Vec<Entry>)>,
+        entry_mappings: Vec<(String, Vec<Entry>)>,
         connections: Vec<((Entry, Entry), i32)>,
         entry_hash_value: &'a dyn Fn(&Entry) -> u64,
         entry_equal: &'a dyn Fn(&Entry, &Entry) -> bool,
     ) -> Self {
-        let entry_map = Self::make_entry_map(entries);
+        let entry_map = Self::make_entry_map(entry_mappings);
         let connection_map = Self::make_connection_map(connections, entry_hash_value, entry_equal);
         HashMapVocabulary {
             entry_map,
@@ -118,10 +119,11 @@ impl<'a> HashMapVocabulary<'a> {
         }
     }
 
-    fn make_entry_map(entries: Vec<(String, Vec<Entry>)>) -> EntryMap {
+    fn make_entry_map(entry_mappings: Vec<(String, Vec<Entry>)>) -> EntryMap {
         let mut entry_map = EntryMap::new();
-        for (key, entries) in entries {
-            let _prev_value = entry_map.insert(key, entries);
+        for (key, entries) in entry_mappings {
+            let entry_rcs = entries.into_iter().map(Rc::new).collect();
+            let _prev_value = entry_map.insert(key, entry_rcs);
         }
         entry_map
     }
@@ -142,7 +144,7 @@ impl<'a> HashMapVocabulary<'a> {
 }
 
 impl Vocabulary for HashMapVocabulary<'_> {
-    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<Entry>> {
+    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<Rc<Entry>>> {
         let Some(key) = key.downcast_ref::<StringInput>() else {
             return Ok(Vec::new());
         };
@@ -218,13 +220,17 @@ mod tests {
     #[test]
     fn new() {
         {
-            let entries = Vec::<(String, Vec<Entry>)>::new();
+            let entry_mappings = Vec::<(String, Vec<Entry>)>::new();
             let connections = Vec::<((Entry, Entry), i32)>::new();
-            let _vocaburary =
-                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
+            let _vocaburary = HashMapVocabulary::new(
+                entry_mappings,
+                connections,
+                &entry_hash_value,
+                &entry_equal,
+            );
         }
         {
-            let entries = vec![
+            let entry_mappings = vec![
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
@@ -264,18 +270,26 @@ mod tests {
                 ),
                 4242,
             )];
-            let _vocaburary =
-                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
+            let _vocaburary = HashMapVocabulary::new(
+                entry_mappings,
+                connections,
+                &entry_hash_value,
+                &entry_equal,
+            );
         }
     }
 
     #[test]
     fn find_entries() {
         {
-            let entries = Vec::<(String, Vec<Entry>)>::new();
+            let entry_mappings = Vec::<(String, Vec<Entry>)>::new();
             let connections = Vec::<((Entry, Entry), i32)>::new();
-            let vocaburary =
-                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
+            let vocaburary = HashMapVocabulary::new(
+                entry_mappings,
+                connections,
+                &entry_hash_value,
+                &entry_equal,
+            );
 
             {
                 let found = vocaburary
@@ -291,7 +305,7 @@ mod tests {
             }
         }
         {
-            let entries = vec![
+            let entry_mappings = vec![
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
@@ -331,8 +345,12 @@ mod tests {
                 ),
                 4242,
             )];
-            let vocaburary =
-                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
+            let vocaburary = HashMapVocabulary::new(
+                entry_mappings,
+                connections,
+                &entry_hash_value,
+                &entry_equal,
+            );
 
             {
                 let found = vocaburary
@@ -394,7 +412,7 @@ mod tests {
     #[test]
     fn find_connection() {
         {
-            let entries = vec![
+            let entry_mappings = vec![
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
@@ -437,8 +455,12 @@ mod tests {
                 ),
                 ((Entry::BosEos, Entry::BosEos), 999),
             ];
-            let vocaburary =
-                HashMapVocabulary::new(entries, connections, &entry_hash_value, &entry_equal);
+            let vocaburary = HashMapVocabulary::new(
+                entry_mappings,
+                connections,
+                &entry_hash_value,
+                &entry_equal,
+            );
 
             let entries_mizuho = vocaburary
                 .find_entries(&StringInput::new(String::from("みずほ")))
