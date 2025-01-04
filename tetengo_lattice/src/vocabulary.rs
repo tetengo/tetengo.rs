@@ -5,6 +5,7 @@
  */
 
 use std::fmt::Debug;
+use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -29,7 +30,7 @@ pub trait Vocabulary: Debug {
      * # Errors
      * * When finding entries fails.
      */
-    fn find_entries(&self, key: &dyn Input) -> Result<Vec<Entry>>;
+    fn find_entries(&self, key: &dyn Input) -> Result<Vec<Rc<Entry>>>;
 
     /**
      * Finds a connection between an origin node and a destination entry.
