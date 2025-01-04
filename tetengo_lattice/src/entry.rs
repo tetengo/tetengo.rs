@@ -55,6 +55,13 @@ impl Entry {
         Entry::Middle(Middle { key, value, cost })
     }
 
+    pub(crate) fn is_bos_eos(&self) -> bool {
+        match self {
+            Entry::BosEos => true,
+            Entry::Middle(_) => false,
+        }
+    }
+
     /**
      * Returns the key.
      *
@@ -68,13 +75,6 @@ impl Entry {
         }
     }
 
-    pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
-        match self {
-            Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry.key.clone()),
-        }
-    }
-
     /**
      * Returns the value.
      *
@@ -85,13 +85,6 @@ impl Entry {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
-        }
-    }
-
-    pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
-        match self {
-            Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry.value.clone()),
         }
     }
 

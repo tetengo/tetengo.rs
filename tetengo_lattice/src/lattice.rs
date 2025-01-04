@@ -171,7 +171,7 @@ impl<'a> Lattice<'a> {
                     preceding_edge_costs[best_preceding_node_index_],
                 );
                 let new_node = match Node::new_with_entry(
-                    entry,
+                    entry.clone(),
                     nodes.len(),
                     i,
                     preceding_edge_costs.clone(),

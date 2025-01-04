@@ -156,19 +156,7 @@ impl Vocabulary for HashMapVocabulary<'_> {
     }
 
     fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection> {
-        let from_entry = match from {
-            Node::Middle(_) => {
-                let Some(from_key) = from.key_rc() else {
-                    return Ok(Connection::new(i32::MAX));
-                };
-                let Some(from_value) = from.value_rc() else {
-                    return Ok(Connection::new(i32::MAX));
-                };
-                Entry::new(from_key, from_value, from.node_cost())
-            }
-            Node::Bos(_) => Entry::BosEos,
-            Node::Eos(_) => Entry::BosEos,
-        };
+        let from_entry = from.entry().as_ref().clone();
         let key = (
             HashableEntry::new(from_entry, self.entry_hash_value, self.entry_equal),
             HashableEntry::new(to.clone(), self.entry_hash_value, self.entry_equal),
@@ -206,7 +194,7 @@ mod tests {
         match entry {
             Entry::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
             Entry::Middle(_) => Node::new_with_entry(
-                entry,
+                Rc::new(entry.clone()),
                 0,
                 usize::MAX,
                 Rc::new(PRECEDING_EDGE_COSTS.clone()),
