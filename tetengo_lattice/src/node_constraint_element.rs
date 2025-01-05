@@ -51,8 +51,8 @@ mod tests {
         let element_node_value = 42;
         let element_node_preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let element_node = Node::new(
-            Rc::new(element_node_key),
-            Rc::new(element_node_value),
+            Box::new(element_node_key),
+            Box::new(element_node_value),
             0,
             1,
             element_node_preceding_edge_costs,
@@ -69,8 +69,8 @@ mod tests {
         let element_node_value = 42;
         let element_node_preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let element_node = Node::new(
-            Rc::new(element_node_key),
-            Rc::new(element_node_value),
+            Box::new(element_node_key),
+            Box::new(element_node_value),
             0,
             1,
             element_node_preceding_edge_costs,
@@ -85,8 +85,8 @@ mod tests {
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::new(
-                Rc::new(key),
-                Rc::new(value),
+                Box::new(key),
+                Box::new(value),
                 0,
                 1,
                 preceding_edge_costs,
@@ -102,8 +102,8 @@ mod tests {
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             let node = Node::new(
-                Rc::new(key),
-                Rc::new(value),
+                Box::new(key),
+                Box::new(value),
                 0,
                 1,
                 preceding_edge_costs,

@@ -156,19 +156,7 @@ impl Vocabulary for HashMapVocabulary<'_> {
     }
 
     fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection> {
-        let from_entry = match from {
-            Node::Middle(_) => {
-                let Some(from_key) = from.key_rc() else {
-                    return Ok(Connection::new(i32::MAX));
-                };
-                let Some(from_value) = from.value_rc() else {
-                    return Ok(Connection::new(i32::MAX));
-                };
-                Entry::new(from_key, from_value, from.node_cost())
-            }
-            Node::Bos(_) => Entry::BosEos,
-            Node::Eos(_) => Entry::BosEos,
-        };
+        let from_entry = from.entry().as_ref().clone();
         let key = (
             HashableEntry::new(from_entry, self.entry_hash_value, self.entry_equal),
             HashableEntry::new(to.clone(), self.entry_hash_value, self.entry_equal),
@@ -201,9 +189,9 @@ mod tests {
         }
     }
 
-    fn make_node(entry: &Entry) -> Node {
+    fn make_node(entry: Rc<Entry>) -> Node {
         static PRECEDING_EDGE_COSTS: Vec<i32> = Vec::new();
-        match entry {
+        match entry.as_ref() {
             Entry::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
             Entry::Middle(_) => Node::new_with_entry(
                 entry,
@@ -234,8 +222,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -243,13 +231,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("さくら")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -258,13 +246,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("さくら"))),
-                        Rc::new(String::from("桜")),
+                        Box::new(StringInput::new(String::from("さくら"))),
+                        Box::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -309,8 +297,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -318,13 +306,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("さくら")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -333,13 +321,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("さくら"))),
-                        Rc::new(String::from("桜")),
+                        Box::new(StringInput::new(String::from("さくら"))),
+                        Box::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -416,8 +404,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -425,13 +413,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("さくら")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -441,13 +429,13 @@ mod tests {
                 (
                     (
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("みずほ"))),
-                            Rc::new(String::from("瑞穂")),
+                            Box::new(StringInput::new(String::from("みずほ"))),
+                            Box::new(String::from("瑞穂")),
                             42,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                     ),
@@ -473,7 +461,7 @@ mod tests {
 
             {
                 let connection = vocaburary
-                    .find_connection(&make_node(&entries_mizuho[0]), &entries_sakura[0])
+                    .find_connection(&make_node(entries_mizuho[0].clone()), &entries_sakura[0])
                     .unwrap();
 
                 assert_eq!(connection.cost(), 4242);
@@ -487,7 +475,7 @@ mod tests {
             }
             {
                 let connection = vocaburary
-                    .find_connection(&make_node(&entries_mizuho[0]), &entries_mizuho[0])
+                    .find_connection(&make_node(entries_mizuho[0].clone()), &entries_mizuho[0])
                     .unwrap();
 
                 assert_eq!(connection.cost(), i32::MAX);

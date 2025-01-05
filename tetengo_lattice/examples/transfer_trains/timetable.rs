@@ -543,8 +543,8 @@ impl Timetable {
                     let found = map.entry(section_name.clone()).or_default();
                     let section = Section::new(Rc::new(train.clone()), from, to);
                     found.push(Entry::new(
-                        Rc::new(StringInput::new(section_name)),
-                        Rc::new(section),
+                        Box::new(StringInput::new(section_name)),
+                        Box::new(section),
                         Self::make_section_duration(train.stops(), from, to) as i32,
                     ));
                 }

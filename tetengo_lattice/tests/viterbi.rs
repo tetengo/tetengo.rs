@@ -4,7 +4,6 @@
 
 mod usage {
     use std::hash::{DefaultHasher, Hash, Hasher};
-    use std::rc::Rc;
 
     use tetengo_lattice::{
         Constraint, Entry, HashMapVocabulary, NBestIterator, Node, Path, StringInput, Vocabulary,
@@ -65,28 +64,28 @@ mod usage {
         // The contents of the vocabulary.
         let entries = [
             Entry::new(
-                Rc::new(StringInput::new(String::from("a"))),
-                Rc::new(String::from("Alpha")),
+                Box::new(StringInput::new(String::from("a"))),
+                Box::new(String::from("Alpha")),
                 2,
             ),
             Entry::new(
-                Rc::new(StringInput::new(String::from("b"))),
-                Rc::new(String::from("Bravo")),
+                Box::new(StringInput::new(String::from("b"))),
+                Box::new(String::from("Bravo")),
                 7,
             ),
             Entry::new(
-                Rc::new(StringInput::new(String::from("a"))),
-                Rc::new(String::from("Alice")),
+                Box::new(StringInput::new(String::from("a"))),
+                Box::new(String::from("Alice")),
                 1,
             ),
             Entry::new(
-                Rc::new(StringInput::new(String::from("b"))),
-                Rc::new(String::from("Bob")),
+                Box::new(StringInput::new(String::from("b"))),
+                Box::new(String::from("Bob")),
                 8,
             ),
             Entry::new(
-                Rc::new(StringInput::new(String::from("ab"))),
-                Rc::new(String::from("AwaBizan")),
+                Box::new(StringInput::new(String::from("ab"))),
+                Box::new(String::from("AwaBizan")),
                 9,
             ),
         ];
