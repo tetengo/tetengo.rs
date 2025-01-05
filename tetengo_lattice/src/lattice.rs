@@ -309,18 +309,18 @@ mod tests {
                 String::from("[HakataTosu][TosuOmuta][OmutaKumamoto]"),
                 vec![
                     Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
-                        Rc::new("mizuho"),
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("mizuho"),
                         3670,
                     ),
                     Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
-                        Rc::new("sakura"),
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("sakura"),
                         2620,
                     ),
                     Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
-                        Rc::new("tsubame"),
+                        to_input("Hakata-Tosu-Omuta-Kumamoto"),
+                        Box::new("tsubame"),
                         2390,
                     ),
                 ],
@@ -328,46 +328,38 @@ mod tests {
             (
                 String::from("[HakataTosu][TosuOmuta]"),
                 vec![
-                    Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta")),
-                        Rc::new("ariake"),
-                        2150,
-                    ),
-                    Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta")),
-                        Rc::new("rapid811"),
-                        1310,
-                    ),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("ariake"), 2150),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new("rapid811"), 1310),
                 ],
             ),
             (
                 String::from("[HakataTosu]"),
                 vec![
-                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new("kamome"), 840),
-                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new("local415"), 570),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new("kamome"), 840),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new("local415"), 570),
                 ],
             ),
             (
                 String::from("[TosuOmuta]"),
                 vec![Entry::new(
-                    Rc::from(to_input("Tosu-Omuta")),
-                    Rc::new("local813"),
+                    to_input("Tosu-Omuta"),
+                    Box::new("local813"),
                     860,
                 )],
             ),
             (
                 String::from("[TosuOmuta][OmutaKumamoto]"),
                 vec![Entry::new(
-                    Rc::from(to_input("Tosu-Omuta-Kumamoto")),
-                    Rc::new("local815"),
+                    to_input("Tosu-Omuta-Kumamoto"),
+                    Box::new("local815"),
                     1680,
                 )],
             ),
             (
                 String::from("[OmutaKumamoto]"),
                 vec![Entry::new(
-                    Rc::from(to_input("Omuta-Kumamoto")),
-                    Rc::new("local817"),
+                    to_input("Omuta-Kumamoto"),
+                    Box::new("local817"),
                     950,
                 )],
             ),
@@ -379,99 +371,91 @@ mod tests {
             (
                 (
                     Entry::BosEos,
-                    Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
-                        Rc::new(""),
-                        0,
-                    ),
+                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
                 ),
                 600,
             ),
             (
                 (
                     Entry::BosEos,
-                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
                 ),
                 700,
             ),
             (
                 (
                     Entry::BosEos,
-                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
                 ),
                 800,
             ),
             ((Entry::BosEos, Entry::BosEos), 8000),
             (
                 (
-                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
-                    Entry::new(Rc::from(to_input("Tosu-Omuta-Kumamoto")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
                 ),
                 500,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
-                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
                 ),
                 600,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Hakata-Tosu")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu"), Box::new(""), 0),
                     Entry::BosEos,
                 ),
                 6000,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
-                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
                 ),
                 200,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Hakata-Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(to_input("Hakata-Tosu-Omuta"), Box::new(""), 0),
                     Entry::BosEos,
                 ),
                 2000,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
-                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
                 ),
                 300,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Tosu-Omuta")), Rc::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta"), Box::new(""), 0),
                     Entry::BosEos,
                 ),
                 3000,
             ),
             (
                 (
-                    Entry::new(
-                        Rc::from(to_input("Hakata-Tosu-Omuta-Kumamoto")),
-                        Rc::new(""),
-                        0,
-                    ),
+                    Entry::new(to_input("Hakata-Tosu-Omuta-Kumamoto"), Box::new(""), 0),
                     Entry::BosEos,
                 ),
                 400,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Tosu-Omuta-Kumamoto")), Rc::new(""), 0),
+                    Entry::new(to_input("Tosu-Omuta-Kumamoto"), Box::new(""), 0),
                     Entry::BosEos,
                 ),
                 500,
             ),
             (
                 (
-                    Entry::new(Rc::from(to_input("Omuta-Kumamoto")), Rc::new(""), 0),
+                    Entry::new(to_input("Omuta-Kumamoto"), Box::new(""), 0),
                     Entry::BosEos,
                 ),
                 600,

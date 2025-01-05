@@ -119,14 +119,14 @@ mod tests {
     }
 
     fn make_path_b_m_s_t_e() -> Vec<Node> {
-        let key_mizuho = Rc::new(StringInput::new(String::from("mizuho")));
-        let key_sakura = Rc::new(StringInput::new(String::from("sakura")));
-        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
+        let key_mizuho = Box::new(StringInput::new(String::from("mizuho")));
+        let key_sakura = Box::new(StringInput::new(String::from("sakura")));
+        let key_tsubame = Box::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
                 key_mizuho,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -136,7 +136,7 @@ mod tests {
             ),
             Node::new(
                 key_sakura.clone(),
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 1,
                 preceding_edge_costs(),
@@ -146,7 +146,7 @@ mod tests {
             ),
             Node::new(
                 key_tsubame.clone(),
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -159,14 +159,14 @@ mod tests {
     }
 
     fn make_path_b_m_a_t_e() -> Vec<Node> {
-        let key_mizuho = Rc::new(StringInput::new(String::from("mizuho")));
-        let key_ariake = Rc::new(StringInput::new(String::from("ariake")));
-        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
+        let key_mizuho = Box::new(StringInput::new(String::from("mizuho")));
+        let key_ariake = Box::new(StringInput::new(String::from("ariake")));
+        let key_tsubame = Box::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
                 key_mizuho,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -176,7 +176,7 @@ mod tests {
             ),
             Node::new(
                 key_ariake,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 1,
                 preceding_edge_costs(),
@@ -186,7 +186,7 @@ mod tests {
             ),
             Node::new(
                 key_tsubame,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -199,13 +199,13 @@ mod tests {
     }
 
     fn make_path_b_h_t_e() -> Vec<Node> {
-        let key_hinokuni = Rc::new(StringInput::new(String::from("hinokuni")));
-        let key_tsubame = Rc::new(StringInput::new(String::from("tsubame")));
+        let key_hinokuni = Box::new(StringInput::new(String::from("hinokuni")));
+        let key_tsubame = Box::new(StringInput::new(String::from("tsubame")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
                 key_hinokuni,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -215,7 +215,7 @@ mod tests {
             ),
             Node::new(
                 key_tsubame,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),
@@ -228,14 +228,14 @@ mod tests {
     }
 
     fn make_path_b_k_s_k_e() -> Vec<Node> {
-        let key_kamome = Rc::new(StringInput::new(String::from("kamome")));
-        let key_sakura = Rc::new(StringInput::new(String::from("sakura")));
-        let key_kumagawa = Rc::new(StringInput::new(String::from("kumagawa")));
+        let key_kamome = Box::new(StringInput::new(String::from("kamome")));
+        let key_sakura = Box::new(StringInput::new(String::from("sakura")));
+        let key_kumagawa = Box::new(StringInput::new(String::from("kumagawa")));
         vec![
             Node::bos(bos_preceding_edge_costs()),
             Node::new(
                 key_kamome,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 0,
                 preceding_edge_costs(),
@@ -245,7 +245,7 @@ mod tests {
             ),
             Node::new(
                 key_sakura,
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 1,
                 preceding_edge_costs(),
@@ -255,7 +255,7 @@ mod tests {
             ),
             Node::new(
                 key_kumagawa.clone(),
-                Rc::new(NODE_VALUE),
+                Box::new(NODE_VALUE),
                 0,
                 2,
                 preceding_edge_costs(),

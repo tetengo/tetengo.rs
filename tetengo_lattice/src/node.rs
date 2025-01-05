@@ -143,8 +143,8 @@ impl Node {
      * * path_cost            - A path cost.
      */
     pub fn new(
-        key: Rc<dyn Input>,
-        value: Rc<dyn Any>,
+        key: Box<dyn Input>,
+        value: Box<dyn Any>,
         index_in_step: usize,
         preceding_step: usize,
         preceding_edge_costs: Rc<Vec<i32>>,
@@ -363,8 +363,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let _node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -380,8 +380,8 @@ mod tests {
             let entry_key = StringInput::new(String::from("mizuho"));
             let entry_value = 42;
             let entry = Rc::new(Entry::new(
-                Rc::new(entry_key.clone()),
-                Rc::new(entry_value),
+                Box::new(entry_key.clone()),
+                Box::new(entry_value),
                 24,
             ));
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
@@ -415,8 +415,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -441,8 +441,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -460,8 +460,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -479,8 +479,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -498,8 +498,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -517,8 +517,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -536,8 +536,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -555,8 +555,8 @@ mod tests {
         let value = 42;
         let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node = Node::new(
-            Rc::new(key),
-            Rc::new(value),
+            Box::new(key),
+            Box::new(value),
             53,
             1,
             preceding_edge_costs.clone(),
@@ -583,8 +583,8 @@ mod tests {
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
             assert!(!Node::new(
-                Rc::new(key),
-                Rc::new(value),
+                Box::new(key),
+                Box::new(value),
                 53,
                 1,
                 preceding_edge_costs.clone(),
@@ -609,8 +609,8 @@ mod tests {
         let value1 = 42;
         let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node1 = Node::new(
-            Rc::new(key.clone()),
-            Rc::new(value1),
+            Box::new(key.clone()),
+            Box::new(value1),
             53,
             1,
             preceding_edge_costs1.clone(),
@@ -622,8 +622,8 @@ mod tests {
         let value2 = 42;
         let preceding_edge_costs2 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
         let node2 = Node::new(
-            Rc::new(key),
-            Rc::new(value2),
+            Box::new(key),
+            Box::new(value2),
             53,
             1,
             preceding_edge_costs2.clone(),

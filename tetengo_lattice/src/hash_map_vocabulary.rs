@@ -222,8 +222,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -231,13 +231,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("さくら")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -246,13 +246,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("さくら"))),
-                        Rc::new(String::from("桜")),
+                        Box::new(StringInput::new(String::from("さくら"))),
+                        Box::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -297,8 +297,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -306,13 +306,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("さくら")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -321,13 +321,13 @@ mod tests {
             let connections = vec![(
                 (
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     ),
                     Entry::new(
-                        Rc::new(StringInput::new(String::from("さくら"))),
-                        Rc::new(String::from("桜")),
+                        Box::new(StringInput::new(String::from("さくら"))),
+                        Box::new(String::from("桜")),
                         24,
                     ),
                 ),
@@ -404,8 +404,8 @@ mod tests {
                 (
                     String::from("みずほ"),
                     vec![Entry::new(
-                        Rc::new(StringInput::new(String::from("みずほ"))),
-                        Rc::new(String::from("瑞穂")),
+                        Box::new(StringInput::new(String::from("みずほ"))),
+                        Box::new(String::from("瑞穂")),
                         42,
                     )],
                 ),
@@ -413,13 +413,13 @@ mod tests {
                     String::from("さくら"),
                     vec![
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("さくら")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("さくら")),
                             2424,
                         ),
                     ],
@@ -429,13 +429,13 @@ mod tests {
                 (
                     (
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("みずほ"))),
-                            Rc::new(String::from("瑞穂")),
+                            Box::new(StringInput::new(String::from("みずほ"))),
+                            Box::new(String::from("瑞穂")),
                             42,
                         ),
                         Entry::new(
-                            Rc::new(StringInput::new(String::from("さくら"))),
-                            Rc::new(String::from("桜")),
+                            Box::new(StringInput::new(String::from("さくら"))),
+                            Box::new(String::from("桜")),
                             24,
                         ),
                     ),
