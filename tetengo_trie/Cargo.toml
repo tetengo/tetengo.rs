@@ -26,5 +26,5 @@ categories = [
 anyhow = "1.0.95"
 hashlink = "0.10.0"
 memmap2 = "0.9.5"
-tempfile = "3.14.0"
+tempfile = "3.15.0"
 thiserror = "2.0.9"
