@@ -189,12 +189,12 @@ mod tests {
         }
     }
 
-    fn make_node(entry: &Entry) -> Node {
+    fn make_node(entry: Rc<Entry>) -> Node {
         static PRECEDING_EDGE_COSTS: Vec<i32> = Vec::new();
-        match entry {
+        match entry.as_ref() {
             Entry::BosEos => Node::bos(Rc::new(PRECEDING_EDGE_COSTS.clone())),
             Entry::Middle(_) => Node::new_with_entry(
-                Rc::new(entry.clone()),
+                entry,
                 0,
                 usize::MAX,
                 Rc::new(PRECEDING_EDGE_COSTS.clone()),
@@ -461,7 +461,7 @@ mod tests {
 
             {
                 let connection = vocaburary
-                    .find_connection(&make_node(&entries_mizuho[0]), &entries_sakura[0])
+                    .find_connection(&make_node(entries_mizuho[0].clone()), &entries_sakura[0])
                     .unwrap();
 
                 assert_eq!(connection.cost(), 4242);
@@ -475,7 +475,7 @@ mod tests {
             }
             {
                 let connection = vocaburary
-                    .find_connection(&make_node(&entries_mizuho[0]), &entries_mizuho[0])
+                    .find_connection(&make_node(entries_mizuho[0].clone()), &entries_mizuho[0])
                     .unwrap();
 
                 assert_eq!(connection.cost(), i32::MAX);
