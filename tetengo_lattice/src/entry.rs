@@ -51,8 +51,19 @@ impl Entry {
      * * `value` - A box of a value.
      * * `cost`  - A cost.
      */
-    pub fn new(key: Rc<dyn Input>, value: Rc<dyn Any>, cost: i32) -> Self {
-        Entry::Middle(Middle { key, value, cost })
+    pub fn new(key: Box<dyn Input>, value: Box<dyn Any>, cost: i32) -> Self {
+        Entry::Middle(Middle {
+            key: Rc::from(key),
+            value: Rc::from(value),
+            cost,
+        })
+    }
+
+    pub(crate) fn is_bos_eos(&self) -> bool {
+        match self {
+            Entry::BosEos => true,
+            Entry::Middle(_) => false,
+        }
     }
 
     /**
@@ -68,13 +79,6 @@ impl Entry {
         }
     }
 
-    pub(crate) fn key_rc(&self) -> Option<Rc<dyn Input>> {
-        match self {
-            Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry.key.clone()),
-        }
-    }
-
     /**
      * Returns the value.
      *
@@ -85,13 +89,6 @@ impl Entry {
         match self {
             Entry::BosEos => None,
             Entry::Middle(entry) => Some(entry.value.as_ref()),
-        }
-    }
-
-    pub(crate) fn value_rc(&self) -> Option<Rc<dyn Any>> {
-        match self {
-            Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry.value.clone()),
         }
     }
 
@@ -127,8 +124,8 @@ mod tests {
     #[test]
     fn new() {
         let _entry = Entry::new(
-            Rc::new(StringInput::new(String::from("みずほ"))),
-            Rc::new(String::from("瑞穂")),
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
             42,
         );
     }
@@ -136,8 +133,8 @@ mod tests {
     #[test]
     fn clone() {
         let entry1 = Entry::new(
-            Rc::new(StringInput::new(String::from("みずほ"))),
-            Rc::new(String::from("瑞穂")),
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
             42,
         );
         let entry2 = entry1.clone();
@@ -156,8 +153,8 @@ mod tests {
     #[test]
     fn key() {
         let entry = Entry::new(
-            Rc::new(StringInput::new(String::from("みずほ"))),
-            Rc::new(String::from("瑞穂")),
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
             42,
         );
 
@@ -177,8 +174,8 @@ mod tests {
     #[test]
     fn value() {
         let entry = Entry::new(
-            Rc::new(StringInput::new(String::from("みずほ"))),
-            Rc::new(String::from("瑞穂")),
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
             42,
         );
 
@@ -193,8 +190,8 @@ mod tests {
     #[test]
     fn cost() {
         let entry = Entry::new(
-            Rc::new(StringInput::new(String::from("みずほ"))),
-            Rc::new(String::from("瑞穂")),
+            Box::new(StringInput::new(String::from("みずほ"))),
+            Box::new(String::from("瑞穂")),
             42,
         );
 
