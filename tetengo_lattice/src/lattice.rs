@@ -145,12 +145,8 @@ impl<'a> Lattice<'a> {
         for i in 0..self.graph.len() {
             let step = &self.graph[i];
 
-            let node_key = match self_input
-                .create_subrange(step.input_tail(), self_input.length() - step.input_tail())
-            {
-                Ok(node_key) => node_key,
-                Err(e) => return Err(e),
-            };
+            let node_key = self_input
+                .create_subrange(step.input_tail(), self_input.length() - step.input_tail())?;
             let found = self.vocabulary.find_entries(node_key.as_ref())?;
 
             let mut preceding_edge_cost_indexes = Vec::new();
@@ -170,17 +166,14 @@ impl<'a> Lattice<'a> {
                     step.nodes[best_preceding_node_index_].path_cost(),
                     preceding_edge_costs[best_preceding_node_index_],
                 );
-                let new_node = match Node::new_with_entry(
+                let new_node = Node::new_with_entry(
                     entry.clone(),
                     nodes.len(),
                     i,
                     preceding_edge_costs.clone(),
                     best_preceding_node_index_,
                     Self::add_cost(best_preceding_path_cost, entry.cost()),
-                ) {
-                    Ok(new_node) => new_node,
-                    Err(e) => return Err(e),
-                };
+                )?;
                 nodes.push(new_node);
             }
         }
