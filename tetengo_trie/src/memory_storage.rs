@@ -287,9 +287,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
 mod tests {
     use std::io::Cursor;
 
-    use crate::serializer::{Deserializer, Serializer};
     use crate::string_serializer::{StrSerializer, StringDeserializer};
-    use crate::value_serializer::ValueSerializer;
 
     use super::*;
 

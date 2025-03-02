@@ -253,7 +253,6 @@ impl<'a> Lattice<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::entry::Entry;
     use crate::hash_map_vocabulary::HashMapVocabulary;
 
     use super::*;
