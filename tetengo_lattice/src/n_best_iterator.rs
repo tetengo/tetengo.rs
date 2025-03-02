@@ -776,11 +776,13 @@ mod tests {
                         assert_eq!(constrained_path.nodes()[0], path.nodes()[0]);
                         assert_eq!(constrained_path.nodes()[1], path.nodes()[1]);
                         assert!(constrained_path.nodes()[2].key().is_some());
-                        assert!(constrained_path.nodes()[2]
-                            .key()
-                            .unwrap()
-                            .downcast_ref::<StringInput>()
-                            .is_some());
+                        assert!(
+                            constrained_path.nodes()[2]
+                                .key()
+                                .unwrap()
+                                .downcast_ref::<StringInput>()
+                                .is_some()
+                        );
                         assert_eq!(
                             constrained_path.nodes()[2]
                                 .key()
@@ -791,11 +793,13 @@ mod tests {
                             "Tosu-Omuta"
                         );
                         assert!(constrained_path.nodes()[3].key().is_some());
-                        assert!(constrained_path.nodes()[3]
-                            .key()
-                            .unwrap()
-                            .downcast_ref::<StringInput>()
-                            .is_some());
+                        assert!(
+                            constrained_path.nodes()[3]
+                                .key()
+                                .unwrap()
+                                .downcast_ref::<StringInput>()
+                                .is_some()
+                        );
                         assert_eq!(
                             constrained_path.nodes()[3]
                                 .key()

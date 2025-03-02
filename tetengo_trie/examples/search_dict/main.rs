@@ -7,7 +7,7 @@
 use std::cmp::min;
 use std::env;
 use std::fs::File;
-use std::io::{stdin, Read};
+use std::io::{Read, stdin};
 use std::path::Path;
 use std::process::exit;
 

@@ -9,7 +9,7 @@ mod timetable;
 use std::collections::HashSet;
 use std::env;
 use std::fs::File;
-use std::io::{stdin, stdout, BufRead, BufReader, Lines, StdinLock, Write};
+use std::io::{BufRead, BufReader, Lines, StdinLock, Write, stdin, stdout};
 use std::path::Path;
 use std::process::exit;
 

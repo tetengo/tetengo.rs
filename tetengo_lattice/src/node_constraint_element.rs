@@ -29,11 +29,7 @@ impl NodeConstraintElement {
 
 impl ConstraintElement for NodeConstraintElement {
     fn matches(&self, node: &Node) -> i32 {
-        if *node == self.node {
-            0
-        } else {
-            -1
-        }
+        if *node == self.node { 0 } else { -1 }
     }
 }
 
