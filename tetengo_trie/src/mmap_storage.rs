@@ -309,7 +309,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
 mod tests {
     use std::{
         fs::File,
-        io::{Seek, SeekFrom, Write},
+        io::{Seek, SeekFrom},
     };
 
     use tempfile::tempfile;
@@ -406,9 +406,7 @@ mod tests {
         use std::io::Cursor;
 
         use crate::double_array::VACANT_CHECK_VALUE;
-        use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
-        use crate::serializer::Deserializer;
-        use crate::value_serializer::ValueDeserializer;
+        use crate::integer_serializer::IntegerSerializer;
 
         use super::*;
 

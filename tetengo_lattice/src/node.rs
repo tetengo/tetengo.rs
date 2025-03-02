@@ -582,17 +582,19 @@ mod tests {
             let key = StringInput::new(String::from("mizuho"));
             let value = 42;
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            assert!(!Node::new(
-                Box::new(key),
-                Box::new(value),
-                53,
-                1,
-                preceding_edge_costs.clone(),
-                5,
-                24,
-                2424
-            )
-            .is_bos());
+            assert!(
+                !Node::new(
+                    Box::new(key),
+                    Box::new(value),
+                    53,
+                    1,
+                    preceding_edge_costs.clone(),
+                    5,
+                    24,
+                    2424
+                )
+                .is_bos()
+            );
         }
     }
 

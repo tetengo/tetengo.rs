@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use crate::double_array::{self, DoubleArray, DEFAULT_DENSITY_FACTOR};
+use crate::double_array::{self, DEFAULT_DENSITY_FACTOR, DoubleArray};
 use crate::serializer::{Serializer, SerializerOf};
 use crate::storage::Storage;
 use crate::trie_iterator::TrieIterator;

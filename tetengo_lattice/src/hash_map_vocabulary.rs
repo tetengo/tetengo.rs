@@ -170,8 +170,6 @@ impl Vocabulary for HashMapVocabulary<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use super::*;
 
     fn entry_hash_value(entry: &Entry) -> u64 {
