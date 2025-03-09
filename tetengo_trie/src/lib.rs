@@ -26,9 +26,7 @@ pub use file_mapping::{FileMapping, FileMappingError};
 pub use integer_serializer::{IntegerDeserializer, IntegerSerializer};
 pub use memory_storage::MemoryStorage;
 pub use mmap_storage::{MmapStorage, MmapStorageError};
-pub use serializer::{
-    DeserializationError, Deserializer, DeserializerOf, Serializer, SerializerOf,
-};
+pub use serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 pub use shared_storage::SharedStorage;
 pub use storage::{Storage, StorageError};
 pub use string_serializer::{StrSerializer, StringDeserializer, StringSerializer};

@@ -185,7 +185,9 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 
         let mut to_deserialize: [u8; size_of::<u32>()] = [0u8; size_of::<u32>()];
         reader.read_exact(&mut to_deserialize)?;
-        U32_DESERIALIZER.deserialize(&to_deserialize)
+        U32_DESERIALIZER
+            .deserialize(&to_deserialize)
+            .map_err(Into::into)
     }
 
     const UNINITIALIZED_BYTE: u8 = 0xFF;
@@ -367,7 +369,9 @@ mod tests {
             let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER.deserialize(serialized)
+                STRING_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let storage = MemoryStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
@@ -381,7 +385,7 @@ mod tests {
             let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::<u32>::new(false));
-                U32_DESERIALIZER.deserialize(serialized)
+                U32_DESERIALIZER.deserialize(serialized).map_err(Into::into)
             }));
             let storage = MemoryStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
@@ -395,7 +399,9 @@ mod tests {
             let mut deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER.deserialize(serialized)
+                STRING_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let result = MemoryStorage::new_with_reader(&mut reader, &mut deserializer);
             assert!(result.is_err());

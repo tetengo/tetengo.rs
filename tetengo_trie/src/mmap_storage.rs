@@ -224,7 +224,9 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
     fn read_u32(&self, offset: usize) -> Result<u32> {
         static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
             LazyLock::new(|| IntegerDeserializer::new(false));
-        U32_DESERIALIZER.deserialize(self.read_bytes(offset, size_of::<u32>())?)
+        U32_DESERIALIZER
+            .deserialize(self.read_bytes(offset, size_of::<u32>())?)
+            .map_err(Into::into)
     }
 }
 
@@ -423,7 +425,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage =
                     MmapStorage::builder(file_mapping, 0, file_size, deserializer).build();
@@ -436,7 +440,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage =
                     MmapStorage::builder(file_mapping, 5, file_size, deserializer).build();
@@ -449,7 +455,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage =
                     MmapStorage::builder(file_mapping, 0, file_size, deserializer).build();
@@ -462,7 +470,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage =
                     MmapStorage::builder(file_mapping, 0, file_size, deserializer).build();
@@ -475,7 +485,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage =
                     MmapStorage::builder(file_mapping, file_size + 1, file_size, deserializer)
@@ -489,7 +501,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .value_cache_capacity(10000)
@@ -507,7 +521,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
@@ -522,7 +538,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
@@ -541,7 +559,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
@@ -557,7 +577,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
@@ -577,7 +599,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
@@ -595,7 +619,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
@@ -611,7 +637,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
@@ -631,7 +659,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
@@ -649,7 +679,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
@@ -664,7 +696,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
@@ -683,7 +717,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
@@ -702,7 +738,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
@@ -725,7 +763,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
@@ -743,7 +783,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
@@ -761,7 +803,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
@@ -789,7 +833,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                     .build()
@@ -809,7 +855,9 @@ mod tests {
                 let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                     static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                         LazyLock::new(|| IntegerDeserializer::new(false));
-                    INTEGER_DESERIALIZER.deserialize(serialized)
+                    INTEGER_DESERIALIZER
+                        .deserialize(serialized)
+                        .map_err(Into::into)
                 }));
                 let storage = MmapStorage::builder(file_mapping, 5, file_size, deserializer)
                     .build()
@@ -833,7 +881,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()
@@ -851,7 +901,9 @@ mod tests {
             let deserializer = ValueDeserializer::<u32>::new(Box::new(|serialized| {
                 static INTEGER_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
                     LazyLock::new(|| IntegerDeserializer::new(false));
-                INTEGER_DESERIALIZER.deserialize(serialized)
+                INTEGER_DESERIALIZER
+                    .deserialize(serialized)
+                    .map_err(Into::into)
             }));
             let mut storage = MmapStorage::builder(file_mapping, 0, file_size, deserializer)
                 .build()

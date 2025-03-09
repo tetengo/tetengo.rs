@@ -7,11 +7,8 @@
 use std::marker::PhantomData;
 use std::ops;
 
-use anyhow::Result;
-
-use crate::serializer::{
-    DeserializationError, Deserializer, DeserializerOf, Serializer, SerializerOf,
-};
+use crate::error::Error;
+use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
 /**
  * A trait for integers.
@@ -80,26 +77,6 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
 }
 
 /**
- * An integer deserialization error.
- */
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub enum IntegerDeserialationError {
-    /**
-     * Invalid serialized length.
-     */
-    #[error("invalid serialized length")]
-    InvalidSerializedLength,
-
-    /**
-     * Invalid serialized content.
-     */
-    #[error("invalid serialized content")]
-    InvalidSerializedContent,
-}
-
-impl DeserializationError for IntegerDeserialationError {}
-
-/**
  * An integer deserializer.
  *
  * When the argument `fe_escape` of the constructor is true, binary bytes are
@@ -131,7 +108,7 @@ impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
             phantom: PhantomData,
         }
     }
-    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
+    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object, Error> {
         from_bytes(bytes, self.fe_escape)
     }
 }
@@ -173,7 +150,10 @@ fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> 
     bytes
 }
 
-fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Result<Object> {
+fn from_bytes<Object: Integer<Object>>(
+    serialized: &[u8],
+    fe_escape: bool,
+) -> Result<Object, Error> {
     if fe_escape {
         from_bytes_with_escape(serialized)
     } else {
@@ -181,9 +161,11 @@ fn from_bytes<Object: Integer<Object>>(serialized: &[u8], fe_escape: bool) -> Re
     }
 }
 
-fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
+fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object, Error> {
     if serialized.len() < size_of::<Object>() || 2 * size_of::<Object>() < serialized.len() {
-        return Err(IntegerDeserialationError::InvalidSerializedLength.into());
+        return Err(Error::InvalidSerializedBytes(String::from(
+            "invalid serialized length.",
+        )));
     }
     let mut object = Object::from(0);
     let mut serialized_iter = serialized.iter();
@@ -194,10 +176,14 @@ fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<
                 if *byte2 == 0xFDu8 || *byte2 == 0xFEu8 {
                     object |= Object::from(*byte2);
                 } else {
-                    return Err(IntegerDeserialationError::InvalidSerializedContent.into());
+                    return Err(Error::InvalidSerializedBytes(String::from(
+                        "invalid serialized content.",
+                    )));
                 }
             } else {
-                return Err(IntegerDeserialationError::InvalidSerializedContent.into());
+                return Err(Error::InvalidSerializedBytes(String::from(
+                    "invalid serialized content.",
+                )));
             }
         } else if *byte == 0xFEu8 {
             object |= Object::from(0x00u8);
@@ -208,9 +194,11 @@ fn from_bytes_with_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<
     Ok(object)
 }
 
-fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object> {
+fn from_bytes_without_escape<Object: Integer<Object>>(serialized: &[u8]) -> Result<Object, Error> {
     if serialized.len() < size_of::<Object>() || 2 * size_of::<Object>() < serialized.len() {
-        return Err(IntegerDeserialationError::InvalidSerializedLength.into());
+        return Err(Error::InvalidSerializedBytes(String::from(
+            "invalid serialized length.",
+        )));
     }
     let mut object = Object::from(0);
     for byte in serialized {
@@ -371,10 +359,7 @@ mod tests {
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                matches!(
-                    e.downcast_ref::<IntegerDeserialationError>(),
-                    Some(IntegerDeserialationError::InvalidSerializedLength)
-                )
+                format!("{}", e).contains("invalid serialized length")
             } else {
                 false
             });
@@ -384,10 +369,7 @@ mod tests {
 
             let serialized = vec![0x00u8, 0x12u8, 0x34u8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                matches!(
-                    e.downcast_ref::<IntegerDeserialationError>(),
-                    Some(IntegerDeserialationError::InvalidSerializedLength)
-                )
+                format!("{}", e).contains("invalid serialized length")
             } else {
                 false
             });
@@ -397,10 +379,7 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFCu8, 0xFDu8, 0xFEu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                matches!(
-                    e.downcast_ref::<IntegerDeserialationError>(),
-                    Some(IntegerDeserialationError::InvalidSerializedContent)
-                )
+                format!("{}", e).contains("invalid serialized content")
             } else {
                 false
             });
@@ -410,10 +389,7 @@ mod tests {
 
             let serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFDu8];
             assert!(if let Err(e) = deserializer.deserialize(&serialized) {
-                matches!(
-                    e.downcast_ref::<IntegerDeserialationError>(),
-                    Some(IntegerDeserialationError::InvalidSerializedContent)
-                )
+                format!("{}", e).contains("invalid serialized content")
             } else {
                 false
             });

@@ -6,6 +6,7 @@
 
 use anyhow::Result;
 
+use crate::error::Error;
 use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
 /**
@@ -57,8 +58,10 @@ impl Deserializer for StringDeserializer {
         StringDeserializer {}
     }
 
-    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object> {
-        String::from_utf8(bytes.to_vec()).map_err(Into::into)
+    fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object, Error> {
+        String::from_utf8(bytes.to_vec()).map_err(|_| {
+            Error::InvalidSerializedBytes(String::from("invalid UTF-8 byte sequence."))
+        })
     }
 }
 
@@ -76,8 +79,6 @@ impl DeserializerOf<String> for () {
 
 #[cfg(test)]
 mod tests {
-    use std::string::FromUtf8Error;
-
     use super::*;
 
     #[test]
@@ -123,7 +124,7 @@ mod tests {
 
             let serialized = &[0xFFu8, 0xFFu8, 0xFFu8];
             assert!(if let Err(e) = deserializer.deserialize(serialized) {
-                e.downcast_ref::<FromUtf8Error>().is_some()
+                format!("{}", e).contains("invalid UTF-8 byte sequence")
             } else {
                 false
             });
