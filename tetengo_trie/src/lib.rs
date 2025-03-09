@@ -4,6 +4,7 @@
 #![doc = include_str!("../tests/usage.rs")]
 #![doc = "```"]
 
+pub mod error;
 pub mod file_mapping;
 pub mod integer_serializer;
 pub mod memory_storage;
@@ -20,6 +21,7 @@ mod double_array;
 mod double_array_builder;
 mod double_array_iterator;
 
+pub use error::Error;
 pub use file_mapping::{FileMapping, FileMappingError};
 pub use integer_serializer::{IntegerDeserializer, IntegerSerializer};
 pub use memory_storage::MemoryStorage;
