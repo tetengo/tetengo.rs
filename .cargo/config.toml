@@ -58,5 +58,5 @@ rustflags = [
     "-D", "unused-macro-rules",
     "-D", "unused-qualifications",
     "-D", "unused-results",
-#    "-D", "variant-size-differences",
+    "-D", "variant-size-differences",
 ]

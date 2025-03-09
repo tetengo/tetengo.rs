@@ -6,34 +6,53 @@
 
 use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
-use std::io::{self, BufRead, Lines};
-use std::num::ParseIntError;
+use std::io::{BufRead, Lines};
 use std::rc::Rc;
+
+use anyhow::Result;
 
 use tetengo_lattice::{Entry, HashMapVocabulary, StringInput, Vocabulary};
 
 /**
  * A timetable error.
  */
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Copy, Debug, thiserror::Error)]
 pub(crate) enum TimetableError {
     /**
-     * Timetable parse error.
+     * Unexpected end of file.
      */
-    #[error("timetable parsing failed: {0}")]
-    TimetableParsingFailed(String),
+    #[error("unexpected end of file")]
+    UnexpectedEndOfFile,
 
     /**
-     * IO error.
+     * Station names and telegram codes unmatch.
      */
-    #[error("io error: {0}")]
-    IoError(#[from] io::Error),
+    #[error("station names and telegram codes unmatch")]
+    StationNamesAndTelegramCodesUnmatch,
 
     /**
-     * Parse error.
+     * Invalid train line found.
      */
-    #[error("parse int error: {0}")]
-    ParseIntError(#[from] ParseIntError),
+    #[error("invalid train line found")]
+    InvalidTrainLineFound,
+
+    /**
+     * Invalid arrival/departure time found.
+     */
+    #[error("invalid arrival/departure time found")]
+    InvalidArrivalOrDepartureTimeFound,
+
+    /**
+     * Invalid time found.
+     */
+    #[error("invalid time found")]
+    InvalidTimeFound,
+
+    /**
+     * Both arrival and departure time not found.
+     */
+    #[error("both arrival and departure time not found")]
+    BothArrivalAndDepartureTimeNotFound,
 }
 
 /**
@@ -295,27 +314,27 @@ impl Timetable {
      * # Arguments
      * * `reader` - A reader.
      */
-    pub(crate) fn new(reader: Box<dyn BufRead>) -> Result<Self, TimetableError> {
+    pub(crate) fn new(reader: Box<dyn BufRead>) -> Result<Self> {
         Ok(Self {
             value: Self::build_timetable(reader)?,
         })
     }
 
-    fn build_timetable(mut reader: Box<dyn BufRead>) -> Result<TimetableValue, TimetableError> {
+    fn build_timetable(mut reader: Box<dyn BufRead>) -> Result<TimetableValue> {
         let mut value = Self::parse_input(reader.as_mut())?;
         Self::guess_arrival_times(&mut value)?;
         Ok(value)
     }
 
-    fn parse_input(reader: &mut dyn BufRead) -> Result<TimetableValue, TimetableError> {
+    fn parse_input(reader: &mut dyn BufRead) -> Result<TimetableValue> {
         let mut lines = reader.lines();
 
         let stations = {
             let Some(line1) = Self::read_line(&mut lines)? else {
-                return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
+                return Err(TimetableError::UnexpectedEndOfFile.into());
             };
             let Some(line2) = Self::read_line(&mut lines)? else {
-                return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
+                return Err(TimetableError::UnexpectedEndOfFile.into());
             };
             Self::parse_stations(line1, line2)?
         };
@@ -334,9 +353,7 @@ impl Timetable {
         Ok(TimetableValue::new(stations, trains))
     }
 
-    fn read_line(
-        lines: &mut Lines<&mut dyn BufRead>,
-    ) -> Result<Option<Vec<String>>, TimetableError> {
+    fn read_line(lines: &mut Lines<&mut dyn BufRead>) -> Result<Option<Vec<String>>> {
         let Some(line) = lines.next() else {
             return Ok(None);
         };
@@ -348,14 +365,9 @@ impl Timetable {
         Ok(Some(elements))
     }
 
-    fn parse_stations(
-        line1: Vec<String>,
-        line2: Vec<String>,
-    ) -> Result<Vec<Station>, TimetableError> {
+    fn parse_stations(line1: Vec<String>, line2: Vec<String>) -> Result<Vec<Station>> {
         if line1.len() != line2.len() {
-            return Err(TimetableError::TimetableParsingFailed(String::from(
-                "Station names and telegram codes unmatch.",
-            )));
+            return Err(TimetableError::StationNamesAndTelegramCodesUnmatch.into());
         }
         let stations = line1
             .into_iter()
@@ -366,11 +378,9 @@ impl Timetable {
         Ok(stations)
     }
 
-    fn parse_train(mut line: Vec<String>, station_count: usize) -> Result<Train, TimetableError> {
+    fn parse_train(mut line: Vec<String>, station_count: usize) -> Result<Train> {
         if line.len() > station_count + 2 {
-            return Err(TimetableError::TimetableParsingFailed(String::from(
-                "Invalid train line.",
-            )));
+            return Err(TimetableError::InvalidTrainLineFound.into());
         }
         line.resize(station_count + 2, String::new());
         let number = line[0].clone();
@@ -379,19 +389,17 @@ impl Timetable {
             .into_iter()
             .skip(2)
             .map(Self::to_stop)
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Vec<_>>>()?;
         Ok(Train::new(number, name, stops))
     }
 
-    fn to_stop(element: String) -> Result<Stop, TimetableError> {
+    fn to_stop(element: String) -> Result<Stop> {
         let string_times = element
             .split('/')
             .map(|e| e.trim().to_string())
             .collect::<Vec<_>>();
         if string_times.is_empty() || string_times.len() > 2 {
-            Err(TimetableError::TimetableParsingFailed(String::from(
-                "Invalid arrival or departure time.",
-            )))
+            Err(TimetableError::InvalidArrivalOrDepartureTimeFound.into())
         } else if string_times.len() == 1 {
             Ok(Stop::new(None, Self::to_minutes(string_times[0].as_str())?))
         } else {
@@ -402,7 +410,7 @@ impl Timetable {
         }
     }
 
-    fn to_minutes(string_time: &str) -> Result<Option<usize>, TimetableError> {
+    fn to_minutes(string_time: &str) -> Result<Option<usize>> {
         if string_time.is_empty() || string_time == "-" {
             return Ok(None);
         }
@@ -410,14 +418,12 @@ impl Timetable {
         let hour = int_time / 100;
         let minute = int_time - hour * 100;
         if hour >= 24 || minute >= 60 {
-            return Err(TimetableError::TimetableParsingFailed(String::from(
-                "Invalid time.",
-            )));
+            return Err(TimetableError::InvalidTimeFound.into());
         }
         Ok(Some(hour * 60 + minute))
     }
 
-    fn guess_arrival_times(value: &mut TimetableValue) -> Result<(), TimetableError> {
+    fn guess_arrival_times(value: &mut TimetableValue) -> Result<()> {
         for from in 0..value.stations.len() - 1 {
             for to in from + 1..value.stations.len() {
                 let minimum_duration = Self::minimum_duration(value.trains.as_ref(), from, to)?;
@@ -427,9 +433,7 @@ impl Timetable {
                     }
                     if train.stops()[to].arrival_time().is_none() {
                         let Some(from_departure_time) = train.stops()[from].departure_time() else {
-                            return Err(TimetableError::TimetableParsingFailed(String::from(
-                                "Neither arrival nor departure time.",
-                            )));
+                            return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
                         };
                         train.stops_mut()[to].set_arrival_time(Self::add_time(
                             from_departure_time,
@@ -437,9 +441,7 @@ impl Timetable {
                         ));
                     } else if train.stops()[from].departure_time().is_none() {
                         let Some(to_arrival_time) = train.stops()[to].arrival_time() else {
-                            return Err(TimetableError::TimetableParsingFailed(String::from(
-                                "Neither arrival nor departure time.",
-                            )));
+                            return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
                         };
                         train.stops_mut()[from]
                             .set_departure_time(Self::add_time(to_arrival_time, -minimum_duration));
@@ -450,7 +452,7 @@ impl Timetable {
         Ok(())
     }
 
-    fn minimum_duration(trains: &[Train], from: usize, to: usize) -> Result<isize, TimetableError> {
+    fn minimum_duration(trains: &[Train], from: usize, to: usize) -> Result<isize> {
         let mut minimum = isize::MAX;
         for train in trains {
             if !Self::all_passing(train.stops(), from, to) {
@@ -461,18 +463,14 @@ impl Timetable {
             } else if let Some(arrival_time) = train.stops()[from].arrival_time() {
                 arrival_time
             } else {
-                return Err(TimetableError::TimetableParsingFailed(String::from(
-                    "Neither arrival nor departure time.",
-                )));
+                return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
             };
             let to_time = if let Some(arrival_time) = train.stops()[to].arrival_time() {
                 arrival_time
             } else if let Some(departure_time) = train.stops()[to].departure_time() {
                 departure_time
             } else {
-                return Err(TimetableError::TimetableParsingFailed(String::from(
-                    "Neither arrival nor departure time.",
-                )));
+                return Err(TimetableError::BothArrivalAndDepartureTimeNotFound.into());
             };
             let duration = Self::diff_time(to_time, from_time);
             if duration < minimum {
