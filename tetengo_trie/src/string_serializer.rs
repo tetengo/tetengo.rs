@@ -4,8 +4,6 @@
  * Copyright (C) 2023-2025 kaoru  <https://www.tetengo.org/>
  */
 
-use anyhow::Result;
-
 use crate::error::Error;
 use crate::serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 
