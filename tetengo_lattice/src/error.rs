@@ -20,6 +20,12 @@ pub enum Error {
     MismatchConcreteType,
 
     /**
+     * A BOS or EOS entry is not allowed.
+     */
+    #[error("BOS or EOS entry is not allowed")]
+    BosOrEosEntryNotAllowed,
+
+    /**
      * An I/O error.
      */
     #[error("io error: {0}")]

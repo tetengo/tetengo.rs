@@ -8,22 +8,9 @@ use std::any::Any;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use anyhow::Result;
-
 use crate::entry::Entry;
+use crate::error::Error;
 use crate::input::Input;
-
-/**
- * A node error.
- */
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub enum NodeError {
-    /**
-     * A BOS or EOS entry is not allowed.
-     */
-    #[error("BOS or EOS entry is not allowed")]
-    BosOrEosEntryNotAllowed,
-}
 
 /**
  * A BOS (Beginning of Sequence) node.
@@ -176,9 +163,9 @@ impl Node {
         preceding_edge_costs: Rc<Vec<i32>>,
         best_preceding_node: usize,
         path_cost: i32,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         if entry.is_bos_eos() {
-            return Err(NodeError::BosOrEosEntryNotAllowed.into());
+            return Err(Error::BosOrEosEntryNotAllowed);
         }
         Ok(Node::Middle(Middle {
             entry,

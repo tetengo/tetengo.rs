@@ -29,7 +29,7 @@ pub use hash_map_vocabulary::HashMapVocabulary;
 pub use input::Input;
 pub use lattice::Lattice;
 pub use n_best_iterator::NBestIterator;
-pub use node::{Node, NodeError};
+pub use node::Node;
 pub use node_constraint_element::NodeConstraintElement;
 pub use path::Path;
 pub use string_input::StringInput;
