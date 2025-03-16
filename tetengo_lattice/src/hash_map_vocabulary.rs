@@ -14,6 +14,7 @@ use anyhow::Result;
 
 use crate::connection::Connection;
 use crate::entry::Entry;
+use crate::error::Error;
 use crate::node::Node;
 use crate::string_input::StringInput;
 use crate::vocabulary::Vocabulary;
@@ -144,7 +145,7 @@ impl<'a> HashMapVocabulary<'a> {
 }
 
 impl Vocabulary for HashMapVocabulary<'_> {
-    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<Rc<Entry>>> {
+    fn find_entries(&self, key: &dyn crate::Input) -> Result<Vec<Rc<Entry>>, Error> {
         let Some(key) = key.downcast_ref::<StringInput>() else {
             return Ok(Vec::new());
         };
@@ -155,7 +156,7 @@ impl Vocabulary for HashMapVocabulary<'_> {
         Ok(found.clone())
     }
 
-    fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection> {
+    fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection, Error> {
         let from_entry = from.entry().as_ref().clone();
         let key = (
             HashableEntry::new(from_entry, self.entry_hash_value, self.entry_equal),
