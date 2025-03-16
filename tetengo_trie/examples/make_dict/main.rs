@@ -11,11 +11,21 @@ use std::io::{BufRead, BufReader, BufWriter};
 use std::path::Path;
 use std::process::exit;
 
-use anyhow::Result;
-
 use tetengo_trie::{
     BuldingObserverSet, Error, Serializer, StringSerializer, Trie, ValueSerializer,
 };
+
+#[derive(Debug, thiserror::Error)]
+enum DictMakingError {
+    #[error("invalid UniDic lex.csv format.")]
+    InvalidUnidicLexCsvFormat,
+
+    #[error("tetengo trie error: {0}")]
+    TetengoTrieError(#[from] Error),
+
+    #[error("io error: {0}")]
+    IoError(#[from] std::io::Error),
+}
 
 fn main() {
     if let Err(e) = main_core() {
@@ -24,7 +34,7 @@ fn main() {
     }
 }
 
-fn main_core() -> Result<()> {
+fn main_core() -> Result<(), DictMakingError> {
     let args = env::args().collect::<Vec<_>>();
     if args.len() <= 2 {
         eprintln!("Usage: make_dict UniDic_lex.csv trie.bin");
@@ -38,15 +48,9 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, thiserror::Error)]
-enum DictMakingError {
-    #[error("Invalid UniDic lex.csv format.")]
-    InvalidUnidicLexCsvFormat,
-}
-
 type WordOffsetMap = HashMap<String, Vec<(usize, usize)>>;
 
-fn load_lex_csv(lex_csv_path: &Path) -> Result<WordOffsetMap> {
+fn load_lex_csv(lex_csv_path: &Path) -> Result<WordOffsetMap, DictMakingError> {
     let file = File::open(lex_csv_path)?;
 
     let mut word_offset_map = WordOffsetMap::new();
@@ -57,7 +61,7 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<WordOffsetMap> {
     for (i, line) in buf_reader.lines().enumerate() {
         let Ok(line) = line else {
             eprintln!("{:8}: Can't read this line.", i);
-            return Err(DictMakingError::InvalidUnidicLexCsvFormat.into());
+            return Err(DictMakingError::InvalidUnidicLexCsvFormat);
         };
         if line.is_empty() {
             line_head += line.len() + 1;
@@ -66,7 +70,7 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<WordOffsetMap> {
         let elements = split(&line, ',');
         if elements.len() != 33 {
             eprintln!("{:8}: {}", i, elements[0]);
-            return Err(DictMakingError::InvalidUnidicLexCsvFormat.into());
+            return Err(DictMakingError::InvalidUnidicLexCsvFormat);
         }
 
         if elements[16] == "記号" && elements[23] == "補助" {
@@ -164,7 +168,7 @@ fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie, Error> {
 
 const SERIALIZED_VALUE_SIZE: usize = size_of::<u32>() * (1 + 4 * 2);
 
-fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<()> {
+fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<(), DictMakingError> {
     eprintln!("Serializing trie...");
     let file = File::create(trie_bin_path)?;
     let mut buf_writer = BufWriter::new(file);
