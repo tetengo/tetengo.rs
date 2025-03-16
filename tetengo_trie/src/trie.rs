@@ -557,9 +557,7 @@ mod tests {
             let mut value_deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER
-                    .deserialize(serialized)
-                    .map_err(Into::into)
+                STRING_DESERIALIZER.deserialize(serialized)
             }));
             let storage = Box::new(
                 MemoryStorage::new_with_reader(&mut reader, &mut value_deserializer).unwrap(),
@@ -572,9 +570,7 @@ mod tests {
             let mut value_deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER
-                    .deserialize(serialized)
-                    .map_err(Into::into)
+                STRING_DESERIALIZER.deserialize(serialized)
             }));
             let storage = Box::new(
                 MemoryStorage::new_with_reader(&mut reader, &mut value_deserializer).unwrap(),
@@ -860,9 +856,7 @@ mod tests {
             let mut value_deserializer = ValueDeserializer::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER
-                    .deserialize(serialized)
-                    .map_err(Into::into)
+                STRING_DESERIALIZER.deserialize(serialized)
             }));
             let storage = Box::new(
                 MemoryStorage::new_with_reader(&mut reader, &mut value_deserializer).unwrap(),

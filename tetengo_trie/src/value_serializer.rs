@@ -211,9 +211,7 @@ mod tests {
         fn new() {
             {
                 let _deserializer = ValueDeserializer::new(Box::new(|serialized: &[u8]| {
-                    IntegerDeserializer::<i32>::new(false)
-                        .deserialize(serialized)
-                        .map_err(Into::into)
+                    IntegerDeserializer::<i32>::new(false).deserialize(serialized)
                 }));
             }
             {
@@ -226,9 +224,7 @@ mod tests {
         fn deserialize() {
             {
                 let mut deserializer = ValueDeserializer::new(Box::new(|serialized: &[u8]| {
-                    IntegerDeserializer::<i32>::new(false)
-                        .deserialize(serialized)
-                        .map_err(Into::into)
+                    IntegerDeserializer::<i32>::new(false).deserialize(serialized)
                 }));
 
                 let expected = 42;

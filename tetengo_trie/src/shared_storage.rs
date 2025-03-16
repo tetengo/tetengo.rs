@@ -190,9 +190,7 @@ mod tests {
             let mut deserializer = ValueDeserializer::<String>::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER
-                    .deserialize(serialized)
-                    .map_err(Into::into)
+                STRING_DESERIALIZER.deserialize(serialized)
             }));
             let storage = SharedStorage::new_with_reader(&mut reader, &mut deserializer).unwrap();
 
@@ -206,9 +204,7 @@ mod tests {
             let mut deserializer = ValueDeserializer::<String>::new(Box::new(|serialized| {
                 static STRING_DESERIALIZER: LazyLock<StringDeserializer> =
                     LazyLock::new(|| StringDeserializer::new(false));
-                STRING_DESERIALIZER
-                    .deserialize(serialized)
-                    .map_err(Into::into)
+                STRING_DESERIALIZER.deserialize(serialized)
             }));
             let result = SharedStorage::new_with_reader(&mut reader, &mut deserializer);
             assert!(result.is_err());
