@@ -10,8 +10,6 @@ use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 
-use anyhow::Result;
-
 use crate::connection::Connection;
 use crate::entry::Entry;
 use crate::error::Error;
