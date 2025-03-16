@@ -7,7 +7,7 @@
 use std::any::type_name_of_val;
 use std::fmt::{self, Debug, Formatter};
 
-use anyhow::Result;
+use crate::error::Error;
 
 /**
  * A serialize function type
@@ -76,7 +76,7 @@ impl<Value: ?Sized> Debug for ValueSerializer<'_, Value> {
 /**
  * A deserialize function type
  */
-pub type Deserialize<Value> = Box<dyn FnMut(&[u8]) -> Result<Value>>;
+pub type Deserialize<Value> = Box<dyn FnMut(&[u8]) -> Result<Value, Error>>;
 
 /**
  * A value deserializer.
@@ -111,7 +111,7 @@ impl<Value: Clone> ValueDeserializer<Value> {
      * # Errors
      * * When it fails to deserialize the value.
      */
-    pub fn deserialize(&mut self, serialized: &[u8]) -> Result<Value> {
+    pub fn deserialize(&mut self, serialized: &[u8]) -> Result<Value, Error> {
         (self.deserialize)(serialized)
     }
 }
