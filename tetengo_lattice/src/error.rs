@@ -26,6 +26,23 @@ pub enum Error {
     BosOrEosEntryNotAllowed,
 
     /**
+     * The step is too large.
+     */
+    #[error("the step is too large")]
+    StepIsTooLarge,
+
+    /**
+     * No node is found for the input.
+     */
+    #[error("no node is found for the input")]
+    NoNodeIsFoundForTheInput,
+
+    /**
+     * No input.
+     */
+    #[error("no input")]
+    NoInput,
+    /**
      * An I/O error.
      */
     #[error("io error: {0}")]

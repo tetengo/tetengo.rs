@@ -7,36 +7,11 @@
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use anyhow::Result;
-
 use crate::entry::Entry;
+use crate::error::Error;
 use crate::input::Input;
 use crate::node::Node;
 use crate::vocabulary::Vocabulary;
-
-/**
- * A lattice error.
- */
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub enum LatticeError {
-    /**
-     * The step is too large.
-     */
-    #[error("The step is too large.")]
-    StepIsTooLarge,
-
-    /**
-     * No node is found for the input.
-     */
-    #[error("No node is found for the input.")]
-    NoNodeIsFoundForTheInput,
-
-    /**
-     * No input.
-     */
-    #[error("No input.")]
-    NoInput,
-}
 
 #[derive(Debug)]
 struct GraphStep {
@@ -112,9 +87,9 @@ impl<'a> Lattice<'a> {
      * # Errors
      * * When step is too large.
      */
-    pub fn nodes_at(&self, step: usize) -> Result<&[Node]> {
+    pub fn nodes_at(&self, step: usize) -> Result<&[Node], Error> {
         if step >= self.graph.len() {
-            Err(LatticeError::StepIsTooLarge.into())
+            Err(Error::StepIsTooLarge)
         } else {
             Ok(self.graph[step].nodes.as_slice())
         }
@@ -129,7 +104,7 @@ impl<'a> Lattice<'a> {
      * # Errors
      * * When no node is found for the input.
      */
-    pub fn push_back(&mut self, input: Box<dyn Input>) -> Result<()> {
+    pub fn push_back(&mut self, input: Box<dyn Input>) -> Result<(), Error> {
         if let Some(self_input) = &mut self.input {
             self_input.append(input)?;
         } else {
@@ -178,7 +153,7 @@ impl<'a> Lattice<'a> {
             }
         }
         if nodes.is_empty() {
-            return Err(LatticeError::NoNodeIsFoundForTheInput.into());
+            return Err(Error::NoNodeIsFoundForTheInput);
         }
 
         self.graph.push(GraphStep::new(self_input.length(), nodes));
@@ -198,9 +173,9 @@ impl<'a> Lattice<'a> {
      * # Errors
      * * When no input pushed yet.
      */
-    pub fn settle(&mut self) -> Result<Node> {
+    pub fn settle(&mut self) -> Result<Node, Error> {
         let Some(graph_last) = self.graph.last() else {
-            return Err(LatticeError::NoInput.into());
+            return Err(Error::NoInput);
         };
         let preceding_edge_costs = self.preceding_edge_costs(graph_last, &Entry::BosEos)?;
         let best_preceding_node_index =
@@ -219,7 +194,11 @@ impl<'a> Lattice<'a> {
         Ok(eos_node)
     }
 
-    fn preceding_edge_costs(&self, step: &GraphStep, next_entry: &Entry) -> Result<Rc<Vec<i32>>> {
+    fn preceding_edge_costs(
+        &self,
+        step: &GraphStep,
+        next_entry: &Entry,
+    ) -> Result<Rc<Vec<i32>>, Error> {
         assert!(!step.nodes().is_empty());
         let mut costs = Vec::with_capacity(step.nodes().len());
         for node in step.nodes() {

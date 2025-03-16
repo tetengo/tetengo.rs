@@ -17,7 +17,7 @@ use tetengo_trie::{
 
 #[derive(Debug, thiserror::Error)]
 enum DictMakingError {
-    #[error("invalid UniDic lex.csv format.")]
+    #[error("invalid UniDic lex.csv format")]
     InvalidUnidicLexCsvFormat,
 
     #[error("tetengo trie error: {0}")]
