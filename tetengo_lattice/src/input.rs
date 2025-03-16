@@ -7,25 +7,7 @@
 use std::any::Any;
 use std::fmt::Debug;
 
-use anyhow::Result;
-
-/**
- * An input error.
- */
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub enum InputError {
-    /**
-     * The range is out of the bounds.
-     */
-    #[error("range out of bounds")]
-    RangeOutOfBounds,
-
-    /**
-     * Mismatch concrete type.
-     */
-    #[error("mismatch concrete type")]
-    MismatchConcreteType,
-}
+use crate::error::Error;
 
 /**
  * An input.
@@ -71,7 +53,7 @@ pub trait Input: Debug + 'static {
      * # Errors
      * * When `offset` and/or `length` are out of the range of the input.
      */
-    fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>>;
+    fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>, Error>;
 
     /**
      * Appends another input.
@@ -82,7 +64,7 @@ pub trait Input: Debug + 'static {
      * # Errors
      * * When `another` is `None` or its type does not match.
      */
-    fn append(&mut self, another: Box<dyn Input>) -> Result<()>;
+    fn append(&mut self, another: Box<dyn Input>) -> Result<(), Error>;
 
     /**
      * Returns this object as 'Any'.
@@ -153,11 +135,11 @@ mod tests {
             unimplemented!()
         }
 
-        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>> {
+        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>, Error> {
             unimplemented!()
         }
 
-        fn append(&mut self, _: Box<dyn Input>) -> Result<()> {
+        fn append(&mut self, _: Box<dyn Input>) -> Result<(), Error> {
             unimplemented!()
         }
 
@@ -186,11 +168,11 @@ mod tests {
             unimplemented!()
         }
 
-        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>> {
+        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>, Error> {
             unimplemented!()
         }
 
-        fn append(&mut self, _: Box<dyn Input>) -> Result<()> {
+        fn append(&mut self, _: Box<dyn Input>) -> Result<(), Error> {
             unimplemented!()
         }
 

@@ -26,7 +26,7 @@ pub use constraint_element::ConstraintElement;
 pub use entry::Entry;
 pub use error::Error;
 pub use hash_map_vocabulary::HashMapVocabulary;
-pub use input::{Input, InputError};
+pub use input::Input;
 pub use lattice::Lattice;
 pub use n_best_iterator::NBestIterator;
 pub use node::{Node, NodeError};

@@ -7,11 +7,18 @@
  */
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    // /**
-    //  * An invalid density factor.
-    //  */
-    // #[error("invalid density factor")]
-    // InvalidDensityFactor,
+    /**
+     * Range out of bounds.
+     */
+    #[error("range out of bounds")]
+    RangeOutOfBounds,
+
+    /**
+     * Mismatch concrete type.
+     */
+    #[error("mismatch concrete type")]
+    MismatchConcreteType,
+
     /**
      * An I/O error.
      */
