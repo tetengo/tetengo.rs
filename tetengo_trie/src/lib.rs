@@ -28,7 +28,7 @@ pub use memory_storage::MemoryStorage;
 pub use mmap_storage::MmapStorage;
 pub use serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 pub use shared_storage::SharedStorage;
-pub use storage::{Storage, StorageError};
+pub use storage::Storage;
 pub use string_serializer::{StrSerializer, StringDeserializer, StringSerializer};
 pub use trie::{BuldingObserverSet, Trie};
 pub use trie_iterator::TrieIterator;

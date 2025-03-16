@@ -14,6 +14,12 @@ pub enum Error {
     InvalidSerializedBytes(String),
 
     /**
+     * An invalid density factor.
+     */
+    #[error("invalid density factor")]
+    InvalidDensityFactor,
+
+    /**
      * An I/O error.
      */
     #[error("io error: {0}")]

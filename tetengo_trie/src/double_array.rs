@@ -14,12 +14,6 @@ use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
 use crate::storage::Storage;
 
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub(super) enum DoubleArrayError {
-    #[error("density_factor must be greater than 0.")]
-    InvalidDensityFactor,
-}
-
 pub(super) type DoubleArrayElement<'a> = (&'a [u8], i32);
 
 pub(super) struct BuildingObserverSet<'a> {

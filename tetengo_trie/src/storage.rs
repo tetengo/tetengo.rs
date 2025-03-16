@@ -5,18 +5,12 @@
  */
 
 use std::any::Any;
-use std::error;
 use std::fmt::Debug;
 use std::io::Write;
 use std::rc::Rc;
 
 use crate::error::Error;
 use crate::value_serializer::ValueSerializer;
-
-/**
- * A storage error.
- */
-pub trait StorageError: error::Error {}
 
 /**
  * A storage.
