@@ -3,22 +3,12 @@
  */
 
 use std::fs::File;
+use std::io::{self, ErrorKind};
 use std::ops::Range;
 
-use anyhow::Result;
 use memmap2::Mmap;
 
-/**
- * A file mapping error.
- */
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub enum FileMappingError {
-    /**
-     * The range is out of the mmap.
-     */
-    #[error("the range is out of the mmap")]
-    RangeOutOfMmap,
-}
+use crate::error::Error;
 
 /**
  * A file mapping.
@@ -39,7 +29,7 @@ impl FileMapping {
      * # Errors
      * * When it fails to memory-map the file.
      */
-    pub fn new(file: File) -> Result<Self> {
+    pub fn new(file: File) -> Result<Self, Error> {
         let mmap = unsafe { Mmap::map(&file)? };
         Ok(Self { file, mmap })
     }
@@ -76,10 +66,10 @@ impl FileMapping {
      * # Errors
      * * When the range is out of the mmap.
      */
-    pub fn region(&self, range: Range<usize>) -> Result<&[u8]> {
+    pub fn region(&self, range: Range<usize>) -> Result<&[u8], Error> {
         self.mmap
             .get(range)
-            .ok_or(FileMappingError::RangeOutOfMmap.into())
+            .ok_or(io::Error::from(ErrorKind::InvalidInput).into())
     }
 }
 

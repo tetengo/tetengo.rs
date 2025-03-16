@@ -22,7 +22,7 @@ mod double_array_builder;
 mod double_array_iterator;
 
 pub use error::Error;
-pub use file_mapping::{FileMapping, FileMappingError};
+pub use file_mapping::FileMapping;
 pub use integer_serializer::{IntegerDeserializer, IntegerSerializer};
 pub use memory_storage::MemoryStorage;
 pub use mmap_storage::{MmapStorage, MmapStorageError};

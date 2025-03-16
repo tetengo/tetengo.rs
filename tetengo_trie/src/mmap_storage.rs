@@ -220,6 +220,7 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
 
         self.file_mapping
             .region(self.content_offset + offset..self.content_offset + offset + size)
+            .map_err(Into::into)
     }
     fn read_u32(&self, offset: usize) -> Result<u32> {
         static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
