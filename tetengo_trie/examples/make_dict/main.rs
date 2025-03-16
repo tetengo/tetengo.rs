@@ -13,7 +13,9 @@ use std::process::exit;
 
 use anyhow::Result;
 
-use tetengo_trie::{BuldingObserverSet, Serializer, StringSerializer, Trie, ValueSerializer};
+use tetengo_trie::{
+    BuldingObserverSet, Error, Serializer, StringSerializer, Trie, ValueSerializer,
+};
 
 fn main() {
     if let Err(e) = main_core() {
@@ -139,7 +141,7 @@ fn insert_word_offset_to_map(key: &str, offset: usize, length: usize, map: &mut 
 
 type DictTrie = Trie<String, Vec<(usize, usize)>>;
 
-fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie> {
+fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie, Error> {
     eprintln!("Building trie...");
     let mut word_offset_vector = word_offset_map.into_iter().collect::<Vec<_>>();
     word_offset_vector.sort();
