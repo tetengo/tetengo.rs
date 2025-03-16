@@ -7,6 +7,7 @@
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
+use std::io;
 use std::io::{BufRead, BufReader, BufWriter};
 use std::path::Path;
 use std::process::exit;
@@ -24,7 +25,7 @@ enum DictMakingError {
     TetengoTrieError(#[from] Error),
 
     #[error("io error: {0}")]
-    IoError(#[from] std::io::Error),
+    IoError(#[from] io::Error),
 }
 
 fn main() {

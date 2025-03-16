@@ -2,6 +2,8 @@
  * An error.
  */
 
+use std::io;
+
 /**
  * An error.
  */
@@ -42,9 +44,10 @@ pub enum Error {
      */
     #[error("no input")]
     NoInput,
+
     /**
      * An I/O error.
      */
     #[error("io error: {0}")]
-    IoError(#[from] std::io::Error),
+    IoError(#[from] io::Error),
 }
