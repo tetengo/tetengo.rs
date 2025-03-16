@@ -15,6 +15,7 @@ use anyhow::Result;
 use hashlink::LinkedHashMap;
 use tempfile as _;
 
+use crate::error::Error;
 use crate::file_mapping::FileMapping;
 use crate::integer_serializer::IntegerDeserializer;
 use crate::serializer::Deserializer;
@@ -232,35 +233,36 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
 }
 
 impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
-    fn base_check_size(&self) -> Result<usize> {
-        self.read_u32(0).map(|v| v as usize)
+    fn base_check_size(&self) -> Result<usize, Error> {
+        self.read_u32(0).map(|v| v as usize).map_err(Into::into)
     }
 
-    fn base_at(&self, base_check_index: usize) -> Result<i32> {
+    fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
         let base_check = self.read_u32(size_of::<u32>() * (1 + base_check_index))?;
         Ok((base_check as i32) >> 8)
     }
 
-    fn set_base_at(&mut self, _: usize, _: i32) -> Result<()> {
+    fn set_base_at(&mut self, _: usize, _: i32) -> Result<(), Error> {
         unreachable!("Unsupported operation.");
     }
 
-    fn check_at(&self, base_check_index: usize) -> Result<u8> {
+    fn check_at(&self, base_check_index: usize) -> Result<u8, Error> {
         let base_check = self.read_u32(size_of::<u32>() * (1 + base_check_index))?;
         Ok((base_check & 0xFF) as u8)
     }
 
-    fn set_check_at(&mut self, _: usize, _: u8) -> Result<()> {
+    fn set_check_at(&mut self, _: usize, _: u8) -> Result<(), Error> {
         unreachable!("Unsupported operation.");
     }
 
-    fn value_count(&self) -> Result<usize> {
+    fn value_count(&self) -> Result<usize, Error> {
         let base_check_count = self.base_check_size()?;
         self.read_u32(size_of::<u32>() * (1 + base_check_count))
             .map(|v| v as usize)
+            .map_err(Into::into)
     }
 
-    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>> {
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>, Error> {
         self.ensure_value_cached(value_index)?;
         let mut cache_ref = self.value_cache.borrow_mut();
         let Some(value) = cache_ref.at(value_index) else {
@@ -269,11 +271,11 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
         Ok(value.clone())
     }
 
-    fn add_value_at(&mut self, _: usize, _: Value) -> Result<()> {
+    fn add_value_at(&mut self, _: usize, _: Value) -> Result<(), Error> {
         unreachable!("Unsupported operation.");
     }
 
-    fn filling_rate(&self) -> Result<f64> {
+    fn filling_rate(&self) -> Result<f64, Error> {
         let base_check_count = self.base_check_size()?;
         let mut empty_count = 0usize;
         for i in 0..base_check_count {
@@ -285,7 +287,11 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
         Ok(1.0 - (empty_count as f64) / (base_check_count as f64))
     }
 
-    fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<'_, Value>) -> Result<()> {
+    fn serialize(
+        &self,
+        _: &mut dyn Write,
+        _: &mut ValueSerializer<'_, Value>,
+    ) -> Result<(), Error> {
         unreachable!("Unsupported operation.");
     }
 

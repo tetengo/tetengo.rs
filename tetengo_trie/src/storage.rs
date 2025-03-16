@@ -10,8 +10,7 @@ use std::fmt::Debug;
 use std::io::Write;
 use std::rc::Rc;
 
-use anyhow::Result;
-
+use crate::error::Error;
 use crate::value_serializer::ValueSerializer;
 
 /**
@@ -35,7 +34,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to read the base-check size.
      */
-    fn base_check_size(&self) -> Result<usize>;
+    fn base_check_size(&self) -> Result<usize, Error>;
 
     /**
      * Returns the base value.
@@ -49,7 +48,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to read the base value.
      */
-    fn base_at(&self, base_check_index: usize) -> Result<i32>;
+    fn base_at(&self, base_check_index: usize) -> Result<i32, Error>;
 
     /**
      * Sets a base value.
@@ -61,7 +60,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to write the base value.
      */
-    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()>;
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<(), Error>;
 
     /**
      * Return the check value.
@@ -75,7 +74,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to read the check value.
      */
-    fn check_at(&self, base_check_index: usize) -> Result<u8>;
+    fn check_at(&self, base_check_index: usize) -> Result<u8, Error>;
 
     /**
      * Sets a check value.
@@ -87,7 +86,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to write the check value.
      */
-    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()>;
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<(), Error>;
 
     /**
      * Returns the value count.
@@ -98,7 +97,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to read the value count.
      */
-    fn value_count(&self) -> Result<usize>;
+    fn value_count(&self) -> Result<usize, Error>;
 
     /**
      * Returns the value object.
@@ -112,7 +111,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to read the value object.
      */
-    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>>;
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>, Error>;
 
     /**
      * Adds a value object.
@@ -124,7 +123,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to write the value object.
      */
-    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()>;
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<(), Error>;
 
     /**
      * Returns the filling rate.
@@ -135,7 +134,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
      * # Errors
      * * When it fails to calculate the filling rate.
      */
-    fn filling_rate(&self) -> Result<f64>;
+    fn filling_rate(&self) -> Result<f64, Error>;
 
     /**
      * Serializes this storage.
@@ -151,7 +150,7 @@ pub trait Storage<Value: 'static>: Debug + 'static {
         &self,
         writer: &mut dyn Write,
         value_serializer: &mut ValueSerializer<'_, Value>,
-    ) -> Result<()>;
+    ) -> Result<(), Error>;
 
     /**
      * Clones this storage as `Box`.
@@ -218,43 +217,47 @@ mod tests {
     struct ConcreteStorage1;
 
     impl Storage<i32> for ConcreteStorage1 {
-        fn base_check_size(&self) -> Result<usize> {
+        fn base_check_size(&self) -> Result<usize, Error> {
             unimplemented!()
         }
 
-        fn base_at(&self, _: usize) -> Result<i32> {
+        fn base_at(&self, _: usize) -> Result<i32, Error> {
             unimplemented!()
         }
 
-        fn set_base_at(&mut self, _: usize, _: i32) -> Result<()> {
+        fn set_base_at(&mut self, _: usize, _: i32) -> Result<(), Error> {
             unimplemented!()
         }
 
-        fn check_at(&self, _: usize) -> Result<u8> {
+        fn check_at(&self, _: usize) -> Result<u8, Error> {
             unimplemented!()
         }
 
-        fn set_check_at(&mut self, _: usize, _: u8) -> Result<()> {
+        fn set_check_at(&mut self, _: usize, _: u8) -> Result<(), Error> {
             unimplemented!()
         }
 
-        fn value_count(&self) -> Result<usize> {
+        fn value_count(&self) -> Result<usize, Error> {
             unimplemented!()
         }
 
-        fn value_at(&self, _: usize) -> Result<Option<Rc<i32>>> {
+        fn value_at(&self, _: usize) -> Result<Option<Rc<i32>>, Error> {
             unimplemented!()
         }
 
-        fn add_value_at(&mut self, _: usize, _: i32) -> Result<()> {
+        fn add_value_at(&mut self, _: usize, _: i32) -> Result<(), Error> {
             unimplemented!()
         }
 
-        fn filling_rate(&self) -> Result<f64> {
+        fn filling_rate(&self) -> Result<f64, Error> {
             unimplemented!()
         }
 
-        fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<'_, i32>) -> Result<()> {
+        fn serialize(
+            &self,
+            _: &mut dyn Write,
+            _: &mut ValueSerializer<'_, i32>,
+        ) -> Result<(), Error> {
             unimplemented!()
         }
 
@@ -275,43 +278,47 @@ mod tests {
     struct ConcreteInput2;
 
     impl Storage<i32> for ConcreteInput2 {
-        fn base_check_size(&self) -> Result<usize> {
+        fn base_check_size(&self) -> Result<usize, Error> {
             unimplemented!()
         }
 
-        fn base_at(&self, _: usize) -> Result<i32> {
+        fn base_at(&self, _: usize) -> Result<i32, Error> {
             unimplemented!()
         }
 
-        fn set_base_at(&mut self, _: usize, _: i32) -> Result<()> {
+        fn set_base_at(&mut self, _: usize, _: i32) -> Result<(), Error> {
             unimplemented!()
         }
 
-        fn check_at(&self, _: usize) -> Result<u8> {
+        fn check_at(&self, _: usize) -> Result<u8, Error> {
             unimplemented!()
         }
 
-        fn set_check_at(&mut self, _: usize, _: u8) -> Result<()> {
+        fn set_check_at(&mut self, _: usize, _: u8) -> Result<(), Error> {
             unimplemented!()
         }
 
-        fn value_count(&self) -> Result<usize> {
+        fn value_count(&self) -> Result<usize, Error> {
             unimplemented!()
         }
 
-        fn value_at(&self, _: usize) -> Result<Option<Rc<i32>>> {
+        fn value_at(&self, _: usize) -> Result<Option<Rc<i32>>, Error> {
             unimplemented!()
         }
 
-        fn add_value_at(&mut self, _: usize, _: i32) -> Result<()> {
+        fn add_value_at(&mut self, _: usize, _: i32) -> Result<(), Error> {
             unimplemented!()
         }
 
-        fn filling_rate(&self) -> Result<f64> {
+        fn filling_rate(&self) -> Result<f64, Error> {
             unimplemented!()
         }
 
-        fn serialize(&self, _: &mut dyn Write, _: &mut ValueSerializer<'_, i32>) -> Result<()> {
+        fn serialize(
+            &self,
+            _: &mut dyn Write,
+            _: &mut ValueSerializer<'_, i32>,
+        ) -> Result<(), Error> {
             unimplemented!()
         }
 

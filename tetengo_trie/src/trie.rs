@@ -297,7 +297,10 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * * When it fails to access the storage.
      */
     pub fn size(&self) -> Result<usize> {
-        self.double_array.storage().value_count()
+        self.double_array
+            .storage()
+            .value_count()
+            .map_err(Into::into)
     }
 
     /**
@@ -336,7 +339,10 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
             return Ok(None);
         };
 
-        self.double_array.storage().value_at(index as usize)
+        self.double_array
+            .storage()
+            .value_at(index as usize)
+            .map_err(Into::into)
     }
 
     /**
