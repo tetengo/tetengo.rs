@@ -24,8 +24,4 @@ pub enum Error {
      */
     #[error("io error: {0}")]
     IoError(#[from] std::io::Error),
-
-    /** (Workaround) */
-    #[error("WORKAROUND!: {0}")]
-    AnyhowError(#[from] anyhow::Error),
 }

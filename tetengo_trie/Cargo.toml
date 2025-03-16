@@ -23,7 +23,6 @@ categories = [
 ]
 
 [dependencies]
-anyhow = "1.0.96"
 hashlink = "0.10.0"
 memmap2 = "0.9.5"
 tempfile = "3.17.1"
