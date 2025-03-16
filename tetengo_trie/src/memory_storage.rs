@@ -11,8 +11,6 @@ use std::io::{Read, Write};
 use std::rc::Rc;
 use std::sync::LazyLock;
 
-use anyhow::Result;
-
 use crate::double_array::VACANT_CHECK_VALUE;
 use crate::error::Error;
 use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
@@ -58,7 +56,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     pub fn new_with_reader(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
             base_check_array: RefCell::new(base_check_array),
@@ -66,7 +64,10 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         })
     }
 
-    fn serialize_base_check_array(writer: &mut dyn Write, base_check_array: &[u32]) -> Result<()> {
+    fn serialize_base_check_array(
+        writer: &mut dyn Write,
+        base_check_array: &[u32],
+    ) -> Result<(), Error> {
         debug_assert!(base_check_array.len() < u32::MAX as usize);
         Self::write_u32(writer, base_check_array.len() as u32)?;
         for v in base_check_array {
@@ -79,7 +80,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         writer: &mut dyn Write,
         value_serializer: &mut ValueSerializer<'_, Value>,
         value_array: &[ValueArrayElement<Value>],
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         debug_assert!(value_array.len() < u32::MAX as usize);
         Self::write_u32(writer, value_array.len() as u32)?;
 
@@ -113,7 +114,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         Ok(())
     }
 
-    fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
+    fn write_u32(writer: &mut dyn Write, value: u32) -> Result<(), Error> {
         static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
             LazyLock::new(|| IntegerSerializer::new(false));
 
@@ -125,13 +126,13 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     fn deserialize(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<(Vec<u32>, Vec<ValueArrayElement<Value>>)> {
+    ) -> Result<(Vec<u32>, Vec<ValueArrayElement<Value>>), Error> {
         let base_check_array = Self::deserialize_base_check_array(reader)?;
         let value_array = Self::deserialize_value_array(reader, value_deserializer)?;
         Ok((base_check_array, value_array))
     }
 
-    fn deserialize_base_check_array(reader: &mut dyn Read) -> Result<Vec<u32>> {
+    fn deserialize_base_check_array(reader: &mut dyn Read) -> Result<Vec<u32>, Error> {
         let size = Self::read_u32(reader)? as usize;
         let mut base_check_array = Vec::with_capacity(size);
         for _ in 0..size {
@@ -143,7 +144,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     fn deserialize_value_array(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<Vec<ValueArrayElement<Value>>> {
+    ) -> Result<Vec<ValueArrayElement<Value>>, Error> {
         let size = Self::read_u32(reader)? as usize;
 
         let fixed_value_size = Self::read_u32(reader)? as usize;
@@ -180,15 +181,13 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         Ok(value_array)
     }
 
-    fn read_u32(reader: &mut dyn Read) -> Result<u32> {
+    fn read_u32(reader: &mut dyn Read) -> Result<u32, Error> {
         static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
             LazyLock::new(|| IntegerDeserializer::new(false));
 
         let mut to_deserialize: [u8; size_of::<u32>()] = [0u8; size_of::<u32>()];
         reader.read_exact(&mut to_deserialize)?;
-        U32_DESERIALIZER
-            .deserialize(&to_deserialize)
-            .map_err(Into::into)
+        U32_DESERIALIZER.deserialize(&to_deserialize)
     }
 
     const UNINITIALIZED_BYTE: u8 = 0xFF;
