@@ -9,8 +9,6 @@ use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
-use anyhow::Result;
-
 use crate::error::Error;
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
@@ -51,7 +49,7 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
     pub fn new_with_reader(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let entity = MemoryStorage::<Value>::new_with_reader(reader, value_deserializer)?;
         Ok(Self {
             entity: Rc::new(entity),
