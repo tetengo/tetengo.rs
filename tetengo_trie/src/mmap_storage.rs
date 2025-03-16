@@ -7,11 +7,10 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::fmt::Debug;
-use std::io::Write;
+use std::io::{self, ErrorKind, Write};
 use std::rc::Rc;
 use std::sync::LazyLock;
 
-use anyhow::Result;
 use hashlink::LinkedHashMap;
 use tempfile as _;
 
@@ -19,7 +18,7 @@ use crate::error::Error;
 use crate::file_mapping::FileMapping;
 use crate::integer_serializer::IntegerDeserializer;
 use crate::serializer::Deserializer;
-use crate::storage::{Storage, StorageError};
+use crate::storage::Storage;
 use crate::value_serializer::{ValueDeserializer, ValueSerializer};
 
 #[derive(Clone, Debug)]
@@ -55,32 +54,6 @@ impl<Value> ValueCache<Value> {
         let _inserted = self.map.insert(index, value);
     }
 }
-
-/**
- * An mmap storage error.
- */
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub enum MmapStorageError {
-    /**
-     * content_size is greater than file_size.
-     */
-    #[error("content_offset is greater than file_size")]
-    InvalidContentSize,
-
-    /**
-     * The value size is not fixed.
-     */
-    #[error("the value size is not fixed")]
-    ValueSizeNotFixed,
-
-    /**
-     * The mmap region is out of the file size.
-     */
-    #[error("the mmap region is out of the file size")]
-    MmapRegionOutOfFileSize,
-}
-
-impl StorageError for MmapStorageError {}
 
 /**
  * An mmap storage builder.
@@ -119,7 +92,7 @@ impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
      * * When the argument(s) is/are invalid.
      * * When it fails to read the file.
      */
-    pub fn build(self) -> Result<MmapStorage<Value>> {
+    pub fn build(self) -> Result<MmapStorage<Value>, Error> {
         let self_ = MmapStorage::<Value> {
             file_mapping: self.file_mapping,
             content_offset: self.content_offset,
@@ -129,13 +102,13 @@ impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
         };
 
         if self_.content_offset > self_.file_size {
-            return Err(MmapStorageError::InvalidContentSize.into());
+            return Err(io::Error::from(ErrorKind::InvalidInput).into());
         }
 
         let base_check_count = self_.base_check_size()?;
         let fixed_value_size = self_.read_u32(size_of::<u32>() * (1 + base_check_count + 1))?;
         if fixed_value_size == 0 {
-            return Err(MmapStorageError::ValueSizeNotFixed.into());
+            return Err(io::Error::from(ErrorKind::InvalidData).into());
         }
 
         Ok(self_)
@@ -188,7 +161,7 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
         }
     }
 
-    fn ensure_value_cached(&self, value_index: usize) -> Result<()> {
+    fn ensure_value_cached(&self, value_index: usize) -> Result<(), Error> {
         if self.value_cache.borrow().has(value_index) {
             return Ok(());
         }
@@ -214,27 +187,24 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
 
     const UNINITIALIZED_BYTE: u8 = 0xFF;
 
-    fn read_bytes(&self, offset: usize, size: usize) -> Result<&[u8]> {
+    fn read_bytes(&self, offset: usize, size: usize) -> Result<&[u8], Error> {
         if offset + size > self.file_size {
-            return Err(MmapStorageError::MmapRegionOutOfFileSize.into());
+            return Err(io::Error::from(ErrorKind::InvalidInput).into());
         }
 
         self.file_mapping
             .region(self.content_offset + offset..self.content_offset + offset + size)
-            .map_err(Into::into)
     }
-    fn read_u32(&self, offset: usize) -> Result<u32> {
+    fn read_u32(&self, offset: usize) -> Result<u32, Error> {
         static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
             LazyLock::new(|| IntegerDeserializer::new(false));
-        U32_DESERIALIZER
-            .deserialize(self.read_bytes(offset, size_of::<u32>())?)
-            .map_err(Into::into)
+        U32_DESERIALIZER.deserialize(self.read_bytes(offset, size_of::<u32>())?)
     }
 }
 
 impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
     fn base_check_size(&self) -> Result<usize, Error> {
-        self.read_u32(0).map(|v| v as usize).map_err(Into::into)
+        self.read_u32(0).map(|v| v as usize)
     }
 
     fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
@@ -259,7 +229,6 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
         let base_check_count = self.base_check_size()?;
         self.read_u32(size_of::<u32>() * (1 + base_check_count))
             .map(|v| v as usize)
-            .map_err(Into::into)
     }
 
     fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>, Error> {
