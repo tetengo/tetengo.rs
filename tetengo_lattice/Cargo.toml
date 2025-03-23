@@ -22,5 +22,5 @@ categories = [
 ]
 
 [dependencies]
-thiserror = "2.0.11"
+thiserror = "2.0.12"
 unicode-width = "0.2.0"
