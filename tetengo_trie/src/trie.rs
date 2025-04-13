@@ -19,12 +19,12 @@ use crate::trie_iterator::TrieIterator;
 /**
  * A building observer set.
  */
-pub struct BuldingObserverSet<'a> {
+pub struct BuildingObserverSet<'a> {
     adding: &'a mut dyn FnMut(&[u8]),
     done: &'a mut dyn FnMut(),
 }
 
-impl<'a> BuldingObserverSet<'a> {
+impl<'a> BuildingObserverSet<'a> {
     /**
      * Creates a building observer set.
      *
@@ -54,7 +54,7 @@ impl<'a> BuldingObserverSet<'a> {
     }
 }
 
-impl Debug for BuldingObserverSet<'_> {
+impl Debug for BuildingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
             .field("adding", &type_name_of_val(&self.adding))
@@ -119,7 +119,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      * * When it fails to access the storage.
      */
     pub fn build(self) -> Result<Trie<Key, Value, KeySerializer>, Error> {
-        self.build_with_observer_set(&mut BuldingObserverSet::new(&mut |_| {}, &mut || {}))
+        self.build_with_observer_set(&mut BuildingObserverSet::new(&mut |_| {}, &mut || {}))
     }
 
     /**
@@ -133,7 +133,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      */
     pub fn build_with_observer_set(
         self,
-        building_observer_set: &mut BuldingObserverSet<'_>,
+        building_observer_set: &mut BuildingObserverSet<'_>,
     ) -> Result<Trie<Key, Value, KeySerializer>, Error> {
         let mut double_array_content_keys = Vec::<Vec<u8>>::with_capacity(self.elements.len());
         for element in &self.elements {
@@ -487,7 +487,7 @@ mod tests {
             let _trie = Trie::<&str, i32>::builder()
                 .elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
                 .key_serializer(StrSerializer::new(true))
-                .build_with_observer_set(&mut BuldingObserverSet::new(
+                .build_with_observer_set(&mut BuildingObserverSet::new(
                     &mut |serialized_keys| {
                         added_serialized_keys.push(serialized_keys.to_vec());
                     },
@@ -521,7 +521,7 @@ mod tests {
                 .elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
                 .key_serializer(StrSerializer::new(true))
                 .double_array_density_factor(DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR)
-                .build_with_observer_set(&mut BuldingObserverSet::new(
+                .build_with_observer_set(&mut BuildingObserverSet::new(
                     &mut |serialized_keys| {
                         added_serialized_keys.push(serialized_keys.to_vec());
                     },

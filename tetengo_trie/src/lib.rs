@@ -30,6 +30,6 @@ pub use serializer::{Deserializer, DeserializerOf, Serializer, SerializerOf};
 pub use shared_storage::SharedStorage;
 pub use storage::Storage;
 pub use string_serializer::{StrSerializer, StringDeserializer, StringSerializer};
-pub use trie::{BuldingObserverSet, Trie};
+pub use trie::{BuildingObserverSet, Trie};
 pub use trie_iterator::TrieIterator;
 pub use value_serializer::{ValueDeserializer, ValueSerializer};

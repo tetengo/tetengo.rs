@@ -5,7 +5,7 @@
 mod usage {
     use std::cell::RefCell;
 
-    use tetengo_trie::{BuldingObserverSet, Serializer, StrSerializer, Trie};
+    use tetengo_trie::{BuildingObserverSet, Serializer, StrSerializer, Trie};
 
     #[test]
     fn usage() {
@@ -22,7 +22,7 @@ mod usage {
                 .borrow_mut()
                 .push("DONE".to_string());
         };
-        let mut building_observer_set = BuldingObserverSet::new(&mut adding, &mut done);
+        let mut building_observer_set = BuildingObserverSet::new(&mut adding, &mut done);
 
         // Builds a trie with initial elements.
         let trie = Trie::<&str, i32>::builder()

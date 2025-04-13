@@ -13,7 +13,7 @@ use std::path::Path;
 use std::process::exit;
 
 use tetengo_trie::{
-    BuldingObserverSet, Error, Serializer, StringSerializer, Trie, ValueSerializer,
+    BuildingObserverSet, Error, Serializer, StringSerializer, Trie, ValueSerializer,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -154,7 +154,7 @@ fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie, Error> {
     let trie = DictTrie::builder()
         .elements(word_offset_vector)
         .key_serializer(StringSerializer::new(true))
-        .build_with_observer_set(&mut BuldingObserverSet::new(
+        .build_with_observer_set(&mut BuildingObserverSet::new(
             &mut |key| {
                 if index % 10000 == 0 {
                     eprint!("{:8}: {}    \r", index, String::from_utf8_lossy(key));
