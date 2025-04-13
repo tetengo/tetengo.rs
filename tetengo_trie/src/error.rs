@@ -4,8 +4,6 @@
 
 use std::io;
 
-type Type = io::Error;
-
 /**
  * An error.
  */
@@ -33,5 +31,5 @@ pub enum Error {
      * An I/O error.
      */
     #[error("io error: {0}")]
-    IoError(#[from] Type),
+    IoError(#[from] io::Error),
 }
