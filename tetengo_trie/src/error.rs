@@ -12,6 +12,12 @@ type Type = io::Error;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /**
+     * Out of mmap.
+     */
+    #[error("out of mmap")]
+    OutOfMmap,
+
+    /**
      * An invalid serialized bytes.
      */
     #[error("invalid serialized bytes: {0}")]

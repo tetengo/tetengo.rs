@@ -3,7 +3,6 @@
  */
 
 use std::fs::File;
-use std::io::{self, ErrorKind};
 use std::ops::Range;
 
 use memmap2::Mmap;
@@ -67,9 +66,7 @@ impl FileMapping {
      * * When the range is out of the mmap.
      */
     pub fn region(&self, range: Range<usize>) -> Result<&[u8], Error> {
-        self.mmap
-            .get(range)
-            .ok_or(io::Error::from(ErrorKind::UnexpectedEof).into())
+        self.mmap.get(range).ok_or(Error::OutOfMmap)
     }
 }
 
