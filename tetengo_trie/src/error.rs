@@ -12,7 +12,7 @@ type Type = io::Error;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /**
-     * An invalid serailzed bytes.
+     * An invalid serialized bytes.
      */
     #[error("invalid serialized bytes: {0}")]
     InvalidSerializedBytes(String),
