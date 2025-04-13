@@ -7,10 +7,9 @@
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use anyhow::Result;
-
 use crate::connection::Connection;
 use crate::entry::Entry;
+use crate::error::Error;
 use crate::input::Input;
 use crate::node::Node;
 
@@ -30,7 +29,7 @@ pub trait Vocabulary: Debug {
      * # Errors
      * * When finding entries fails.
      */
-    fn find_entries(&self, key: &dyn Input) -> Result<Vec<Rc<Entry>>>;
+    fn find_entries(&self, key: &dyn Input) -> Result<Vec<Rc<Entry>>, Error>;
 
     /**
      * Finds a connection between an origin node and a destination entry.
@@ -45,5 +44,5 @@ pub trait Vocabulary: Debug {
      * # Errors
      * * When finding a connection fails.
      */
-    fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection>;
+    fn find_connection(&self, from: &Node, to: &Entry) -> Result<Connection, Error>;
 }

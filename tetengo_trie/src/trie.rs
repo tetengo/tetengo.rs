@@ -10,9 +10,8 @@ use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-use anyhow::Result;
-
 use crate::double_array::{self, DEFAULT_DENSITY_FACTOR, DoubleArray};
+use crate::error::Error;
 use crate::serializer::{Serializer, SerializerOf};
 use crate::storage::Storage;
 use crate::trie_iterator::TrieIterator;
@@ -20,12 +19,12 @@ use crate::trie_iterator::TrieIterator;
 /**
  * A building observer set.
  */
-pub struct BuldingObserverSet<'a> {
+pub struct BuildingObserverSet<'a> {
     adding: &'a mut dyn FnMut(&[u8]),
     done: &'a mut dyn FnMut(),
 }
 
-impl<'a> BuldingObserverSet<'a> {
+impl<'a> BuildingObserverSet<'a> {
     /**
      * Creates a building observer set.
      *
@@ -55,7 +54,7 @@ impl<'a> BuldingObserverSet<'a> {
     }
 }
 
-impl Debug for BuldingObserverSet<'_> {
+impl Debug for BuildingObserverSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("BuldingObserverSet")
             .field("adding", &type_name_of_val(&self.adding))
@@ -119,8 +118,8 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn build(self) -> Result<Trie<Key, Value, KeySerializer>> {
-        self.build_with_observer_set(&mut BuldingObserverSet::new(&mut |_| {}, &mut || {}))
+    pub fn build(self) -> Result<Trie<Key, Value, KeySerializer>, Error> {
+        self.build_with_observer_set(&mut BuildingObserverSet::new(&mut |_| {}, &mut || {}))
     }
 
     /**
@@ -134,8 +133,8 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      */
     pub fn build_with_observer_set(
         self,
-        building_observer_set: &mut BuldingObserverSet<'_>,
-    ) -> Result<Trie<Key, Value, KeySerializer>> {
+        building_observer_set: &mut BuildingObserverSet<'_>,
+    ) -> Result<Trie<Key, Value, KeySerializer>, Error> {
         let mut double_array_content_keys = Vec::<Vec<u8>>::with_capacity(self.elements.len());
         for element in &self.elements {
             let (key, _) = &element;
@@ -283,7 +282,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn is_empty(&self) -> Result<bool> {
+    pub fn is_empty(&self) -> Result<bool, Error> {
         Ok(self.double_array.storage().value_count()? == 0)
     }
 
@@ -296,7 +295,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn size(&self) -> Result<usize> {
+    pub fn size(&self) -> Result<usize, Error> {
         self.double_array.storage().value_count()
     }
 
@@ -312,7 +311,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn contains(&self, key: &KeySerializer::Object<'_>) -> Result<bool> {
+    pub fn contains(&self, key: &KeySerializer::Object<'_>) -> Result<bool, Error> {
         let serialized_key = self.key_serializer.serialize(key);
         Ok(self.double_array.find(&serialized_key)?.is_some())
     }
@@ -329,7 +328,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn find(&self, key: &KeySerializer::Object<'_>) -> Result<Option<Rc<Value>>> {
+    pub fn find(&self, key: &KeySerializer::Object<'_>) -> Result<Option<Rc<Value>>, Error> {
         let serialized_key = self.key_serializer.serialize(key);
         let index = self.double_array.find(&serialized_key)?;
         let Some(index) = index else {
@@ -361,7 +360,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      * # Errors
      * * When it fails to access the storage.
      */
-    pub fn subtrie(&self, key_prefix: &KeySerializer::Object<'_>) -> Result<Option<Self>> {
+    pub fn subtrie(&self, key_prefix: &KeySerializer::Object<'_>) -> Result<Option<Self>, Error> {
         let serialized_key_prefix = self.key_serializer.serialize(key_prefix);
         let subdouble_array = self.double_array.subtrie(&serialized_key_prefix)?;
         let Some(subdouble_array) = subdouble_array else {
@@ -488,7 +487,7 @@ mod tests {
             let _trie = Trie::<&str, i32>::builder()
                 .elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
                 .key_serializer(StrSerializer::new(true))
-                .build_with_observer_set(&mut BuldingObserverSet::new(
+                .build_with_observer_set(&mut BuildingObserverSet::new(
                     &mut |serialized_keys| {
                         added_serialized_keys.push(serialized_keys.to_vec());
                     },
@@ -522,7 +521,7 @@ mod tests {
                 .elements([("Kumamoto", 42), ("Tamana", 24)].to_vec())
                 .key_serializer(StrSerializer::new(true))
                 .double_array_density_factor(DEFAULT_DOUBLE_ARRAY_DENSITY_FACTOR)
-                .build_with_observer_set(&mut BuldingObserverSet::new(
+                .build_with_observer_set(&mut BuildingObserverSet::new(
                     &mut |serialized_keys| {
                         added_serialized_keys.push(serialized_keys.to_vec());
                     },

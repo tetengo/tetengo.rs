@@ -11,9 +11,8 @@ use std::io::{Read, Write};
 use std::rc::Rc;
 use std::sync::LazyLock;
 
-use anyhow::Result;
-
 use crate::double_array::VACANT_CHECK_VALUE;
+use crate::error::Error;
 use crate::integer_serializer::{IntegerDeserializer, IntegerSerializer};
 use crate::serializer::{Deserializer, Serializer};
 use crate::storage::Storage;
@@ -57,7 +56,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     pub fn new_with_reader(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let (base_check_array, value_array) = Self::deserialize(reader, value_deserializer)?;
         Ok(Self {
             base_check_array: RefCell::new(base_check_array),
@@ -65,7 +64,10 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         })
     }
 
-    fn serialize_base_check_array(writer: &mut dyn Write, base_check_array: &[u32]) -> Result<()> {
+    fn serialize_base_check_array(
+        writer: &mut dyn Write,
+        base_check_array: &[u32],
+    ) -> Result<(), Error> {
         debug_assert!(base_check_array.len() < u32::MAX as usize);
         Self::write_u32(writer, base_check_array.len() as u32)?;
         for v in base_check_array {
@@ -78,7 +80,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         writer: &mut dyn Write,
         value_serializer: &mut ValueSerializer<'_, Value>,
         value_array: &[ValueArrayElement<Value>],
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         debug_assert!(value_array.len() < u32::MAX as usize);
         Self::write_u32(writer, value_array.len() as u32)?;
 
@@ -112,7 +114,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         Ok(())
     }
 
-    fn write_u32(writer: &mut dyn Write, value: u32) -> Result<()> {
+    fn write_u32(writer: &mut dyn Write, value: u32) -> Result<(), Error> {
         static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
             LazyLock::new(|| IntegerSerializer::new(false));
 
@@ -124,13 +126,13 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     fn deserialize(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<(Vec<u32>, Vec<ValueArrayElement<Value>>)> {
+    ) -> Result<(Vec<u32>, Vec<ValueArrayElement<Value>>), Error> {
         let base_check_array = Self::deserialize_base_check_array(reader)?;
         let value_array = Self::deserialize_value_array(reader, value_deserializer)?;
         Ok((base_check_array, value_array))
     }
 
-    fn deserialize_base_check_array(reader: &mut dyn Read) -> Result<Vec<u32>> {
+    fn deserialize_base_check_array(reader: &mut dyn Read) -> Result<Vec<u32>, Error> {
         let size = Self::read_u32(reader)? as usize;
         let mut base_check_array = Vec::with_capacity(size);
         for _ in 0..size {
@@ -142,7 +144,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
     fn deserialize_value_array(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<Vec<ValueArrayElement<Value>>> {
+    ) -> Result<Vec<ValueArrayElement<Value>>, Error> {
         let size = Self::read_u32(reader)? as usize;
 
         let fixed_value_size = Self::read_u32(reader)? as usize;
@@ -179,7 +181,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         Ok(value_array)
     }
 
-    fn read_u32(reader: &mut dyn Read) -> Result<u32> {
+    fn read_u32(reader: &mut dyn Read) -> Result<u32, Error> {
         static U32_DESERIALIZER: LazyLock<IntegerDeserializer<u32>> =
             LazyLock::new(|| IntegerDeserializer::new(false));
 
@@ -200,46 +202,46 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
 }
 
 impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
-    fn base_check_size(&self) -> Result<usize> {
+    fn base_check_size(&self) -> Result<usize, Error> {
         Ok(self.base_check_array.borrow().len())
     }
 
-    fn base_at(&self, base_check_index: usize) -> Result<i32> {
+    fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
         self.ensure_base_check_size(base_check_index + 1);
         Ok(self.base_check_array.borrow()[base_check_index] as i32 >> 8i32)
     }
 
-    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<(), Error> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0x000000FF;
         self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
         Ok(())
     }
 
-    fn check_at(&self, base_check_index: usize) -> Result<u8> {
+    fn check_at(&self, base_check_index: usize) -> Result<u8, Error> {
         self.ensure_base_check_size(base_check_index + 1);
         Ok((self.base_check_array.borrow()[base_check_index] & 0xFF) as u8)
     }
 
-    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()> {
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<(), Error> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0xFFFFFF00;
         self.base_check_array.borrow_mut()[base_check_index] |= check as u32;
         Ok(())
     }
 
-    fn value_count(&self) -> Result<usize> {
+    fn value_count(&self) -> Result<usize, Error> {
         Ok(self.value_array.len())
     }
 
-    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>> {
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>, Error> {
         let Some(value) = self.value_array.get(value_index) else {
             return Ok(None);
         };
         Ok(value.clone())
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<(), Error> {
         if value_index >= self.value_array.len() {
             self.value_array.resize_with(value_index + 1, || None);
         }
@@ -247,7 +249,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
         Ok(())
     }
 
-    fn filling_rate(&self) -> Result<f64> {
+    fn filling_rate(&self) -> Result<f64, Error> {
         let empty_count = self
             .base_check_array
             .borrow()
@@ -261,7 +263,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
         &self,
         writer: &mut dyn Write,
         value_serializer: &mut ValueSerializer<'_, Value>,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         Self::serialize_base_check_array(writer, &self.base_check_array.borrow())?;
         Self::serialize_value_array(writer, value_serializer, &self.value_array)?;
 

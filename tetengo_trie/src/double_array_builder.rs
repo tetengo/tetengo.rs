@@ -7,11 +7,10 @@
 use std::collections::HashSet;
 use std::fmt::Debug;
 
-use anyhow::Result;
-
 use crate::double_array::{
-    BuildingObserverSet, DoubleArrayElement, DoubleArrayError, KEY_TERMINATOR, VACANT_CHECK_VALUE,
+    BuildingObserverSet, DoubleArrayElement, KEY_TERMINATOR, VACANT_CHECK_VALUE,
 };
+use crate::error::Error;
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 
@@ -19,9 +18,9 @@ pub(super) fn build<T: Clone + Debug + 'static>(
     mut elements: Vec<DoubleArrayElement<'_>>,
     observer: &mut BuildingObserverSet<'_>,
     density_factor: usize,
-) -> Result<Box<dyn Storage<T>>> {
+) -> Result<Box<dyn Storage<T>>, Error> {
     if density_factor == 0 {
-        return Err(DoubleArrayError::InvalidDensityFactor.into());
+        return Err(Error::InvalidDensityFactor);
     }
 
     elements.sort_by_key(|(k, _)| *k);
@@ -53,7 +52,7 @@ fn build_iter<T: 'static>(
     base_uniquer: &mut HashSet<i32>,
     observer: &mut BuildingObserverSet<'_>,
     density_factor: usize,
-) -> Result<()> {
+) -> Result<(), Error> {
     let children_firsts = children_firsts(elements, key_offset);
 
     let base = calc_base(
@@ -105,7 +104,7 @@ fn calc_base<T: 'static>(
     base_check_index: usize,
     density_factor: usize,
     base_uniquer: &mut HashSet<i32>,
-) -> Result<i32> {
+) -> Result<i32, Error> {
     let (element_key, _) = elements[0];
     let base_first = (base_check_index - (base_check_index / density_factor)) as i32
         - char_code_at(element_key, key_offset) as i32

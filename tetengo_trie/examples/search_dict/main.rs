@@ -7,13 +7,11 @@
 use std::cmp::min;
 use std::env;
 use std::fs::File;
-use std::io::{Read, stdin};
+use std::io::{self, ErrorKind, Read, stdin};
 use std::path::Path;
 use std::process::exit;
 
-use anyhow::Result;
-
-use tetengo_trie::{MemoryStorage, Trie, ValueDeserializer};
+use tetengo_trie::{Error, MemoryStorage, Trie, ValueDeserializer};
 
 fn main() {
     if let Err(e) = main_core() {
@@ -22,7 +20,7 @@ fn main() {
     }
 }
 
-fn main_core() -> Result<()> {
+fn main_core() -> Result<(), Error> {
     let args = env::args().collect::<Vec<_>>();
     if args.len() <= 2 {
         eprintln!("Usage: search_dict UniDic_lex.csv trie.bin");
@@ -60,13 +58,7 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug, thiserror::Error)]
-enum DictSearchingError {
-    #[error("Can't read the whole of lex.csv file.")]
-    CantReadWholeOfLexCsvFile,
-}
-
-fn load_lex_csv(lex_csv_path: &Path) -> Result<String> {
+fn load_lex_csv(lex_csv_path: &Path) -> Result<String, Error> {
     let mut file = File::open(lex_csv_path)?;
 
     let lex_csv_size = file.metadata()?.len();
@@ -74,14 +66,14 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<String> {
     let mut buffer = String::new();
     let read_length = file.read_to_string(&mut buffer)?;
     if read_length != lex_csv_size as usize {
-        return Err(DictSearchingError::CantReadWholeOfLexCsvFile.into());
+        return Err(io::Error::from(ErrorKind::UnexpectedEof).into());
     }
     Ok(buffer)
 }
 
 type DictTrie = Trie<String, Vec<(usize, usize)>>;
 
-fn load_trie(trie_path: &Path) -> Result<DictTrie> {
+fn load_trie(trie_path: &Path) -> Result<DictTrie, Error> {
     let mut file = File::open(trie_path)?;
 
     let mut value_deserializer = ValueDeserializer::new(Box::new(deserialize_value));
@@ -95,7 +87,7 @@ fn load_trie(trie_path: &Path) -> Result<DictTrie> {
 
 const VALUE_CAPACITY: usize = 4usize;
 
-fn deserialize_value(bytes: &[u8]) -> Result<Vec<(usize, usize)>> {
+fn deserialize_value(bytes: &[u8]) -> Result<Vec<(usize, usize)>, Error> {
     let mut byte_offset = 0usize;
 
     let size = deserialize_usize(bytes, &mut byte_offset)?;
@@ -110,13 +102,16 @@ fn deserialize_value(bytes: &[u8]) -> Result<Vec<(usize, usize)>> {
     Ok(vps)
 }
 
-fn deserialize_pair_of_usize(bytes: &[u8], byte_offset: &mut usize) -> Result<(usize, usize)> {
+fn deserialize_pair_of_usize(
+    bytes: &[u8],
+    byte_offset: &mut usize,
+) -> Result<(usize, usize), Error> {
     let first = deserialize_usize(bytes, byte_offset)?;
     let second = deserialize_usize(bytes, byte_offset)?;
     Ok((first, second))
 }
 
-fn deserialize_usize(bytes: &[u8], byte_offset: &mut usize) -> Result<usize> {
+fn deserialize_usize(bytes: &[u8], byte_offset: &mut usize) -> Result<usize, Error> {
     let mut value = 0usize;
     (0..size_of::<u32>()).for_each(|i| {
         value <<= 8;

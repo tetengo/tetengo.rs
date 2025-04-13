@@ -8,17 +8,10 @@ use std::any::type_name_of_val;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
 
-use anyhow::Result;
-
 use crate::double_array_builder;
 use crate::double_array_iterator::DoubleArrayIterator;
+use crate::error::Error;
 use crate::storage::Storage;
-
-#[derive(Clone, Copy, Debug, thiserror::Error)]
-pub(super) enum DoubleArrayError {
-    #[error("density_factor must be greater than 0.")]
-    InvalidDensityFactor,
-}
 
 pub(super) type DoubleArrayElement<'a> = (&'a [u8], i32);
 
@@ -78,14 +71,14 @@ impl<'a, Value: Clone + Debug + 'static> DoubleArrayBuilder<'a, Value> {
     }
 
     #[cfg(test)]
-    pub(super) fn build(self) -> Result<DoubleArray<Value>> {
+    pub(super) fn build(self) -> Result<DoubleArray<Value>, Error> {
         self.build_with_observer_set(&mut BuildingObserverSet::new(&mut |_| {}, &mut || {}))
     }
 
     pub(super) fn build_with_observer_set(
         self,
         building_observer_set: &mut BuildingObserverSet<'_>,
-    ) -> Result<DoubleArray<Value>> {
+    ) -> Result<DoubleArray<Value>, Error> {
         Ok(DoubleArray::new(
             double_array_builder::build::<Value>(
                 self.elements,
@@ -122,7 +115,7 @@ impl<Value: Clone + Debug + 'static> DoubleArray<Value> {
         }
     }
 
-    pub(super) fn find(&self, key: &[u8]) -> Result<Option<i32>> {
+    pub(super) fn find(&self, key: &[u8]) -> Result<Option<i32>, Error> {
         let mut terminated_key: Vec<u8>;
         let index = self.traverse({
             terminated_key = Vec::from(key);
@@ -139,7 +132,7 @@ impl<Value: Clone + Debug + 'static> DoubleArray<Value> {
         DoubleArrayIterator::new(self.storage.as_ref(), self.root_base_check_index)
     }
 
-    pub(super) fn subtrie(&self, key_prefix: &[u8]) -> Result<Option<Self>> {
+    pub(super) fn subtrie(&self, key_prefix: &[u8]) -> Result<Option<Self>, Error> {
         let index = self.traverse(key_prefix)?;
         let Some(index) = index else {
             return Ok(None);
@@ -147,7 +140,7 @@ impl<Value: Clone + Debug + 'static> DoubleArray<Value> {
         Ok(Some(Self::new(self.storage().clone_box(), index)))
     }
 
-    fn traverse(&self, key: &[u8]) -> Result<Option<usize>> {
+    fn traverse(&self, key: &[u8]) -> Result<Option<usize>, Error> {
         let mut base_check_index = self.root_base_check_index;
         for c in key {
             let next_base_check_index =
@@ -306,7 +299,7 @@ mod tests {
         0x00001800, // [11]   24,    10,         0
     ];
 
-    fn base_check_array_of<T: 'static>(storage: &dyn Storage<T>) -> Result<Vec<u32>> {
+    fn base_check_array_of<T: 'static>(storage: &dyn Storage<T>) -> Result<Vec<u32>, Error> {
         let size = storage.base_check_size()?;
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {

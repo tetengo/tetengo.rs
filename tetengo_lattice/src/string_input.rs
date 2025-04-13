@@ -8,9 +8,8 @@ use std::any::Any;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
-use anyhow::Result;
-
-use crate::input::{Input, InputError};
+use crate::error::Error;
+use crate::input::Input;
 
 /**
  * A string input.
@@ -70,9 +69,9 @@ impl Input for StringInput {
         self.value.len()
     }
 
-    fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>> {
+    fn create_subrange(&self, offset: usize, length: usize) -> Result<Box<dyn Input>, Error> {
         if offset + length > self.value.len() {
-            return Err(InputError::RangeOutOfBounds.into());
+            return Err(Error::RangeOutOfBounds);
         }
 
         Ok(Box::new(StringInput::new(
@@ -80,9 +79,9 @@ impl Input for StringInput {
         )))
     }
 
-    fn append(&mut self, another: Box<dyn Input>) -> Result<()> {
+    fn append(&mut self, another: Box<dyn Input>) -> Result<(), Error> {
         let Some(another) = another.downcast_ref::<StringInput>() else {
-            return Err(InputError::MismatchConcreteType.into());
+            return Err(Error::MismatchConcreteType);
         };
 
         self.value += another.value();
@@ -119,11 +118,11 @@ mod tests {
             unimplemented!()
         }
 
-        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>> {
+        fn create_subrange(&self, _: usize, _: usize) -> Result<Box<dyn Input>, Error> {
             unimplemented!()
         }
 
-        fn append(&mut self, _: Box<dyn Input>) -> Result<()> {
+        fn append(&mut self, _: Box<dyn Input>) -> Result<(), Error> {
             unimplemented!()
         }
 

@@ -13,10 +13,10 @@ use std::io::{BufRead, BufReader, Lines, StdinLock, Write, stdin, stdout};
 use std::path::Path;
 use std::process::exit;
 
-use anyhow::Result;
+use timetable::TimetableError;
 use unicode_width::UnicodeWidthStr;
 
-use tetengo_lattice::{Constraint, Lattice, NBestIterator, Node, StringInput};
+use tetengo_lattice::{Constraint, Error, Lattice, NBestIterator, Node, StringInput};
 
 use crate::timetable::{Section, Timetable};
 
@@ -27,7 +27,7 @@ fn main() {
     }
 }
 
-fn main_core() -> Result<()> {
+fn main_core() -> Result<(), TimetableError> {
     let args = env::args().collect::<Vec<_>>();
     if args.len() <= 1 {
         eprintln!("Usage: transfer_trains timetable.txt");
@@ -58,7 +58,7 @@ fn main_core() -> Result<()> {
     Ok(())
 }
 
-fn create_reader(path: &Path) -> Result<Box<dyn BufRead>> {
+fn create_reader(path: &Path) -> Result<Box<dyn BufRead>, Error> {
     let reader = BufReader::new(File::open(path)?);
     Ok(Box::new(reader))
 }
@@ -71,7 +71,7 @@ enum Input {
 fn get_departure_and_arrival(
     lines: &mut Lines<StdinLock<'_>>,
     timetable: &Timetable,
-) -> Result<Input> {
+) -> Result<Input, Error> {
     let Some(departure_station_index) = get_station_index("Departure Station", lines, timetable)?
     else {
         return Ok(Input::Eof);
@@ -108,7 +108,7 @@ fn get_station_index(
     prompt: &str,
     lines: &mut Lines<StdinLock<'_>>,
     timetable: &Timetable,
-) -> Result<Option<usize>> {
+) -> Result<Option<usize>, Error> {
     print!("{}: ", prompt);
     stdout().flush()?;
     let Some(input) = lines.next() else {
@@ -118,7 +118,7 @@ fn get_station_index(
     Ok(Some(timetable.station_index(input.trim())))
 }
 
-fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<Option<usize>> {
+fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<Option<usize>, Error> {
     print!("{}: ", prompt);
     stdout().flush()?;
     let Some(input) = lines.next() else {
@@ -146,7 +146,7 @@ fn build_lattice(
     ((departure_station_index, _), arrival_station_index): ((usize, usize), usize),
     timetable: &Timetable,
     lattice: &mut Lattice<'_>,
-) -> Result<()> {
+) -> Result<(), Error> {
     for i in departure_station_index..arrival_station_index {
         let key = format!(
             "{}-{}/",

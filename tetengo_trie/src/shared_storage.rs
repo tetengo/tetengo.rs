@@ -9,8 +9,7 @@ use std::fmt::Debug;
 use std::io::{Read, Write};
 use std::rc::Rc;
 
-use anyhow::Result;
-
+use crate::error::Error;
 use crate::memory_storage::MemoryStorage;
 use crate::storage::Storage;
 use crate::value_serializer::{ValueDeserializer, ValueSerializer};
@@ -50,7 +49,7 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
     pub fn new_with_reader(
         reader: &mut dyn Read,
         value_deserializer: &mut ValueDeserializer<Value>,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let entity = MemoryStorage::<Value>::new_with_reader(reader, value_deserializer)?;
         Ok(Self {
             entity: Rc::new(entity),
@@ -59,42 +58,42 @@ impl<Value: Clone + 'static> SharedStorage<Value> {
 }
 
 impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
-    fn base_check_size(&self) -> Result<usize> {
+    fn base_check_size(&self) -> Result<usize, Error> {
         self.entity.base_check_size()
     }
 
-    fn base_at(&self, base_check_index: usize) -> Result<i32> {
+    fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
         self.entity.base_at(base_check_index)
     }
 
-    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<()> {
+    fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<(), Error> {
         let entity = Rc::get_mut(&mut self.entity).unwrap();
         entity.set_base_at(base_check_index, base)
     }
 
-    fn check_at(&self, base_check_index: usize) -> Result<u8> {
+    fn check_at(&self, base_check_index: usize) -> Result<u8, Error> {
         self.entity.check_at(base_check_index)
     }
 
-    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<()> {
+    fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<(), Error> {
         let entity = Rc::get_mut(&mut self.entity).unwrap();
         entity.set_check_at(base_check_index, check)
     }
 
-    fn value_count(&self) -> Result<usize> {
+    fn value_count(&self) -> Result<usize, Error> {
         self.entity.value_count()
     }
 
-    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>> {
+    fn value_at(&self, value_index: usize) -> Result<Option<Rc<Value>>, Error> {
         self.entity.value_at(value_index)
     }
 
-    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<()> {
+    fn add_value_at(&mut self, value_index: usize, value: Value) -> Result<(), Error> {
         let entity = Rc::get_mut(&mut self.entity).unwrap();
         entity.add_value_at(value_index, value)
     }
 
-    fn filling_rate(&self) -> Result<f64> {
+    fn filling_rate(&self) -> Result<f64, Error> {
         self.entity.filling_rate()
     }
 
@@ -102,7 +101,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for SharedStorage<Value> {
         &self,
         writer: &mut dyn Write,
         value_serializer: &mut ValueSerializer<'_, Value>,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         self.entity.serialize(writer, value_serializer)
     }
 

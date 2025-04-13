@@ -4,9 +4,7 @@
  * Copyright (C) 2023-2025 kaoru  <https://www.tetengo.org/>
  */
 
-use std::error;
-
-use anyhow::Result;
+use crate::error::Error;
 
 /**
  * A serializer.
@@ -38,11 +36,6 @@ pub trait Serializer {
 }
 
 /**
- * A deserialization error.
- */
-pub trait DeserializationError: error::Error {}
-
-/**
  * A deserializer.
  */
 pub trait Deserializer {
@@ -71,7 +64,7 @@ pub trait Deserializer {
      * # Errors
      * * When it fails to deserialize the object.
      */
-    fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object>;
+    fn deserialize(&self, serialized: &[u8]) -> Result<Self::Object, Error>;
 }
 
 /**
