@@ -69,7 +69,7 @@ impl FileMapping {
     pub fn region(&self, range: Range<usize>) -> Result<&[u8], Error> {
         self.mmap
             .get(range)
-            .ok_or(io::Error::from(ErrorKind::InvalidInput).into())
+            .ok_or(io::Error::from(ErrorKind::UnexpectedEof).into())
     }
 }
 

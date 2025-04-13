@@ -102,7 +102,7 @@ impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
         };
 
         if self_.content_offset > self_.file_size {
-            return Err(io::Error::from(ErrorKind::InvalidInput).into());
+            return Err(io::Error::from(ErrorKind::UnexpectedEof).into());
         }
 
         let base_check_count = self_.base_check_size()?;
@@ -189,7 +189,7 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
 
     fn read_bytes(&self, offset: usize, size: usize) -> Result<&[u8], Error> {
         if offset + size > self.file_size {
-            return Err(io::Error::from(ErrorKind::InvalidInput).into());
+            return Err(io::Error::from(ErrorKind::UnexpectedEof).into());
         }
 
         self.file_mapping
