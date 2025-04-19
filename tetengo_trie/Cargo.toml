@@ -1,6 +1,6 @@
 [package]
 name = "tetengo_trie"
-version = "1.4.0"
+version = "1.5.0"
 authors = ["kaoru"]
 edition = "2024"
 rust-version = "1.86"
