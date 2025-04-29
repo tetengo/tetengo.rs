@@ -5,12 +5,12 @@
  */
 
 use std::collections::HashMap;
+use std::error;
 use std::hash::{DefaultHasher, Hash, Hasher};
-use std::io::{self, BufRead, Lines};
-use std::num;
+use std::io::{BufRead, Lines};
 use std::rc::Rc;
 
-use tetengo_lattice::{Entry, Error, HashMapVocabulary, StringInput, Vocabulary};
+use tetengo_lattice::{Entry, HashMapVocabulary, StringInput, Vocabulary};
 
 /**
  * A timetable error.
@@ -54,22 +54,10 @@ pub(crate) enum TimetableError {
     BothArrivalAndDepartureTimeNotFound,
 
     /**
-     * tetengo lattice error.
+     * An error returned from an internal crate.
      */
-    #[error("tetengo lattice error: {0}")]
-    TetengoLatticeError(#[from] Error),
-
-    /**
-     * An I/O error.
-     */
-    #[error("io error: {0}")]
-    IoError(#[from] io::Error),
-
-    /**
-     * Parse Int error.
-     */
-    #[error("parse int error: {0}")]
-    ParseIntError(#[from] num::ParseIntError),
+    #[error("internal error: {0}")]
+    InternalError(#[from] Box<dyn error::Error>),
 }
 
 /**
@@ -376,7 +364,7 @@ impl Timetable {
         let Some(line) = lines.next() else {
             return Ok(None);
         };
-        let line = line?;
+        let line = line.map_err(|e| TimetableError::InternalError(Box::new(e)))?;
         let elements = line
             .split(',')
             .map(|e| e.trim().to_string())
@@ -436,7 +424,9 @@ impl Timetable {
         if string_time.is_empty() || string_time == "-" {
             return Ok(None);
         }
-        let int_time = string_time.parse::<usize>()?;
+        let int_time = string_time
+            .parse::<usize>()
+            .map_err(|e| TimetableError::InternalError(Box::new(e)))?;
         let hour = int_time / 100;
         let minute = int_time - hour * 100;
         if hour >= 24 || minute >= 60 {

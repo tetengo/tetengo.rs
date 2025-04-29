@@ -34,11 +34,16 @@ fn main_core() -> Result<(), TimetableError> {
         return Ok(());
     }
 
-    let timetable = Timetable::new(create_reader(Path::new(&args[1]))?)?;
+    let timetable = Timetable::new(
+        create_reader(Path::new(&args[1]))
+            .map_err(|e| TimetableError::InternalError(Box::new(e)))?,
+    )?;
 
     let mut lines = stdin().lines();
     loop {
-        let departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)? {
+        let departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)
+            .map_err(|e| TimetableError::InternalError(Box::new(e)))?
+        {
             Input::DepartureAndArrival(Some(value)) => value,
             Input::DepartureAndArrival(None) => continue,
             Input::Eof => break,
@@ -47,8 +52,11 @@ fn main_core() -> Result<(), TimetableError> {
         let ((_, departure_time), _) = departure_and_arrival;
         let vocabulary = timetable.create_vocabulary(departure_time);
         let mut lattice = Lattice::new(vocabulary.as_ref());
-        build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
-        let eos_node = lattice.settle()?;
+        build_lattice(departure_and_arrival, &timetable, &mut lattice)
+            .map_err(|e| TimetableError::InternalError(Box::new(e)))?;
+        let eos_node = lattice
+            .settle()
+            .map_err(|e| TimetableError::InternalError(Box::new(e)))?;
 
         let trips = enumerate_trips(&lattice, eos_node, 5);
 
