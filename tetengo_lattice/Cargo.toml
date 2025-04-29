@@ -1,6 +1,6 @@
 [package]
 name = "tetengo_lattice"
-version = "1.4.0"
+version = "1.4.1"
 authors = ["kaoru"]
 edition = "2024"
 rust-version = "1.86"
