@@ -7,7 +7,7 @@
 use std::cmp::min;
 use std::env;
 use std::fs::File;
-use std::io::{self, ErrorKind, Read, stdin};
+use std::io::{Read, stdin};
 use std::path::Path;
 use std::process::exit;
 
@@ -33,7 +33,9 @@ fn main_core() -> Result<(), Error> {
     loop {
         eprint!(">> ");
         let mut line = String::new();
-        let read_length = stdin().read_line(&mut line)?;
+        let read_length = stdin()
+            .read_line(&mut line)
+            .map_err(|e| Error::InternalError(e.into()))?;
         if read_length == 0 {
             break;
         }
@@ -59,14 +61,19 @@ fn main_core() -> Result<(), Error> {
 }
 
 fn load_lex_csv(lex_csv_path: &Path) -> Result<String, Error> {
-    let mut file = File::open(lex_csv_path)?;
+    let mut file = File::open(lex_csv_path).map_err(|e| Error::InternalError(e.into()))?;
 
-    let lex_csv_size = file.metadata()?.len();
+    let lex_csv_size = file
+        .metadata()
+        .map_err(|e| Error::InternalError(e.into()))?
+        .len();
 
     let mut buffer = String::new();
-    let read_length = file.read_to_string(&mut buffer)?;
+    let read_length = file
+        .read_to_string(&mut buffer)
+        .map_err(|e| Error::InternalError(e.into()))?;
     if read_length != lex_csv_size as usize {
-        return Err(io::Error::from(ErrorKind::UnexpectedEof).into());
+        return Err(Error::UnexpectedEof);
     }
     Ok(buffer)
 }
@@ -74,7 +81,7 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<String, Error> {
 type DictTrie = Trie<String, Vec<(usize, usize)>>;
 
 fn load_trie(trie_path: &Path) -> Result<DictTrie, Error> {
-    let mut file = File::open(trie_path)?;
+    let mut file = File::open(trie_path).map_err(|e| Error::InternalError(e.into()))?;
 
     let mut value_deserializer = ValueDeserializer::new(Box::new(deserialize_value));
     let storage = Box::new(MemoryStorage::new_with_reader(

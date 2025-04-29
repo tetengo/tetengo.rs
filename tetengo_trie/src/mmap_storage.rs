@@ -7,7 +7,7 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::fmt::Debug;
-use std::io::{self, ErrorKind, Write};
+use std::io::Write;
 use std::rc::Rc;
 use std::sync::LazyLock;
 
@@ -102,13 +102,13 @@ impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
         };
 
         if self_.content_offset > self_.file_size {
-            return Err(io::Error::from(ErrorKind::UnexpectedEof).into());
+            return Err(Error::LargerContentOffsetThanFileSize);
         }
 
         let base_check_count = self_.base_check_size()?;
         let fixed_value_size = self_.read_u32(size_of::<u32>() * (1 + base_check_count + 1))?;
         if fixed_value_size == 0 {
-            return Err(io::Error::from(ErrorKind::InvalidData).into());
+            return Err(Error::ZeroFixedValueSize);
         }
 
         Ok(self_)
@@ -189,7 +189,7 @@ impl<Value: Clone + Debug + 'static> MmapStorage<Value> {
 
     fn read_bytes(&self, offset: usize, size: usize) -> Result<&[u8], Error> {
         if offset + size > self.file_size {
-            return Err(io::Error::from(ErrorKind::UnexpectedEof).into());
+            return Err(Error::UnexpectedEof);
         }
 
         self.file_mapping

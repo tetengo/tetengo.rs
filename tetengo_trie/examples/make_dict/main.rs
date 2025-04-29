@@ -5,12 +5,11 @@
  */
 
 use std::collections::HashMap;
-use std::env;
 use std::fs::File;
-use std::io;
 use std::io::{BufRead, BufReader, BufWriter};
 use std::path::Path;
 use std::process::exit;
+use std::{env, error};
 
 use tetengo_trie::{
     BuildingObserverSet, Error, Serializer, StringSerializer, Trie, ValueSerializer,
@@ -21,11 +20,8 @@ enum DictMakingError {
     #[error("invalid UniDic lex.csv format")]
     InvalidUnidicLexCsvFormat,
 
-    #[error("tetengo trie error: {0}")]
-    TetengoTrieError(#[from] Error),
-
-    #[error("io error: {0}")]
-    IoError(#[from] io::Error),
+    #[error("internal error: {0}")]
+    InternalError(#[from] Box<dyn error::Error>),
 }
 
 fn main() {
@@ -43,7 +39,7 @@ fn main_core() -> Result<(), DictMakingError> {
     }
 
     let word_offset_map = load_lex_csv(Path::new(&args[1]))?;
-    let trie = build_trie(word_offset_map)?;
+    let trie = build_trie(word_offset_map).map_err(|e| DictMakingError::InternalError(e.into()))?;
     serialize_trie(&trie, Path::new(&args[2]))?;
 
     Ok(())
@@ -52,7 +48,7 @@ fn main_core() -> Result<(), DictMakingError> {
 type WordOffsetMap = HashMap<String, Vec<(usize, usize)>>;
 
 fn load_lex_csv(lex_csv_path: &Path) -> Result<WordOffsetMap, DictMakingError> {
-    let file = File::open(lex_csv_path)?;
+    let file = File::open(lex_csv_path).map_err(|e| DictMakingError::InternalError(e.into()))?;
 
     let mut word_offset_map = WordOffsetMap::new();
 
@@ -171,10 +167,12 @@ const SERIALIZED_VALUE_SIZE: usize = size_of::<u32>() * (1 + 4 * 2);
 
 fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<(), DictMakingError> {
     eprintln!("Serializing trie...");
-    let file = File::create(trie_bin_path)?;
+    let file = File::create(trie_bin_path).map_err(|e| DictMakingError::InternalError(e.into()))?;
     let mut buf_writer = BufWriter::new(file);
     let mut serializer = ValueSerializer::new(Box::new(serialize_value), SERIALIZED_VALUE_SIZE);
-    trie.storage().serialize(&mut buf_writer, &mut serializer)?;
+    trie.storage()
+        .serialize(&mut buf_writer, &mut serializer)
+        .map_err(|e| DictMakingError::InternalError(e.into()))?;
     eprintln!("Done.        ");
     Ok(())
 }

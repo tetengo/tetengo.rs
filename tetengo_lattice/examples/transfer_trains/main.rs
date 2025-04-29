@@ -34,11 +34,15 @@ fn main_core() -> Result<(), TimetableError> {
         return Ok(());
     }
 
-    let timetable = Timetable::new(create_reader(Path::new(&args[1]))?)?;
+    let timetable = Timetable::new(
+        create_reader(Path::new(&args[1])).map_err(|e| TimetableError::InternalError(e.into()))?,
+    )?;
 
     let mut lines = stdin().lines();
     loop {
-        let departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)? {
+        let departure_and_arrival = match get_departure_and_arrival(&mut lines, &timetable)
+            .map_err(|e| TimetableError::InternalError(e.into()))?
+        {
             Input::DepartureAndArrival(Some(value)) => value,
             Input::DepartureAndArrival(None) => continue,
             Input::Eof => break,
@@ -47,8 +51,11 @@ fn main_core() -> Result<(), TimetableError> {
         let ((_, departure_time), _) = departure_and_arrival;
         let vocabulary = timetable.create_vocabulary(departure_time);
         let mut lattice = Lattice::new(vocabulary.as_ref());
-        build_lattice(departure_and_arrival, &timetable, &mut lattice)?;
-        let eos_node = lattice.settle()?;
+        build_lattice(departure_and_arrival, &timetable, &mut lattice)
+            .map_err(|e| TimetableError::InternalError(e.into()))?;
+        let eos_node = lattice
+            .settle()
+            .map_err(|e| TimetableError::InternalError(e.into()))?;
 
         let trips = enumerate_trips(&lattice, eos_node, 5);
 
@@ -59,7 +66,7 @@ fn main_core() -> Result<(), TimetableError> {
 }
 
 fn create_reader(path: &Path) -> Result<Box<dyn BufRead>, Error> {
-    let reader = BufReader::new(File::open(path)?);
+    let reader = BufReader::new(File::open(path).map_err(|e| Error::InternalError(e.into()))?);
     Ok(Box::new(reader))
 }
 
@@ -110,21 +117,25 @@ fn get_station_index(
     timetable: &Timetable,
 ) -> Result<Option<usize>, Error> {
     print!("{}: ", prompt);
-    stdout().flush()?;
+    stdout()
+        .flush()
+        .map_err(|e| Error::InternalError(e.into()))?;
     let Some(input) = lines.next() else {
         return Ok(None);
     };
-    let input = input?;
+    let input = input.map_err(|e| Error::InternalError(e.into()))?;
     Ok(Some(timetable.station_index(input.trim())))
 }
 
 fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<Option<usize>, Error> {
     print!("{}: ", prompt);
-    stdout().flush()?;
+    stdout()
+        .flush()
+        .map_err(|e| Error::InternalError(e.into()))?;
     let Some(input) = lines.next() else {
         return Ok(None);
     };
-    let input = input?;
+    let input = input.map_err(|e| Error::InternalError(e.into()))?;
 
     let elements = input.split(':').collect::<Vec<_>>();
     if elements.len() != 2 {
