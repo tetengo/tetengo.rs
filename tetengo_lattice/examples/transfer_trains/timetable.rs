@@ -364,7 +364,7 @@ impl Timetable {
         let Some(line) = lines.next() else {
             return Ok(None);
         };
-        let line = line.map_err(|e| TimetableError::InternalError(Box::new(e)))?;
+        let line = line.map_err(|e| TimetableError::InternalError(e.into()))?;
         let elements = line
             .split(',')
             .map(|e| e.trim().to_string())
@@ -426,7 +426,7 @@ impl Timetable {
         }
         let int_time = string_time
             .parse::<usize>()
-            .map_err(|e| TimetableError::InternalError(Box::new(e)))?;
+            .map_err(|e| TimetableError::InternalError(e.into()))?;
         let hour = int_time / 100;
         let minute = int_time - hour * 100;
         if hour >= 24 || minute >= 60 {

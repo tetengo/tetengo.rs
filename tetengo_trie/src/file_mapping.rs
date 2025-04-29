@@ -29,7 +29,7 @@ impl FileMapping {
      * * When it fails to memory-map the file.
      */
     pub fn new(file: File) -> Result<Self, Error> {
-        let mmap = unsafe { Mmap::map(&file).map_err(|e| Error::InternalError(Box::new(e)))? };
+        let mmap = unsafe { Mmap::map(&file).map_err(|e| Error::InternalError(e.into()))? };
         Ok(Self { file, mmap })
     }
 

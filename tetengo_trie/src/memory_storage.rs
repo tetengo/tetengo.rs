@@ -96,7 +96,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
                     Self::write_u32(writer, serialized.len() as u32)?;
                     writer
                         .write_all(&serialized)
-                        .map_err(|e| Error::InternalError(Box::new(e)))?;
+                        .map_err(|e| Error::InternalError(e.into()))?;
                 } else {
                     Self::write_u32(writer, 0)?;
                 }
@@ -108,12 +108,12 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
                     debug_assert!(serialized.len() == fixed_value_size as usize);
                     writer
                         .write_all(&serialized)
-                        .map_err(|e| Error::InternalError(Box::new(e)))?;
+                        .map_err(|e| Error::InternalError(e.into()))?;
                 } else {
                     let uninitialized = vec![Self::UNINITIALIZED_BYTE; fixed_value_size as usize];
                     writer
                         .write_all(&uninitialized)
-                        .map_err(|e| Error::InternalError(Box::new(e)))?;
+                        .map_err(|e| Error::InternalError(e.into()))?;
                 }
             }
         }
@@ -127,7 +127,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         let serialized = INTEGER_SERIALIZER.serialize(&value);
         writer
             .write_all(&serialized)
-            .map_err(|e| Error::InternalError(Box::new(e)))?;
+            .map_err(|e| Error::InternalError(e.into()))?;
         Ok(())
     }
 
@@ -164,7 +164,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
                     let mut to_deserialize = vec![0; element_size];
                     reader
                         .read_exact(&mut to_deserialize)
-                        .map_err(|e| Error::InternalError(Box::new(e)))?;
+                        .map_err(|e| Error::InternalError(e.into()))?;
                     value_array.push(Some(Rc::new(
                         value_deserializer.deserialize(&to_deserialize)?,
                     )));
@@ -177,7 +177,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
                 let mut to_deserialize = vec![0; fixed_value_size];
                 reader
                     .read_exact(&mut to_deserialize)
-                    .map_err(|e| Error::InternalError(Box::new(e)))?;
+                    .map_err(|e| Error::InternalError(e.into()))?;
                 if to_deserialize
                     .iter()
                     .all(|&e| e == Self::UNINITIALIZED_BYTE)
@@ -200,7 +200,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         let mut to_deserialize: [u8; size_of::<u32>()] = [0u8; size_of::<u32>()];
         reader
             .read_exact(&mut to_deserialize)
-            .map_err(|e| Error::InternalError(Box::new(e)))?;
+            .map_err(|e| Error::InternalError(e.into()))?;
         U32_DESERIALIZER.deserialize(&to_deserialize)
     }
 
