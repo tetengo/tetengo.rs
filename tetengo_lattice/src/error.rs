@@ -2,7 +2,7 @@
  * An error.
  */
 
-use std::io;
+use std::error;
 
 /**
  * An error.
@@ -46,8 +46,8 @@ pub enum Error {
     NoInput,
 
     /**
-     * An I/O error.
+     * An error returned from an internal crate.
      */
-    #[error("io error: {0}")]
-    IoError(#[from] io::Error),
+    #[error("internal error: {0}")]
+    InternalError(#[from] Box<dyn error::Error>),
 }

@@ -2,7 +2,7 @@
  * An error.
  */
 
-use std::io;
+use std::error;
 
 /**
  * An error.
@@ -28,8 +28,26 @@ pub enum Error {
     InvalidDensityFactor,
 
     /**
-     * An I/O error.
+     * The content offset is larger than the file size.
      */
-    #[error("io error: {0}")]
-    IoError(#[from] io::Error),
+    #[error("content offset is larger than the file size")]
+    LargerContentOffsetThanFileSize,
+
+    /**
+     * The fixed value size is 0.
+     */
+    #[error("fixed value size is 0")]
+    ZeroFixedValueSize,
+
+    /**
+     * An unexpected EOF.
+     */
+    #[error("unexpected EOF")]
+    UnexpectedEof,
+
+    /**
+     * An error returned from an internal crate.
+     */
+    #[error("internal error: {0}")]
+    InternalError(#[from] Box<dyn error::Error>),
 }
