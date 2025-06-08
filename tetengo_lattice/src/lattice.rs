@@ -37,20 +37,20 @@ impl GraphStep {
  * A lattice.
  */
 #[derive(Debug)]
-pub struct Lattice<'a> {
-    vocabulary: &'a dyn Vocabulary,
+pub struct Lattice {
+    vocabulary: Rc<dyn Vocabulary>,
     input: Option<Box<dyn Input>>,
     graph: Vec<GraphStep>,
 }
 
-impl<'a> Lattice<'a> {
+impl Lattice {
     /**
      * Creates a lattice.
      *
      * # Arguments
      * * `vocabulary` - A vocabulary.
      */
-    pub fn new(vocabulary: &'a dyn Vocabulary) -> Self {
+    pub fn new(vocabulary: Rc<dyn Vocabulary>) -> Self {
         let mut self_ = Self {
             vocabulary,
             input: None,
@@ -449,9 +449,8 @@ mod tests {
         }
         false
     }
-
-    fn create_vocabulary() -> Box<dyn Vocabulary> {
-        Box::new(HashMapVocabulary::new(
+    fn create_vocabulary() -> Rc<dyn Vocabulary> {
+        Rc::new(HashMapVocabulary::new(
             entries(),
             connections(),
             &entry_hash,
@@ -459,8 +458,8 @@ mod tests {
         ))
     }
 
-    fn create_empty_vocabulary() -> Box<dyn Vocabulary> {
-        Box::new(HashMapVocabulary::new(
+    fn create_empty_vocabulary() -> Rc<dyn Vocabulary> {
+        Rc::new(HashMapVocabulary::new(
             Vec::new(),
             Vec::new(),
             &entry_hash,
@@ -471,13 +470,13 @@ mod tests {
     #[test]
     fn new() {
         let vocabulary = create_vocabulary();
-        let _lattice = Lattice::new(vocabulary.as_ref());
+        let _lattice = Lattice::new(vocabulary);
     }
 
     #[test]
     fn step_count() {
         let vocabulary = create_vocabulary();
-        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let mut lattice = Lattice::new(vocabulary);
         assert_eq!(lattice.step_count(), 1);
 
         let result1 = lattice.push_back(to_input("[HakataTosu]"));
@@ -496,7 +495,7 @@ mod tests {
     #[test]
     fn nodes_at() {
         let vocabulary = create_vocabulary();
-        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let mut lattice = Lattice::new(vocabulary);
         let _result = lattice.push_back(to_input("[HakataTosu]"));
         let _result = lattice.push_back(to_input("[TosuOmuta]"));
         let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
@@ -596,7 +595,7 @@ mod tests {
     fn push_back() {
         {
             let vocabulary = create_vocabulary();
-            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let mut lattice = Lattice::new(vocabulary);
 
             let result1 = lattice.push_back(to_input("[HakataTosu]"));
             assert!(result1.is_ok());
@@ -607,7 +606,7 @@ mod tests {
         }
         {
             let vocabulary = create_empty_vocabulary();
-            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let mut lattice = Lattice::new(vocabulary);
 
             let result = lattice.push_back(to_input("[HakataTosu]"));
             assert!(result.is_err());
@@ -618,7 +617,7 @@ mod tests {
     fn settle() {
         {
             let vocabulary = create_vocabulary();
-            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let mut lattice = Lattice::new(vocabulary);
 
             {
                 let result = lattice.settle();

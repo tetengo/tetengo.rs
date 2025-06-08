@@ -50,7 +50,7 @@ fn main_core() -> Result<(), TimetableError> {
 
         let ((_, departure_time), _) = departure_and_arrival;
         let vocabulary = timetable.create_vocabulary(departure_time);
-        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let mut lattice = Lattice::new(vocabulary);
         build_lattice(departure_and_arrival, &timetable, &mut lattice)
             .map_err(|e| TimetableError::InternalError(e.into()))?;
         let eos_node = lattice
@@ -156,7 +156,7 @@ fn get_time(prompt: &str, lines: &mut Lines<StdinLock<'_>>) -> Result<Option<usi
 fn build_lattice(
     ((departure_station_index, _), arrival_station_index): ((usize, usize), usize),
     timetable: &Timetable,
-    lattice: &mut Lattice<'_>,
+    lattice: &mut Lattice,
 ) -> Result<(), Error> {
     for i in departure_station_index..arrival_station_index {
         let key = format!(
@@ -186,7 +186,7 @@ struct Trip {
     pub(crate) cost: i32,
 }
 
-fn enumerate_trips(lattice: &Lattice<'_>, eos_node: Node, trip_capacity: usize) -> Vec<Trip> {
+fn enumerate_trips(lattice: &Lattice, eos_node: Node, trip_capacity: usize) -> Vec<Trip> {
     let iter = NBestIterator::new(lattice, eos_node, Box::new(Constraint::new()));
     let mut trips = Vec::with_capacity(trip_capacity);
     let mut duplication_checker = HashSet::<String>::new();
