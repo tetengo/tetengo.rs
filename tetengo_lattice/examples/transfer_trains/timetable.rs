@@ -531,10 +531,10 @@ impl Timetable {
      * # Returns
      * A vocabulary.
      */
-    pub(crate) fn create_vocabulary(&self, departure_time: usize) -> Box<dyn Vocabulary> {
+    pub(crate) fn create_vocabulary(&self, departure_time: usize) -> Rc<dyn Vocabulary> {
         let entries = Self::build_entries(&self.value);
         let connections = Self::build_connections(&entries, departure_time);
-        Box::new(HashMapVocabulary::new(
+        Rc::new(HashMapVocabulary::new(
             entries,
             connections,
             &Self::entry_hash_value,

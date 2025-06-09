@@ -4,6 +4,7 @@
 
 mod usage {
     use std::hash::{DefaultHasher, Hash, Hasher};
+    use std::rc::Rc;
 
     use tetengo_lattice::{
         Constraint, Entry, HashMapVocabulary, NBestIterator, Node, Path, StringInput, Vocabulary,
@@ -36,7 +37,7 @@ mod usage {
         let vocabulary = build_vocabulary();
 
         // Creates an object for a lattice.
-        let mut lattice = tetengo_lattice::lattice::Lattice::new(vocabulary.as_ref());
+        let mut lattice = tetengo_lattice::lattice::Lattice::new(vocabulary);
 
         // Enters key characters to construct the lattice.
         let _ignored = lattice.push_back(Box::new(StringInput::new(String::from("a"))));
@@ -60,7 +61,7 @@ mod usage {
         assert_eq!(paths, expected);
     }
 
-    fn build_vocabulary() -> Box<dyn Vocabulary> {
+    fn build_vocabulary() -> Rc<dyn Vocabulary> {
         // The contents of the vocabulary.
         let entries = [
             Entry::new(
@@ -114,7 +115,7 @@ mod usage {
         ];
 
         // Returns a vocabulary implemented with hash tables.
-        Box::new(HashMapVocabulary::new(
+        Rc::new(HashMapVocabulary::new(
             entry_mappings,
             connections,
             &|entry| {

@@ -17,7 +17,7 @@ use crate::path::Path;
  */
 #[derive(Debug)]
 pub struct NBestIterator<'a> {
-    lattice: &'a Lattice<'a>,
+    lattice: &'a Lattice,
     caps: BinaryHeap<Reverse<Cap>>,
     constraint: Box<Constraint<'a>>,
 }
@@ -31,7 +31,7 @@ impl<'a> NBestIterator<'a> {
      * * `eos_node`   - An EOS node.
      * * `constraint` - A constraint.
      */
-    pub fn new(lattice: &'a Lattice<'a>, eos_node: Node, constraint: Box<Constraint<'a>>) -> Self {
+    pub fn new(lattice: &'a Lattice, eos_node: Node, constraint: Box<Constraint<'a>>) -> Self {
         let mut caps = BinaryHeap::new();
         let tail_path_cost = eos_node.node_cost();
         let whole_path_cost = eos_node.path_cost();
@@ -48,7 +48,7 @@ impl<'a> NBestIterator<'a> {
     }
 
     fn open_cap(
-        lattice: &Lattice<'a>,
+        lattice: &Lattice,
         caps: &mut BinaryHeap<Reverse<Cap>>,
         constraint: &Constraint<'a>,
     ) -> Option<Path> {
@@ -424,8 +424,8 @@ mod tests {
         false
     }
 
-    fn create_vocabulary() -> Box<dyn Vocabulary> {
-        Box::new(HashMapVocabulary::new(
+    fn create_vocabulary() -> Rc<dyn Vocabulary> {
+        Rc::new(HashMapVocabulary::new(
             entries(),
             connections(),
             &entry_hash,
@@ -454,7 +454,7 @@ mod tests {
     #[test]
     fn new() {
         let vocabulary = create_vocabulary();
-        let mut lattice = Lattice::new(vocabulary.as_ref());
+        let mut lattice = Lattice::new(vocabulary);
         let _result = lattice.push_back(to_input("[HakataTosu]"));
         let _result = lattice.push_back(to_input("[TosuOmuta]"));
         let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
@@ -467,7 +467,7 @@ mod tests {
     fn next() {
         {
             let vocabulary = create_vocabulary();
-            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let mut lattice = Lattice::new(vocabulary);
             let _result = lattice.push_back(to_input("[HakataTosu]"));
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
@@ -704,7 +704,7 @@ mod tests {
         }
         {
             let vocabulary = create_vocabulary();
-            let mut lattice = Lattice::new(vocabulary.as_ref());
+            let mut lattice = Lattice::new(vocabulary);
             let _result = lattice.push_back(to_input("[HakataTosu]"));
             let _result = lattice.push_back(to_input("[TosuOmuta]"));
             let _result = lattice.push_back(to_input("[OmutaKumamoto]"));
