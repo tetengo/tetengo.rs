@@ -723,7 +723,7 @@ impl Timetable {
                 let Some(another_section) = another_value.downcast_ref::<Section>() else {
                     unreachable!("another.value() must be Section.");
                 };
-                let is_equal = if let Some(one_key) = one.key() {
+                (if let Some(one_key) = one.key() {
                     if let Some(another_key) = another.key() {
                         one_key.equal_to(another_key)
                     } else {
@@ -731,17 +731,15 @@ impl Timetable {
                     }
                 } else {
                     another.key().is_none()
-                } && one_section.train().number()
-                    == another_section.train().number()
+                } && one_section.train().number() == another_section.train().number()
                     && one_section.train().name() == another_section.train().name()
                     && one_section.from() == another_section.from()
-                    && one_section.to() == another_section.to();
-                is_equal
+                    && one_section.to() == another_section.to())
             } else {
                 false
             }
         } else if another.value().is_none() {
-            let is_equal = if let Some(one_key) = one.key() {
+            if let Some(one_key) = one.key() {
                 if let Some(another_key) = another.key() {
                     one_key.equal_to(another_key)
                 } else {
@@ -749,8 +747,7 @@ impl Timetable {
                 }
             } else {
                 another.key().is_none()
-            };
-            is_equal
+            }
         } else {
             false
         }

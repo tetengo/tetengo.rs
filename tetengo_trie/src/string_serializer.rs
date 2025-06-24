@@ -91,7 +91,7 @@ mod tests {
                 std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
                 expected_serialized
             );
-            assert!(!serialized.iter().any(|&b| b == 0x00u8));
+            assert!(!serialized.contains(&0x00u8));
         }
         {
             let serializer = <() as SerializerOf<String>>::Type::new(false);
@@ -103,7 +103,7 @@ mod tests {
                 std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
                 expected_serialized
             );
-            assert!(!serialized.iter().any(|&b| b == 0x00u8));
+            assert!(!serialized.contains(&0x00u8));
         }
     }
 

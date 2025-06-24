@@ -299,7 +299,7 @@ mod tests {
             let expected_serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
-            assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
+            assert!(!serialized.contains(&KEY_TERMINATOR));
         }
         {
             let serializer = <() as SerializerOf<u32>>::Type::new(false);
@@ -316,7 +316,7 @@ mod tests {
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
-            assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
+            assert!(!serialized.contains(&KEY_TERMINATOR));
         }
     }
 
