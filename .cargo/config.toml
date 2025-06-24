@@ -1,6 +1,5 @@
 [build]
 rustflags = [
-    "-A", "clippy::too_many_arguments",
     "-D", "warnings",
     "-D", "absolute-paths-not-starting-with-crate",
     "-D", "ambiguous-negative-literals",
@@ -62,4 +61,15 @@ rustflags = [
     "-D", "unused-qualifications",
     "-D", "unused-results",
     "-D", "variant-size-differences",
+#    "-D", "clippy::all",
+#    "-D", "clippy::cargo",
+#    "-D", "clippy::complexity",
+#    "-D", "clippy::correctness",
+#    "-D", "clippy::nursery",
+#    "-D", "clippy::pedantic",
+#    "-D", "clippy::perf",
+#    "-D", "clippy::restriction",
+#    "-D", "clippy::style",
+#    "-D", "clippy::suspicious",
+    "-A", "clippy::too_many_arguments",
 ]
