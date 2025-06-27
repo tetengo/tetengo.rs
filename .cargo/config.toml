@@ -65,12 +65,50 @@ rustflags = [
     "-D", "clippy::cargo",
     "-D", "clippy::complexity",
     "-D", "clippy::correctness",
-#    "-D", "clippy::nursery",
-#    "-D", "clippy::pedantic",
+    "-D", "clippy::nursery",
+    "-D", "clippy::pedantic",
     "-D", "clippy::perf",
 #    "-D", "clippy::restriction",
     "-D", "clippy::style",
-#    "-D", "clippy::suspicious",
+    "-D", "clippy::suspicious",
     "-A", "clippy::multiple_crate_versions",
     "-A", "clippy::too_many_arguments",
+
+    "-A", "clippy::bool_to_int_with_if",                # pedantic
+    "-A", "clippy::cast_lossless",                      # pedantic
+    "-A", "clippy::cast_possible_truncation",           # pedantic
+    "-A", "clippy::cast_possible_wrap",                 # pedantic
+    "-A", "clippy::cast_precision_loss",                # pedantic
+    "-A", "clippy::cast_sign_loss",                     # pedantic
+    "-A", "clippy::checked_conversions",                # pedantic
+    "-A", "clippy::doc_markdown",                       # pedantic
+    "-A", "clippy::format_push_string",                 # pedantic
+    "-A", "clippy::if_not_else",                        # pedantic
+    "-A", "clippy::items_after_statements",             # pedantic
+    "-A", "clippy::iter_without_into_iter",             # pedantic
+    "-A", "clippy::manual_let_else",                    # pedantic
+    "-A", "clippy::match_same_arms",                    # pedantic
+    "-A", "clippy::must_use_candidate",                 # pedantic
+    "-A", "clippy::needless_pass_by_value",             # pedantic
+    "-A", "clippy::range_plus_one",                     # pedantic
+    "-A", "clippy::redundant_closure_for_method_calls", # pedantic
+    "-A", "clippy::return_self_not_must_use",           # pedantic
+    "-A", "clippy::should_panic_without_expect",        # pedantic
+    "-A", "clippy::similar_names",                      # pedantic
+    "-A", "clippy::single_match_else",                  # pedantic
+    "-A", "clippy::too_many_lines",                     # pedantic
+    "-A", "clippy::uninlined_format_args",              # pedantic
+    "-A", "clippy::unnecessary_semicolon",              # pedantic
+    "-A", "clippy::unnecessary_wraps",                  # pedantic
+    "-A", "clippy::unreadable_literal",                 # pedantic
+
+    "-A", "clippy::cognitive_complexity",           # nursery
+    "-A", "clippy::missing_const_for_fn",           # nursery
+    "-A", "clippy::needless_collect",               # nursery
+    "-A", "clippy::option_if_let_else",             # nursery
+    "-A", "clippy::redundant_clone",                # nursery
+    "-A", "clippy::redundant_pub_crate",            # nursery
+    "-A", "clippy::significant_drop_tightening",    # nursery
+    "-A", "clippy::string_lit_as_bytes",            # nursery
+    "-A", "clippy::use_self",                       # nursery
 ]
