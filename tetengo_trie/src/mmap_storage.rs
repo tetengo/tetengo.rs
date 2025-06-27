@@ -209,7 +209,9 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
 
     fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
         let base_check = self.read_u32(size_of::<u32>() * (1 + base_check_index))?;
-        Ok((base_check as i32) >> 8)
+        #[allow(clippy::cast_possible_wrap)]
+        let result = (base_check as i32) >> 8;
+        Ok(result)
     }
 
     fn set_base_at(&mut self, _: usize, _: i32) -> Result<(), Error> {

@@ -450,13 +450,15 @@ impl Timetable {
                         train.stops_mut()[to].set_arrival_time(Self::add_time(
                             from_departure_time,
                             minimum_duration,
-                        ));
+                        )?);
                     } else if train.stops()[from].departure_time().is_none() {
                         let Some(to_arrival_time) = train.stops()[to].arrival_time() else {
                             return Err(TimetableError::BothArrivalAndDepartureTimeNotFound);
                         };
-                        train.stops_mut()[from]
-                            .set_departure_time(Self::add_time(to_arrival_time, -minimum_duration));
+                        train.stops_mut()[from].set_departure_time(Self::add_time(
+                            to_arrival_time,
+                            -minimum_duration,
+                        )?);
                     }
                 }
             }
@@ -484,7 +486,7 @@ impl Timetable {
             } else {
                 return Err(TimetableError::BothArrivalAndDepartureTimeNotFound);
             };
-            let duration = Self::diff_time(to_time, from_time);
+            let duration = Self::diff_time(to_time, from_time)?;
             if duration < minimum {
                 minimum = duration;
             }
@@ -559,7 +561,8 @@ impl Timetable {
                     let section_name = Self::make_section_name(&timetable.stations, from, to);
                     let found = map.entry(section_name.clone()).or_default();
                     let section = Section::new(Rc::new(train.clone()), from, to);
-                    let cost = i32::try_from(Self::make_section_duration(train.stops(), from, to))
+                    let section_duration = Self::make_section_duration(train.stops(), from, to)?;
+                    let cost = i32::try_from(section_duration)
                         .map_err(|e| TimetableError::InternalError(e.into()))?;
                     found.push(Entry::new(
                         Box::new(StringInput::new(section_name)),
@@ -599,14 +602,19 @@ impl Timetable {
         name
     }
 
-    fn make_section_duration(stops: &[Stop], from: usize, to: usize) -> usize {
+    fn make_section_duration(
+        stops: &[Stop],
+        from: usize,
+        to: usize,
+    ) -> Result<usize, TimetableError> {
         let departure_time = stops[from].departure_time().unwrap_or_else(|| {
             unreachable!("departure_time must be set.");
         });
         let arrival_time = stops[to].arrival_time().unwrap_or_else(|| {
             unreachable!("arrival_time must be set.");
         });
-        Self::diff_time(arrival_time, departure_time) as usize
+        let diff_result = Self::diff_time(arrival_time, departure_time)?;
+        usize::try_from(diff_result).map_err(|e| TimetableError::InternalError(e.into()))
     }
 
     fn build_connections(
@@ -645,9 +653,9 @@ impl Timetable {
                             .unwrap_or_else(|| {
                                 unreachable!("to departure_time must be set.");
                             });
-                        let cost =
-                            i32::try_from(Self::diff_time(to_departure_time, from_arrival_time))
-                                .map_err(|e| TimetableError::InternalError(e.into()))?;
+                        let time_diff = Self::diff_time(to_departure_time, from_arrival_time)?;
+                        let cost = i32::try_from(time_diff)
+                            .map_err(|e| TimetableError::InternalError(e.into()))?;
                         if cost > 60 {
                             continue;
                         }
@@ -673,9 +681,9 @@ impl Timetable {
                     .unwrap_or_else(|| {
                         unreachable!("departure_time() must be set.");
                     });
-                let bos_cost =
-                    i32::try_from(Self::diff_time(section_departure_time, departure_time))
-                        .map_err(|e| TimetableError::InternalError(e.into()))?;
+                let time_diff = Self::diff_time(section_departure_time, departure_time)?;
+                let bos_cost = i32::try_from(time_diff)
+                    .map_err(|e| TimetableError::InternalError(e.into()))?;
                 if bos_cost <= 240 {
                     connections.push(((Entry::BosEos, entry.clone()), bos_cost * 9 / 10));
                 }
@@ -686,16 +694,23 @@ impl Timetable {
         Ok(connections)
     }
 
-    fn add_time(time: usize, duration: isize) -> usize {
+    fn add_time(time: usize, duration: isize) -> Result<usize, TimetableError> {
         assert!(time < 1440);
         assert!(-1440 < duration && duration < 1440);
-        (time as isize + 1440 + duration) as usize % 1440
+        let time_isize =
+            isize::try_from(time).map_err(|e| TimetableError::InternalError(e.into()))?;
+        let result = (time_isize + 1440 + duration) % 1440;
+        usize::try_from(result).map_err(|e| TimetableError::InternalError(e.into()))
     }
 
-    fn diff_time(time1: usize, time2: usize) -> isize {
+    fn diff_time(time1: usize, time2: usize) -> Result<isize, TimetableError> {
         assert!(time1 < 1440);
         assert!(time2 < 1440);
-        (time1 as isize + 1440 - time2 as isize) % 1440
+        let time1_isize =
+            isize::try_from(time1).map_err(|e| TimetableError::InternalError(e.into()))?;
+        let time2_isize =
+            isize::try_from(time2).map_err(|e| TimetableError::InternalError(e.into()))?;
+        Ok((time1_isize + 1440 - time2_isize) % 1440)
     }
 
     fn entry_hash_value(entry: &Entry) -> u64 {
