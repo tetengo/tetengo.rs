@@ -1,5 +1,5 @@
 /*!
- * The usage of tetengo_lattice
+ * The usage of `tetengo_lattice`
  */
 
 mod usage {

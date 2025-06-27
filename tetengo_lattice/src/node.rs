@@ -85,7 +85,7 @@ impl Node {
      * Creates a BOS (Beginning of Sequence).
      *
      * # Arguments
-     * * preceding_edge_costs - Preceding edge costs.
+     * * `preceding_edge_costs` - Preceding edge costs.
      */
     pub const fn bos(preceding_edge_costs: Rc<Vec<i32>>) -> Self {
         Node::Bos(Bos {
@@ -97,10 +97,10 @@ impl Node {
      * Creates an EOS (Ending of Sequence).
      *
      * # Arguments
-     * * preceding_step       - An index of a preceding step.
-     * * preceding_edge_costs - Preceding edge costs.
-     * * best_preceding_node  - An index of a best preceding node.
-     * * path_cost            - A path cost.
+     * * `preceding_step`       - An index of a preceding step.
+     * * `preceding_edge_costs` - Preceding edge costs.
+     * * `best_preceding_node`  - An index of a best preceding node.
+     * * `path_cost`            - A path cost.
      */
     pub const fn eos(
         preceding_step: usize,
@@ -120,14 +120,14 @@ impl Node {
      * Creates a node.
      *
      * # Arguments
-     * * key                  - A key.
-     * * value                - A value.
-     * * index_in_step        - An index in the step.
-     * * preceding_step       - An index of a preceding step.
-     * * preceding_edge_costs - Preceding edge costs.
-     * * best_preceding_node  - An index of a best preceding node.
-     * * node_cost            - A node cost.
-     * * path_cost            - A path cost.
+     * * `key`                  - A key.
+     * * `value`                - A value.
+     * * `index_in_step`        - An index in the step.
+     * * `preceding_step`       - An index of a preceding step.
+     * * `preceding_edge_costs` - Preceding edge costs.
+     * * `best_preceding_node`  - An index of a best preceding node.
+     * * `node_cost`            - A node cost.
+     * * `path_cost`            - A path cost.
      */
     pub fn new(
         key: Box<dyn Input>,

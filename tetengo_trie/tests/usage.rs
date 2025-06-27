@@ -1,5 +1,5 @@
 /*!
- * The usage of tetengo_trie
+ * The usage of `tetengo_trie`
  */
 
 mod usage {

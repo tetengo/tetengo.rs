@@ -131,9 +131,6 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      *
      * # Errors
      * * When it fails to access the storage.
-     *
-     * # Panics
-     * * When element index doesn't fit in i32.
      */
     pub fn build_with_observer_set(
         self,
