@@ -55,7 +55,10 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
             if next_index < 0 {
                 continue;
             }
-            let check_at_next_index = match self.storage.check_at(next_index as usize) {
+            let Ok(next_index_usize) = next_index.try_into() else {
+                continue;
+            };
+            let check_at_next_index = match self.storage.check_at(next_index_usize) {
                 Ok(check) => check,
                 Err(e) => {
                     debug_assert!(false, "{}", e);
@@ -74,7 +77,7 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
                     next_key
                 };
                 self.base_check_index_key_stack
-                    .push((next_index as usize, next_key));
+                    .push((next_index_usize, next_key));
             }
         }
 

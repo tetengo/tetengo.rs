@@ -43,7 +43,8 @@ impl<T> Iterator for TrieIterator<'_, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let value_index = self.double_array_iterator.next()?;
-        match self.storage.value_at(value_index as usize) {
+        let index: usize = value_index.try_into().ok()?;
+        match self.storage.value_at(index) {
             Ok(value) => value,
             Err(e) => {
                 debug_assert!(false, "{}", e);

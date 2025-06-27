@@ -371,10 +371,13 @@ mod tests {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(
-                ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | u32::from(storage.check_at(i).unwrap()),
-            );
+            #[allow(clippy::cast_sign_loss)]
+            {
+                array.push(
+                    ((storage.base_at(i).unwrap() as u32) << 8u32)
+                        | u32::from(storage.check_at(i).unwrap()),
+                );
+            }
         }
         array
     }

@@ -241,7 +241,10 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<(), Error> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0x000000FF;
-        self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
+        #[allow(clippy::cast_sign_loss)]
+        {
+            self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
+        }
         Ok(())
     }
 
@@ -376,10 +379,13 @@ mod tests {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(
-                ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | u32::from(storage.check_at(i).unwrap()),
-            );
+            #[allow(clippy::cast_sign_loss)]
+            {
+                array.push(
+                    ((storage.base_at(i).unwrap() as u32) << 8u32)
+                        | u32::from(storage.check_at(i).unwrap()),
+                );
+            }
         }
         array
     }

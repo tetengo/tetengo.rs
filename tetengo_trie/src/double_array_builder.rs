@@ -69,7 +69,9 @@ fn build_iter<T: 'static>(
     for children_first in children_firsts.iter().take(children_firsts.len() - 1) {
         let (element_key, _) = elements[*children_first];
         let char_code = char_code_at(element_key, key_offset);
-        let next_base_check_index = (base + i32::from(char_code)) as usize;
+        let base_plus_char = base + i32::from(char_code);
+        #[allow(clippy::cast_sign_loss)]
+        let next_base_check_index: usize = base_plus_char as usize;
         storage.set_check_at(next_base_check_index, char_code)?;
     }
     for i in 0..children_firsts.len() - 1 {
@@ -77,7 +79,9 @@ fn build_iter<T: 'static>(
         let children_last = children_firsts[i + 1];
         let (element_key, value) = elements[children_first];
         let char_code = char_code_at(element_key, key_offset);
-        let next_base_check_index = (base + i32::from(char_code)) as usize;
+        let base_plus_char = base + i32::from(char_code);
+        #[allow(clippy::cast_sign_loss)]
+        let next_base_check_index: usize = base_plus_char as usize;
         if char_code == KEY_TERMINATOR {
             observer.adding(&elements[children_first]);
             storage.set_base_at(next_base_check_index, value)?;
@@ -117,8 +121,9 @@ fn calc_base<T: 'static>(
             .take(first_last)
             .skip(firsts[0])
             .find_map(|&(key, _)| {
-                let next_base_check_index =
-                    (base + i32::from(char_code_at(key, key_offset))) as usize;
+                let base_plus_char = base + i32::from(char_code_at(key, key_offset));
+                #[allow(clippy::cast_sign_loss)]
+                let next_base_check_index: usize = base_plus_char as usize;
                 match storage.check_at(next_base_check_index) {
                     Ok(check) => {
                         if check != VACANT_CHECK_VALUE {

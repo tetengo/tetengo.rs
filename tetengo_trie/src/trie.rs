@@ -8,6 +8,7 @@ use std::any::type_name_of_val;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
+use std::num::TryFromIntError;
 use std::rc::Rc;
 
 use crate::double_array::{self, DEFAULT_DENSITY_FACTOR, DoubleArray};
@@ -341,7 +342,10 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
             return Ok(None);
         };
 
-        self.double_array.storage().value_at(index as usize)
+        let index: usize = index
+            .try_into()
+            .map_err(|e: TryFromIntError| Error::InternalError(e.into()))?;
+        self.double_array.storage().value_at(index)
     }
 
     /**
