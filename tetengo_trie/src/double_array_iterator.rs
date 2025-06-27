@@ -51,7 +51,7 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
 
         for char_code in (0..=0xFE).rev() {
             let char_code_as_uint8 = char_code as u8;
-            let next_index = base + char_code_as_uint8 as i32;
+            let next_index = base + i32::from(char_code_as_uint8);
             if next_index < 0 {
                 continue;
             }

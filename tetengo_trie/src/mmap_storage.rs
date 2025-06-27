@@ -367,7 +367,7 @@ mod tests {
         for i in 0..size {
             array.push(
                 ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | storage.check_at(i).unwrap() as u32,
+                    | u32::from(storage.check_at(i).unwrap()),
             );
         }
         array

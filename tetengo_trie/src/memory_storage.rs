@@ -38,7 +38,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
      */
     pub fn new() -> Self {
         Self {
-            base_check_array: RefCell::new(vec![VACANT_CHECK_VALUE as u32]),
+            base_check_array: RefCell::new(vec![u32::from(VACANT_CHECK_VALUE)]),
             value_array: Vec::new(),
         }
     }
@@ -210,7 +210,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         if size > self.base_check_array.borrow().len() {
             self.base_check_array
                 .borrow_mut()
-                .resize(size, VACANT_CHECK_VALUE as u32);
+                .resize(size, u32::from(VACANT_CHECK_VALUE));
         }
     }
 }
@@ -240,7 +240,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<(), Error> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0xFFFFFF00;
-        self.base_check_array.borrow_mut()[base_check_index] |= check as u32;
+        self.base_check_array.borrow_mut()[base_check_index] |= u32::from(check);
         Ok(())
     }
 
@@ -359,7 +359,7 @@ mod tests {
         for i in 0..size {
             array.push(
                 ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | storage.check_at(i).unwrap() as u32,
+                    | u32::from(storage.check_at(i).unwrap()),
             );
         }
         array
