@@ -557,7 +557,8 @@ impl Timetable {
                     found.push(Entry::new(
                         Box::new(StringInput::new(section_name)),
                         Box::new(section),
-                        Self::make_section_duration(train.stops(), from, to) as i32,
+                        i32::try_from(Self::make_section_duration(train.stops(), from, to))
+                            .expect("Section duration should fit in i32"),
                     ));
                 }
             }
@@ -638,7 +639,9 @@ impl Timetable {
                             .unwrap_or_else(|| {
                                 unreachable!("to departure_time must be set.");
                             });
-                        let cost = Self::diff_time(to_departure_time, from_arrival_time) as i32;
+                        let cost =
+                            i32::try_from(Self::diff_time(to_departure_time, from_arrival_time))
+                                .expect("Time difference should fit in i32");
                         if cost > 60 {
                             continue;
                         }
@@ -664,7 +667,9 @@ impl Timetable {
                     .unwrap_or_else(|| {
                         unreachable!("departure_time() must be set.");
                     });
-                let bos_cost = Self::diff_time(section_departure_time, departure_time) as i32;
+                let bos_cost =
+                    i32::try_from(Self::diff_time(section_departure_time, departure_time))
+                        .expect("Time difference should fit in i32");
                 if bos_cost <= 240 {
                     connections.push(((Entry::BosEos, entry.clone()), bos_cost * 9 / 10));
                 }

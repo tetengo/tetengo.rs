@@ -75,7 +75,7 @@ rustflags = [
     "-A", "clippy::too_many_arguments",
     "-A", "clippy::bool_to_int_with_if",                # pedantic
 
-    "-A", "clippy::cast_possible_truncation",           # pedantic
+#    "-A", "clippy::cast_possible_truncation",           # pedantic
     "-A", "clippy::cast_possible_wrap",                 # pedantic
     "-A", "clippy::cast_precision_loss",                # pedantic
     "-A", "clippy::cast_sign_loss",                     # pedantic

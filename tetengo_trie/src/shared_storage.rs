@@ -304,8 +304,15 @@ mod tests {
 
         for i in 0..9 {
             if i % 3 == 0 {
-                storage.set_base_at(i, (i * i) as i32).unwrap();
-                storage.set_check_at(i, i as u8).unwrap();
+                storage
+                    .set_base_at(
+                        i,
+                        i32::try_from(i * i).expect("Test value should fit in i32"),
+                    )
+                    .unwrap();
+                storage
+                    .set_check_at(i, u8::try_from(i).expect("Test index should fit in u8"))
+                    .unwrap();
             } else {
                 storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
                 storage

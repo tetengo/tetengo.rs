@@ -72,7 +72,10 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<String, Error> {
     let read_length = file
         .read_to_string(&mut buffer)
         .map_err(|e| Error::InternalError(e.into()))?;
-    if read_length != lex_csv_size as usize {
+    if read_length
+        != usize::try_from(lex_csv_size)
+            .map_err(|_| Error::InternalError("File size doesn't fit in usize".into()))?
+    {
         return Err(Error::UnexpectedEof);
     }
     Ok(buffer)

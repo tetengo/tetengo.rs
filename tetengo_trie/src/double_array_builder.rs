@@ -106,7 +106,8 @@ fn calc_base<T: 'static>(
     base_uniquer: &mut HashSet<i32>,
 ) -> Result<i32, Error> {
     let (element_key, _) = elements[0];
-    let base_first = (base_check_index - (base_check_index / density_factor)) as i32
+    let base_first = i32::try_from(base_check_index - (base_check_index / density_factor))
+        .expect("Base check calculation should fit in i32")
         - i32::from(char_code_at(element_key, key_offset))
         + 1;
     for base in base_first.. {

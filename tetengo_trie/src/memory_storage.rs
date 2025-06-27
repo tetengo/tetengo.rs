@@ -69,7 +69,10 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         base_check_array: &[u32],
     ) -> Result<(), Error> {
         debug_assert!(base_check_array.len() < u32::MAX as usize);
-        Self::write_u32(writer, base_check_array.len() as u32)?;
+        Self::write_u32(
+            writer,
+            u32::try_from(base_check_array.len()).expect("Array length should fit in u32"),
+        )?;
         for v in base_check_array {
             Self::write_u32(writer, *v)?;
         }
@@ -82,10 +85,14 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         value_array: &[ValueArrayElement<Value>],
     ) -> Result<(), Error> {
         debug_assert!(value_array.len() < u32::MAX as usize);
-        Self::write_u32(writer, value_array.len() as u32)?;
+        Self::write_u32(
+            writer,
+            u32::try_from(value_array.len()).expect("Array length should fit in u32"),
+        )?;
 
         debug_assert!(value_serializer.fixed_value_size() < u32::MAX as usize);
-        let fixed_value_size = value_serializer.fixed_value_size() as u32;
+        let fixed_value_size = u32::try_from(value_serializer.fixed_value_size())
+            .expect("Fixed value size should fit in u32");
         Self::write_u32(writer, fixed_value_size)?;
 
         if fixed_value_size == 0 {
@@ -93,7 +100,11 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
                 if let Some(v) = v {
                     let serialized = value_serializer.serialize(v);
                     debug_assert!(serialized.len() < u32::MAX as usize);
-                    Self::write_u32(writer, serialized.len() as u32)?;
+                    Self::write_u32(
+                        writer,
+                        u32::try_from(serialized.len())
+                            .expect("Serialized length should fit in u32"),
+                    )?;
                     writer
                         .write_all(&serialized)
                         .map_err(|e| Error::InternalError(e.into()))?;
@@ -512,8 +523,15 @@ mod tests {
 
         for i in 0..9 {
             if i % 3 == 0 {
-                storage.set_base_at(i, (i * i) as i32).unwrap();
-                storage.set_check_at(i, i as u8).unwrap();
+                storage
+                    .set_base_at(
+                        i,
+                        i32::try_from(i * i).expect("Test value should fit in i32"),
+                    )
+                    .unwrap();
+                storage
+                    .set_check_at(i, u8::try_from(i).expect("Test index should fit in u8"))
+                    .unwrap();
             } else {
                 storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
                 storage

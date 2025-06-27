@@ -212,7 +212,8 @@ fn serialize_usize(us: usize) -> Vec<u8> {
 
     let mut serialized = Vec::from([0u8; size_of::<u32>()]);
     (0..size_of::<u32>()).for_each(|i| {
-        serialized[i] = ((us >> ((size_of::<u32>() - i - 1) * 8)) & 0xFF) as u8;
+        serialized[i] = u8::try_from((us >> ((size_of::<u32>() - i - 1) * 8)) & 0xFF)
+            .expect("Masked byte should fit in u8");
     });
     serialized
 }

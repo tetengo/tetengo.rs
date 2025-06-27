@@ -130,6 +130,9 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      *
      * # Errors
      * * When it fails to access the storage.
+     *
+     * # Panics
+     * * When element index doesn't fit in i32.
      */
     pub fn build_with_observer_set(
         self,
@@ -143,7 +146,10 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
         }
         let mut double_array_contents = Vec::<(&[u8], i32)>::with_capacity(self.elements.len());
         for (i, _) in self.elements.iter().enumerate() {
-            double_array_contents.push((&double_array_content_keys[i], i as i32));
+            double_array_contents.push((
+                &double_array_content_keys[i],
+                i32::try_from(i).expect("Index should fit in i32"),
+            ));
         }
 
         let building_observer_set_ref_cell = RefCell::new(building_observer_set);
