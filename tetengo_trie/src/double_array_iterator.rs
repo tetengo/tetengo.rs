@@ -50,7 +50,7 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
         }
 
         for char_code in (0..=0xFE).rev() {
-            let char_code_as_uint8 = u8::try_from(char_code).expect("Char code should fit in u8");
+            let char_code_as_uint8 = u8::try_from(char_code).expect("char_code must fit in u8");
             let next_index = base + i32::from(char_code_as_uint8);
             if next_index < 0 {
                 continue;

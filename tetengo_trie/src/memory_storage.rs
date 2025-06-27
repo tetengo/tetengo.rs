@@ -71,7 +71,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         debug_assert!(base_check_array.len() < u32::MAX as usize);
         Self::write_u32(
             writer,
-            u32::try_from(base_check_array.len()).expect("Array length should fit in u32"),
+            u32::try_from(base_check_array.len()).map_err(|e| Error::InternalError(e.into()))?,
         )?;
         for v in base_check_array {
             Self::write_u32(writer, *v)?;
@@ -87,7 +87,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         debug_assert!(value_array.len() < u32::MAX as usize);
         Self::write_u32(
             writer,
-            u32::try_from(value_array.len()).expect("Array length should fit in u32"),
+            u32::try_from(value_array.len()).map_err(|e| Error::InternalError(e.into()))?,
         )?;
 
         debug_assert!(value_serializer.fixed_value_size() < u32::MAX as usize);
@@ -524,14 +524,9 @@ mod tests {
         for i in 0..9 {
             if i % 3 == 0 {
                 storage
-                    .set_base_at(
-                        i,
-                        i32::try_from(i * i).expect("Test value should fit in i32"),
-                    )
+                    .set_base_at(i, i32::try_from(i * i).unwrap())
                     .unwrap();
-                storage
-                    .set_check_at(i, u8::try_from(i).expect("Test index should fit in u8"))
-                    .unwrap();
+                storage.set_check_at(i, u8::try_from(i).unwrap()).unwrap();
             } else {
                 storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
                 storage

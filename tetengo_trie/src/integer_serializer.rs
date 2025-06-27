@@ -141,8 +141,7 @@ fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> 
     let mut object = *object;
     for _ in 0..size_of::<Object>() {
         let byte_object = object & Object::from(0xFFu8);
-        let u128_object: i128 = byte_object.into();
-        let u8_object = u8::try_from(u128_object).expect("Masked byte should fit in u8");
+        let u8_object = u8::try_from(byte_object.into()).expect("byte_object must fit in u8");
         bytes.push(u8_object);
         object >>= 8;
     }

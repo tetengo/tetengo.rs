@@ -49,7 +49,7 @@ fn main_core() -> Result<(), TimetableError> {
         };
 
         let ((_, departure_time), _) = departure_and_arrival;
-        let vocabulary = timetable.create_vocabulary(departure_time);
+        let vocabulary = timetable.create_vocabulary(departure_time)?;
         let mut lattice = Lattice::new(vocabulary);
         build_lattice(departure_and_arrival, &timetable, &mut lattice)
             .map_err(|e| TimetableError::InternalError(e.into()))?;

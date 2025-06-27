@@ -148,7 +148,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
         for (i, _) in self.elements.iter().enumerate() {
             double_array_contents.push((
                 &double_array_content_keys[i],
-                i32::try_from(i).expect("Index should fit in i32"),
+                i32::try_from(i).map_err(|e| Error::InternalError(e.into()))?,
             ));
         }
 

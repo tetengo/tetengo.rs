@@ -531,18 +531,23 @@ impl Timetable {
      * # Returns
      * A vocabulary.
      */
-    pub(crate) fn create_vocabulary(&self, departure_time: usize) -> Rc<dyn Vocabulary> {
-        let entries = Self::build_entries(&self.value);
-        let connections = Self::build_connections(&entries, departure_time);
-        Rc::new(HashMapVocabulary::new(
+    pub(crate) fn create_vocabulary(
+        &self,
+        departure_time: usize,
+    ) -> Result<Rc<dyn Vocabulary>, TimetableError> {
+        let entries = Self::build_entries(&self.value)?;
+        let connections = Self::build_connections(&entries, departure_time)?;
+        Ok(Rc::new(HashMapVocabulary::new(
             entries,
             connections,
             &Self::entry_hash_value,
             &Self::entry_equal_to,
-        ))
+        )))
     }
 
-    fn build_entries(timetable: &TimetableValue) -> Vec<(String, Vec<Entry>)> {
+    fn build_entries(
+        timetable: &TimetableValue,
+    ) -> Result<Vec<(String, Vec<Entry>)>, TimetableError> {
         let mut map = HashMap::<String, Vec<Entry>>::new();
         for train in &timetable.trains {
             for from in 0..timetable.stations.len() - 1 {
@@ -554,16 +559,17 @@ impl Timetable {
                     let section_name = Self::make_section_name(&timetable.stations, from, to);
                     let found = map.entry(section_name.clone()).or_default();
                     let section = Section::new(Rc::new(train.clone()), from, to);
+                    let cost = i32::try_from(Self::make_section_duration(train.stops(), from, to))
+                        .map_err(|e| TimetableError::InternalError(e.into()))?;
                     found.push(Entry::new(
                         Box::new(StringInput::new(section_name)),
                         Box::new(section),
-                        i32::try_from(Self::make_section_duration(train.stops(), from, to))
-                            .expect("Section duration should fit in i32"),
+                        cost,
                     ));
                 }
             }
         }
-        map.into_iter().collect::<Vec<_>>()
+        Ok(map.into_iter().collect::<Vec<_>>())
     }
 
     fn all_passing(stops: &[Stop], from: usize, to: usize) -> bool {
@@ -606,7 +612,7 @@ impl Timetable {
     fn build_connections(
         entries: &[(String, Vec<Entry>)],
         departure_time: usize,
-    ) -> Vec<((Entry, Entry), i32)> {
+    ) -> Result<Vec<((Entry, Entry), i32)>, TimetableError> {
         let mut connections = Vec::<((Entry, Entry), i32)>::new();
 
         for (_, from_entries) in entries {
@@ -641,7 +647,7 @@ impl Timetable {
                             });
                         let cost =
                             i32::try_from(Self::diff_time(to_departure_time, from_arrival_time))
-                                .expect("Time difference should fit in i32");
+                                .map_err(|e| TimetableError::InternalError(e.into()))?;
                         if cost > 60 {
                             continue;
                         }
@@ -669,7 +675,7 @@ impl Timetable {
                     });
                 let bos_cost =
                     i32::try_from(Self::diff_time(section_departure_time, departure_time))
-                        .expect("Time difference should fit in i32");
+                        .map_err(|e| TimetableError::InternalError(e.into()))?;
                 if bos_cost <= 240 {
                     connections.push(((Entry::BosEos, entry.clone()), bos_cost * 9 / 10));
                 }
@@ -677,7 +683,7 @@ impl Timetable {
             }
         }
 
-        connections
+        Ok(connections)
     }
 
     const fn add_time(time: usize, duration: isize) -> usize {

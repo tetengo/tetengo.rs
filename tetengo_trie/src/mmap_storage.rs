@@ -389,7 +389,7 @@ mod tests {
         use super::*;
 
         fn file_size_of(file: &File) -> usize {
-            usize::try_from(file.metadata().unwrap().len()).expect("File size should fit in usize")
+            usize::try_from(file.metadata().unwrap().len()).unwrap()
         }
 
         #[test]
