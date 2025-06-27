@@ -283,7 +283,13 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
             .iter()
             .filter(|&&e| e == 0x000000FFu32)
             .count();
-        Ok(1.0 - (empty_count as f64) / (self.base_check_array.borrow().len() as f64))
+        let empty_count_f64 =
+            f64::from(u32::try_from(empty_count).map_err(|e| Error::InternalError(e.into()))?);
+        let total_count_f64 = f64::from(
+            u32::try_from(self.base_check_array.borrow().len())
+                .map_err(|e| Error::InternalError(e.into()))?,
+        );
+        Ok(1.0 - empty_count_f64 / total_count_f64)
     }
 
     fn serialize(

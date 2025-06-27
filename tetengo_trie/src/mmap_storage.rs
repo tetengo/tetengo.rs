@@ -255,7 +255,11 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
                 empty_count += 1;
             }
         }
-        Ok(1.0 - (empty_count as f64) / (base_check_count as f64))
+        let empty_count_f64 =
+            f64::from(u32::try_from(empty_count).map_err(|e| Error::InternalError(e.into()))?);
+        let base_check_count_f64 =
+            f64::from(u32::try_from(base_check_count).map_err(|e| Error::InternalError(e.into()))?);
+        Ok(1.0 - empty_count_f64 / base_check_count_f64)
     }
 
     fn serialize(
