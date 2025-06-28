@@ -718,16 +718,10 @@ impl Timetable {
     fn entry_hash_value(entry: &Entry) -> u64 {
         let mut hasher = DefaultHasher::new();
 
-        hasher.write_u64(if let Some(key) = entry.key() {
-            key.hash_value()
-        } else {
-            0
-        });
-        let section = if let Some(value) = entry.value() {
-            value.downcast_ref::<Section>()
-        } else {
-            None
-        };
+        hasher.write_u64(entry.key().map_or(0, tetengo_lattice::Input::hash_value));
+        let section = entry
+            .value()
+            .and_then(|value| value.downcast_ref::<Section>());
         if let Some(section) = section {
             section.train().number().hash(&mut hasher);
             section.train().name().hash(&mut hasher);
@@ -743,41 +737,42 @@ impl Timetable {
     }
 
     fn entry_equal_to(one: &Entry, another: &Entry) -> bool {
-        if let Some(one_value) = one.value() {
-            if let Some(another_value) = another.value() {
-                let Some(one_section) = one_value.downcast_ref::<Section>() else {
-                    unreachable!("one.value() must be Section.");
-                };
-                let Some(another_section) = another_value.downcast_ref::<Section>() else {
-                    unreachable!("another.value() must be Section.");
-                };
-                (if let Some(one_key) = one.key() {
-                    if let Some(another_key) = another.key() {
-                        one_key.equal_to(another_key)
-                    } else {
-                        false
-                    }
-                } else {
-                    another.key().is_none()
-                } && one_section.train().number() == another_section.train().number()
-                    && one_section.train().name() == another_section.train().name()
-                    && one_section.from() == another_section.from()
-                    && one_section.to() == another_section.to())
-            } else {
-                false
-            }
-        } else if another.value().is_none() {
-            if let Some(one_key) = one.key() {
-                if let Some(another_key) = another.key() {
-                    one_key.equal_to(another_key)
+        one.value().map_or_else(
+            || {
+                if another.value().is_none() {
+                    one.key().map_or_else(
+                        || another.key().is_none(),
+                        |one_key| {
+                            another
+                                .key()
+                                .is_some_and(|another_key| one_key.equal_to(another_key))
+                        },
+                    )
                 } else {
                     false
                 }
-            } else {
-                another.key().is_none()
-            }
-        } else {
-            false
-        }
+            },
+            |one_value| {
+                another.value().is_some_and(|another_value| {
+                    let Some(one_section) = one_value.downcast_ref::<Section>() else {
+                        unreachable!("one.value() must be Section.");
+                    };
+                    let Some(another_section) = another_value.downcast_ref::<Section>() else {
+                        unreachable!("another.value() must be Section.");
+                    };
+                    one.key().map_or_else(
+                        || another.key().is_none(),
+                        |one_key| {
+                            another
+                                .key()
+                                .is_some_and(|another_key| one_key.equal_to(another_key))
+                        },
+                    ) && one_section.train().number() == another_section.train().number()
+                        && one_section.train().name() == another_section.train().name()
+                        && one_section.from() == another_section.from()
+                        && one_section.to() == another_section.to()
+                })
+            },
+        )
     }
 }
