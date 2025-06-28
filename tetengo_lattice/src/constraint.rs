@@ -135,7 +135,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                key_sakura.clone(),
+                key_sakura,
                 Box::new(NODE_VALUE),
                 0,
                 1,
@@ -145,7 +145,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                key_tsubame.clone(),
+                key_tsubame,
                 Box::new(NODE_VALUE),
                 0,
                 2,
@@ -254,7 +254,7 @@ mod tests {
                 0,
             ),
             Node::new(
-                key_kumagawa.clone(),
+                key_kumagawa,
                 Box::new(NODE_VALUE),
                 0,
                 2,

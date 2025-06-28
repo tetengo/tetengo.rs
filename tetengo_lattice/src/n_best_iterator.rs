@@ -854,8 +854,7 @@ mod tests {
                     ];
                     let constraint = Box::new(Constraint::new_with_pattern(pattern));
 
-                    let constrained_iterator =
-                        NBestIterator::new(&lattice, eos_node.clone(), constraint);
+                    let constrained_iterator = NBestIterator::new(&lattice, eos_node, constraint);
 
                     assert_eq!(constrained_iterator.collect::<Vec<_>>().len(), 9);
                 }

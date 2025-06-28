@@ -349,7 +349,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -385,7 +385,7 @@ mod tests {
         {
             let entry = Rc::new(Entry::BosEos);
             let preceding_edge_costs = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            let node = Node::new_with_entry(entry, 53, 1, preceding_edge_costs.clone(), 5, 2424);
+            let node = Node::new_with_entry(entry, 53, 1, preceding_edge_costs, 5, 2424);
 
             assert!(node.is_err());
         }
@@ -401,7 +401,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -427,7 +427,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -446,7 +446,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -465,7 +465,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -503,7 +503,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -522,7 +522,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -541,7 +541,7 @@ mod tests {
             Box::new(value),
             53,
             1,
-            preceding_edge_costs.clone(),
+            preceding_edge_costs,
             5,
             24,
             2424,
@@ -554,11 +554,11 @@ mod tests {
     fn is_bos() {
         {
             let preceding_edge_costs_bos = Rc::new(Vec::new());
-            assert!(Node::bos(preceding_edge_costs_bos.clone()).is_bos());
+            assert!(Node::bos(preceding_edge_costs_bos).is_bos());
         }
         {
             let preceding_edge_costs_eos = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-            assert!(!Node::eos(1, preceding_edge_costs_eos.clone(), 5, 42).is_bos());
+            assert!(!Node::eos(1, preceding_edge_costs_eos, 5, 42).is_bos());
         }
         {
             let key = StringInput::new(String::from("mizuho"));
@@ -570,7 +570,7 @@ mod tests {
                     Box::new(value),
                     53,
                     1,
-                    preceding_edge_costs.clone(),
+                    preceding_edge_costs,
                     5,
                     24,
                     2424
@@ -585,10 +585,10 @@ mod tests {
         let key = StringInput::new(String::from("mizuho"));
 
         let preceding_edge_costs_bos = Rc::new(Vec::new());
-        let bos = Node::bos(preceding_edge_costs_bos.clone());
+        let bos = Node::bos(preceding_edge_costs_bos);
 
         let preceding_edge_costs_eos = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
-        let eos = Node::eos(1, preceding_edge_costs_eos.clone(), 5, 42);
+        let eos = Node::eos(1, preceding_edge_costs_eos, 5, 42);
 
         let value1 = 42;
         let preceding_edge_costs1 = Rc::new(vec![3, 1, 4, 1, 5, 9, 2, 6]);
@@ -597,7 +597,7 @@ mod tests {
             Box::new(value1),
             53,
             1,
-            preceding_edge_costs1.clone(),
+            preceding_edge_costs1,
             5,
             24,
             2424,
@@ -610,7 +610,7 @@ mod tests {
             Box::new(value2),
             53,
             1,
-            preceding_edge_costs2.clone(),
+            preceding_edge_costs2,
             5,
             24,
             2424,
