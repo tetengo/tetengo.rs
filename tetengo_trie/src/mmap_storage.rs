@@ -77,6 +77,7 @@ impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
      * # Arguments
      * * `value` - A value cache capacity.
      */
+    #[must_use]
     pub const fn value_cache_capacity(mut self, value: usize) -> Self {
         self.value_cache_capacity = value;
         self

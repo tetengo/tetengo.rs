@@ -89,6 +89,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets elements.
      */
+    #[must_use]
     pub fn elements(mut self, elements: Vec<(KeySerializer::Object<'static>, Value)>) -> Self {
         self.elements = elements;
         self
@@ -97,6 +98,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets a key serializer.
      */
+    #[must_use]
     pub fn key_serializer(mut self, key_serializer: KeySerializer) -> Self {
         self.key_serializer = key_serializer;
         self
@@ -105,6 +107,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets a double array density factor.
      */
+    #[must_use]
     pub fn double_array_density_factor(mut self, double_array_density_factor: usize) -> Self {
         self.double_array_density_factor = double_array_density_factor;
         self
@@ -197,6 +200,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets a key serializer.
      */
+    #[must_use]
     pub fn key_serializer(mut self, key_serializer: KeySerializer) -> Self {
         self.key_serializer = key_serializer;
         self
