@@ -77,12 +77,11 @@ rustflags = [
     "-A", "clippy::bool_to_int_with_if",                # pedantic
     "-A", "clippy::items_after_statements",             # pedantic
     "-A", "clippy::must_use_candidate",                 # pedantic
-
     "-A", "clippy::should_panic_without_expect",        # pedantic
     "-A", "clippy::similar_names",                      # pedantic
-    "-A", "clippy::single_match_else",                  # pedantic
     "-A", "clippy::too_many_lines",                     # pedantic
     "-A", "clippy::uninlined_format_args",              # pedantic
+
     "-A", "clippy::unnecessary_semicolon",              # pedantic
     "-A", "clippy::unnecessary_wraps",                  # pedantic
     "-A", "clippy::unreadable_literal",                 # pedantic
