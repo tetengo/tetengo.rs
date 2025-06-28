@@ -409,7 +409,7 @@ mod tests {
     }
 
     fn entry_hash(entry: &Entry) -> u64 {
-        entry.key().map_or(0, |key| key.hash_value())
+        entry.key().map_or(0, Input::hash_value)
     }
 
     fn entry_equal_to(one: &Entry, other: &Entry) -> bool {
