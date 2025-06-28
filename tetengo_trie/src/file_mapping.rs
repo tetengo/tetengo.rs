@@ -139,6 +139,7 @@ mod tests {
             assert_eq!(region, SERIALIZED_FIXED_VALUE_SIZE);
         }
         {
+            #[allow(clippy::range_plus_one)]
             let region = file_mapping.region(0..file_mapping.size() + 1);
             assert!(region.is_err());
         }

@@ -78,7 +78,6 @@ rustflags = [
     "-A", "clippy::items_after_statements",             # pedantic
     "-A", "clippy::must_use_candidate",                 # pedantic
 
-    "-A", "clippy::range_plus_one",                     # pedantic
     "-A", "clippy::redundant_closure_for_method_calls", # pedantic
     "-A", "clippy::return_self_not_must_use",           # pedantic
     "-A", "clippy::should_panic_without_expect",        # pedantic
