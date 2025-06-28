@@ -81,7 +81,6 @@ rustflags = [
     "-A", "clippy::similar_names",                      # pedantic
     "-A", "clippy::too_many_lines",                     # pedantic
     "-A", "clippy::uninlined_format_args",              # pedantic
-
     "-A", "clippy::unnecessary_wraps",                  # pedantic
     "-A", "clippy::unreadable_literal",                 # pedantic
 
