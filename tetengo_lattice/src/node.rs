@@ -179,8 +179,7 @@ impl Node {
 
     pub(crate) fn entry(&self) -> Rc<Entry> {
         match self {
-            Node::Bos(_) => Rc::new(Entry::BosEos),
-            Node::Eos(_) => Rc::new(Entry::BosEos),
+            Node::Bos(_) | Node::Eos(_) => Rc::new(Entry::BosEos),
             Node::Middle(middle) => middle.entry.clone(),
         }
     }
@@ -193,8 +192,7 @@ impl Node {
      */
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
-            Node::Bos(_) => Entry::BosEos.key(),
-            Node::Eos(_) => Entry::BosEos.key(),
+            Node::Bos(_) | Node::Eos(_) => Entry::BosEos.key(),
             Node::Middle(middle) => middle.entry.key(),
         }
     }
@@ -207,8 +205,7 @@ impl Node {
      */
     pub fn value(&self) -> Option<&dyn Any> {
         match self {
-            Node::Bos(_) => Entry::BosEos.value(),
-            Node::Eos(_) => Entry::BosEos.value(),
+            Node::Bos(_) | Node::Eos(_) => Entry::BosEos.value(),
             Node::Middle(middle) => middle.entry.value(),
         }
     }
@@ -221,8 +218,7 @@ impl Node {
      */
     pub const fn index_in_step(&self) -> usize {
         match self {
-            Node::Bos(_) => 0,
-            Node::Eos(_) => 0,
+            Node::Bos(_) | Node::Eos(_) => 0,
             Node::Middle(middle) => middle.index_in_step,
         }
     }
@@ -277,8 +273,7 @@ impl Node {
      */
     pub fn node_cost(&self) -> i32 {
         match self {
-            Node::Bos(_) => Entry::BosEos.cost(),
-            Node::Eos(_) => Entry::BosEos.cost(),
+            Node::Bos(_) | Node::Eos(_) => Entry::BosEos.cost(),
             Node::Middle(middle) => middle.entry.cost(),
         }
     }
