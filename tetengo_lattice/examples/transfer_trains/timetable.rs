@@ -399,12 +399,12 @@ impl Timetable {
         let stops = line
             .into_iter()
             .skip(2)
-            .map(Self::to_stop)
+            .map(|s| Self::to_stop(&s))
             .collect::<Result<Vec<_>, TimetableError>>()?;
         Ok(Train::new(number, name, stops))
     }
 
-    fn to_stop(element: String) -> Result<Stop, TimetableError> {
+    fn to_stop(element: &str) -> Result<Stop, TimetableError> {
         let string_times = element
             .split('/')
             .map(|e| e.trim().to_string())
