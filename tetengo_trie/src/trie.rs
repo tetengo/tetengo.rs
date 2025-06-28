@@ -391,6 +391,17 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
     }
 }
 
+impl<'a, Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone> IntoIterator
+    for &'a Trie<Key, Value, KeySerializer>
+{
+    type Item = Rc<Value>;
+    type IntoIter = TrieIterator<'a, Value>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
