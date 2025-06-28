@@ -6,6 +6,7 @@
 
 use std::collections::HashMap;
 use std::error;
+use std::fmt::Write;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{BufRead, Lines};
 use std::rc::Rc;
@@ -593,7 +594,8 @@ impl Timetable {
     fn make_section_name(stations: &[Station], from: usize, to: usize) -> String {
         let mut name = String::new();
         for i in from..to {
-            name += &format!(
+            let _ = write!(
+                name,
                 "{}-{}/",
                 stations[i].telegram_code(),
                 stations[i + 1].telegram_code()
