@@ -103,7 +103,7 @@ fn get_departure_and_arrival(
     if arrival_station_index >= timetable.stations().len() {
         println!("No arrival station is found.");
         return Ok(Input::DepartureAndArrival(None));
-    };
+    }
 
     Ok(Input::DepartureAndArrival(Some((
         (departure_station_index, departure_time),

@@ -109,7 +109,7 @@ impl Lattice {
             self_input.append(input)?;
         } else {
             self.input = Some(input);
-        };
+        }
         let Some(self_input) = &self.input else {
             unreachable!()
         };
