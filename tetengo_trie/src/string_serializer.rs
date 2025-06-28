@@ -112,7 +112,7 @@ mod tests {
         {
             let deserializer = <() as DeserializerOf<String>>::Type::new(false);
 
-            let serialized = "Sakuramachi".as_bytes();
+            let serialized = b"Sakuramachi";
             let expected_object = "Sakuramachi";
             let object = deserializer.deserialize(serialized).unwrap();
             assert_eq!(object.as_str(), expected_object);
