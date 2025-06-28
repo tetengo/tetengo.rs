@@ -110,9 +110,8 @@ impl Lattice {
         } else {
             self.input = Some(input);
         };
-        let self_input = match &self.input {
-            Some(self_input) => self_input,
-            None => unreachable!(),
+        let Some(self_input) = &self.input else {
+            unreachable!()
         };
 
         let mut nodes = Vec::new();

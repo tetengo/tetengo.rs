@@ -44,12 +44,9 @@ fn main_core() -> Result<(), Error> {
         }
 
         line = line.trim_end().to_string();
-        let found = match trie.find(&line)? {
-            Some(found) => found,
-            None => {
-                println!("ERROR: Not found.");
-                continue;
-            }
+        let Some(found) = trie.find(&line)? else {
+            println!("ERROR: Not found.");
+            continue;
         };
 
         found.iter().for_each(|e| {
