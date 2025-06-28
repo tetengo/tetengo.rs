@@ -164,7 +164,7 @@ impl Cap {
         }
     }
 
-    fn tail_path(&self) -> &[Node] {
+    const fn tail_path(&self) -> &[Node] {
         self.tail_path.as_slice()
     }
 

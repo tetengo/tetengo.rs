@@ -33,7 +33,7 @@ impl Path {
      * # Returns
      * `true` if this path is empty.
      */
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
 
@@ -43,7 +43,7 @@ impl Path {
      * # Returns
      * The nodes.
      */
-    pub fn nodes(&self) -> &[Node] {
+    pub const fn nodes(&self) -> &[Node] {
         self.nodes.as_slice()
     }
 

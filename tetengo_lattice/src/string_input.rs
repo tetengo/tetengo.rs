@@ -36,7 +36,7 @@ impl StringInput {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> &str {
+    pub const fn value(&self) -> &str {
         self.value.as_str()
     }
 
@@ -46,7 +46,7 @@ impl StringInput {
      * # Returns
      * The value.
      */
-    pub fn value_mut(&mut self) -> &mut String {
+    pub const fn value_mut(&mut self) -> &mut String {
         &mut self.value
     }
 }

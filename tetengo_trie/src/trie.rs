@@ -108,7 +108,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
      * Sets a double array density factor.
      */
     #[must_use]
-    pub fn double_array_density_factor(mut self, double_array_density_factor: usize) -> Self {
+    pub const fn double_array_density_factor(mut self, double_array_density_factor: usize) -> Self {
         self.double_array_density_factor = double_array_density_factor;
         self
     }

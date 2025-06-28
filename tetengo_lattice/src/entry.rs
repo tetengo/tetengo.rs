@@ -59,7 +59,7 @@ impl Entry {
         })
     }
 
-    pub(crate) fn is_bos_eos(&self) -> bool {
+    pub(crate) const fn is_bos_eos(&self) -> bool {
         match self {
             Entry::BosEos => true,
             Entry::Middle(_) => false,

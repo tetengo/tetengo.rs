@@ -91,7 +91,7 @@ impl Station {
      * # Returns
      * The name.
      */
-    pub(crate) fn name(&self) -> &str {
+    pub(crate) const fn name(&self) -> &str {
         self.name.as_str()
     }
 
@@ -101,7 +101,7 @@ impl Station {
      * # Returns
      * The telegram code.
      */
-    pub(crate) fn telegram_code(&self) -> &str {
+    pub(crate) const fn telegram_code(&self) -> &str {
         self.telegram_code.as_str()
     }
 }
@@ -146,7 +146,7 @@ impl Stop {
      * # Arguments
      * * `time` - An arrival time.
      */
-    pub(crate) fn set_arrival_time(&mut self, time: usize) {
+    pub(crate) const fn set_arrival_time(&mut self, time: usize) {
         self.arrival_time = Some(time);
     }
 
@@ -166,7 +166,7 @@ impl Stop {
      * # Arguments
      * * `time` - A departure time.
      */
-    pub(crate) fn set_departure_time(&mut self, time: usize) {
+    pub(crate) const fn set_departure_time(&mut self, time: usize) {
         self.departure_time = Some(time);
     }
 }
@@ -204,7 +204,7 @@ impl Train {
      * # Returns
      * The number.
      */
-    pub(crate) fn number(&self) -> &str {
+    pub(crate) const fn number(&self) -> &str {
         self.number.as_str()
     }
 
@@ -214,7 +214,7 @@ impl Train {
      * # Returns
      * The name.
      */
-    pub(crate) fn name(&self) -> &str {
+    pub(crate) const fn name(&self) -> &str {
         self.name.as_str()
     }
 
@@ -224,7 +224,7 @@ impl Train {
      * # Returns
      * The stops.
      */
-    pub(crate) fn stops(&self) -> &[Stop] {
+    pub(crate) const fn stops(&self) -> &[Stop] {
         self.stops.as_slice()
     }
 
@@ -234,7 +234,7 @@ impl Train {
      * # Returns
      * The stops.
      */
-    pub(crate) fn stops_mut(&mut self) -> &mut Vec<Stop> {
+    pub(crate) const fn stops_mut(&mut self) -> &mut Vec<Stop> {
         &mut self.stops
     }
 }
@@ -501,7 +501,7 @@ impl Timetable {
      * # Returns
      * The stations.
      */
-    pub(crate) fn stations(&self) -> &[Station] {
+    pub(crate) const fn stations(&self) -> &[Station] {
         self.value.stations.as_slice()
     }
 

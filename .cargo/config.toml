@@ -85,7 +85,6 @@ rustflags = [
     "-A", "clippy::unreadable_literal",                 # pedantic
     "-A", "clippy::cognitive_complexity",           # nursery
 
-    "-A", "clippy::missing_const_for_fn",           # nursery
     "-A", "clippy::needless_collect",               # nursery
     "-A", "clippy::option_if_let_else",             # nursery
     "-A", "clippy::redundant_clone",                # nursery

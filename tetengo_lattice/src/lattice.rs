@@ -71,7 +71,7 @@ impl Lattice {
      * # Returns
      * The step count.
      */
-    pub fn step_count(&self) -> usize {
+    pub const fn step_count(&self) -> usize {
         self.graph.len()
     }
 

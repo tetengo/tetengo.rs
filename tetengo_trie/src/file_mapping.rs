@@ -39,7 +39,7 @@ impl FileMapping {
      * # Returns
      * The file.
      */
-    pub fn file(&self) -> &File {
+    pub const fn file(&self) -> &File {
         &self.file
     }
 
