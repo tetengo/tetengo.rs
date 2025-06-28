@@ -76,8 +76,8 @@ rustflags = [
     "-A", "clippy::type_complexity",
     "-A", "clippy::bool_to_int_with_if",                # pedantic
     "-A", "clippy::items_after_statements",             # pedantic
-
     "-A", "clippy::must_use_candidate",                 # pedantic
+
     "-A", "clippy::needless_pass_by_value",             # pedantic
     "-A", "clippy::range_plus_one",                     # pedantic
     "-A", "clippy::redundant_closure_for_method_calls", # pedantic
