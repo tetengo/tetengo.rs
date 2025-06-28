@@ -661,10 +661,10 @@ impl Timetable {
                         if cost > 60 {
                             continue;
                         }
-                        if from_value.train().number() != to_value.train().number() {
-                            connections.push(((from_entry.clone(), to_entry.clone()), cost + 1));
-                        } else {
+                        if from_value.train().number() == to_value.train().number() {
                             connections.push(((from_entry.clone(), to_entry.clone()), cost));
+                        } else {
+                            connections.push(((from_entry.clone(), to_entry.clone()), cost + 1));
                         }
                     }
                 }

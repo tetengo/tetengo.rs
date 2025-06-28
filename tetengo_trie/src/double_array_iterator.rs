@@ -66,10 +66,10 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
                 }
             };
             if check_at_next_index == char_code_as_uint8 {
-                let mut next_key_tail = if char_code_as_uint8 != double_array::KEY_TERMINATOR {
-                    vec![char_code_as_uint8]
-                } else {
+                let mut next_key_tail = if char_code_as_uint8 == double_array::KEY_TERMINATOR {
                     Vec::new()
+                } else {
+                    vec![char_code_as_uint8]
                 };
                 let next_key = {
                     let mut next_key = key.clone();

@@ -126,10 +126,10 @@ fn calc_base<T: 'static>(
                 let next_base_check_index: usize = base_plus_char as usize;
                 match storage.check_at(next_base_check_index) {
                     Ok(check) => {
-                        if check != VACANT_CHECK_VALUE {
-                            Some(Ok(()))
-                        } else {
+                        if check == VACANT_CHECK_VALUE {
                             None
+                        } else {
+                            Some(Ok(()))
                         }
                     }
                     Err(e) => Some(Err(e)),
