@@ -367,7 +367,7 @@ mod tests {
     }
 
     impl<Value: Clone> SharedStorage<Value> {
-        fn shared_with(&self, another: &SharedStorage<Value>) -> bool {
+        fn shared_with(&self, another: &Self) -> bool {
             Rc::ptr_eq(&self.entity, &another.entity)
         }
     }

@@ -17,7 +17,7 @@ impl Serializer for StrSerializer {
     type Object<'a> = &'a str;
 
     fn new(_: bool) -> Self {
-        StrSerializer {}
+        Self {}
     }
 
     fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
@@ -35,7 +35,7 @@ impl Serializer for StringSerializer {
     type Object<'a> = String;
 
     fn new(_: bool) -> Self {
-        StringSerializer {}
+        Self {}
     }
 
     fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
@@ -53,7 +53,7 @@ impl Deserializer for StringDeserializer {
     type Object = String;
 
     fn new(_: bool) -> Self {
-        StringDeserializer {}
+        Self {}
     }
 
     fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object, Error> {

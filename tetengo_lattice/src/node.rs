@@ -88,7 +88,7 @@ impl Node {
      * * `preceding_edge_costs` - Preceding edge costs.
      */
     pub const fn bos(preceding_edge_costs: Rc<Vec<i32>>) -> Self {
-        Node::Bos(Bos {
+        Self::Bos(Bos {
             preceding_edge_costs,
         })
     }
@@ -108,7 +108,7 @@ impl Node {
         best_preceding_node: usize,
         path_cost: i32,
     ) -> Self {
-        Node::Eos(Eos {
+        Self::Eos(Eos {
             preceding_step,
             preceding_edge_costs,
             best_preceding_node,
@@ -140,7 +140,7 @@ impl Node {
         path_cost: i32,
     ) -> Self {
         let entry = Rc::new(Entry::new(key, value, node_cost));
-        Node::Middle(Middle {
+        Self::Middle(Middle {
             entry,
             index_in_step,
             preceding_step,
@@ -167,7 +167,7 @@ impl Node {
         if entry.is_bos_eos() {
             return Err(Error::BosOrEosEntryNotAllowed);
         }
-        Ok(Node::Middle(Middle {
+        Ok(Self::Middle(Middle {
             entry,
             index_in_step,
             preceding_step,
@@ -179,8 +179,8 @@ impl Node {
 
     pub(crate) fn entry(&self) -> Rc<Entry> {
         match self {
-            Node::Bos(_) | Node::Eos(_) => Rc::new(Entry::BosEos),
-            Node::Middle(middle) => middle.entry.clone(),
+            Self::Bos(_) | Self::Eos(_) => Rc::new(Entry::BosEos),
+            Self::Middle(middle) => middle.entry.clone(),
         }
     }
 
@@ -192,8 +192,8 @@ impl Node {
      */
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
-            Node::Bos(_) | Node::Eos(_) => Entry::BosEos.key(),
-            Node::Middle(middle) => middle.entry.key(),
+            Self::Bos(_) | Self::Eos(_) => Entry::BosEos.key(),
+            Self::Middle(middle) => middle.entry.key(),
         }
     }
 
@@ -205,8 +205,8 @@ impl Node {
      */
     pub fn value(&self) -> Option<&dyn Any> {
         match self {
-            Node::Bos(_) | Node::Eos(_) => Entry::BosEos.value(),
-            Node::Middle(middle) => middle.entry.value(),
+            Self::Bos(_) | Self::Eos(_) => Entry::BosEos.value(),
+            Self::Middle(middle) => middle.entry.value(),
         }
     }
 
@@ -218,8 +218,8 @@ impl Node {
      */
     pub const fn index_in_step(&self) -> usize {
         match self {
-            Node::Bos(_) | Node::Eos(_) => 0,
-            Node::Middle(middle) => middle.index_in_step,
+            Self::Bos(_) | Self::Eos(_) => 0,
+            Self::Middle(middle) => middle.index_in_step,
         }
     }
 
@@ -231,9 +231,9 @@ impl Node {
      */
     pub const fn preceding_step(&self) -> usize {
         match self {
-            Node::Bos(_) => usize::MAX,
-            Node::Eos(eos) => eos.preceding_step,
-            Node::Middle(middle) => middle.preceding_step,
+            Self::Bos(_) => usize::MAX,
+            Self::Eos(eos) => eos.preceding_step,
+            Self::Middle(middle) => middle.preceding_step,
         }
     }
 
@@ -245,9 +245,9 @@ impl Node {
      */
     pub fn preceding_edge_costs(&self) -> &Vec<i32> {
         match self {
-            Node::Bos(bos) => bos.preceding_edge_costs.as_ref(),
-            Node::Eos(eos) => eos.preceding_edge_costs.as_ref(),
-            Node::Middle(middle) => middle.preceding_edge_costs.as_ref(),
+            Self::Bos(bos) => bos.preceding_edge_costs.as_ref(),
+            Self::Eos(eos) => eos.preceding_edge_costs.as_ref(),
+            Self::Middle(middle) => middle.preceding_edge_costs.as_ref(),
         }
     }
 
@@ -259,9 +259,9 @@ impl Node {
      */
     pub const fn best_preceding_node(&self) -> usize {
         match self {
-            Node::Bos(_) => usize::MAX,
-            Node::Eos(eos) => eos.best_preceding_node,
-            Node::Middle(middle) => middle.best_preceding_node,
+            Self::Bos(_) => usize::MAX,
+            Self::Eos(eos) => eos.best_preceding_node,
+            Self::Middle(middle) => middle.best_preceding_node,
         }
     }
 
@@ -273,8 +273,8 @@ impl Node {
      */
     pub fn node_cost(&self) -> i32 {
         match self {
-            Node::Bos(_) | Node::Eos(_) => Entry::BosEos.cost(),
-            Node::Middle(middle) => middle.entry.cost(),
+            Self::Bos(_) | Self::Eos(_) => Entry::BosEos.cost(),
+            Self::Middle(middle) => middle.entry.cost(),
         }
     }
 
@@ -286,9 +286,9 @@ impl Node {
      */
     pub const fn path_cost(&self) -> i32 {
         match self {
-            Node::Bos(_) => 0,
-            Node::Eos(eos) => eos.path_cost,
-            Node::Middle(middle) => middle.path_cost,
+            Self::Bos(_) => 0,
+            Self::Eos(eos) => eos.path_cost,
+            Self::Middle(middle) => middle.path_cost,
         }
     }
 
@@ -299,7 +299,7 @@ impl Node {
      * `true` if this node is the BOS.
      */
     pub const fn is_bos(&self) -> bool {
-        matches!(self, Node::Bos(_))
+        matches!(self, Self::Bos(_))
     }
 }
 

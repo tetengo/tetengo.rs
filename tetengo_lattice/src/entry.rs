@@ -52,7 +52,7 @@ impl Entry {
      * * `cost`  - A cost.
      */
     pub fn new(key: Box<dyn Input>, value: Box<dyn Any>, cost: i32) -> Self {
-        Entry::Middle(Middle {
+        Self::Middle(Middle {
             key: Rc::from(key),
             value: Rc::from(value),
             cost,
@@ -61,8 +61,8 @@ impl Entry {
 
     pub(crate) const fn is_bos_eos(&self) -> bool {
         match self {
-            Entry::BosEos => true,
-            Entry::Middle(_) => false,
+            Self::BosEos => true,
+            Self::Middle(_) => false,
         }
     }
 
@@ -74,8 +74,8 @@ impl Entry {
      */
     pub fn key(&self) -> Option<&dyn Input> {
         match self {
-            Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry.key.as_ref()),
+            Self::BosEos => None,
+            Self::Middle(entry) => Some(entry.key.as_ref()),
         }
     }
 
@@ -87,8 +87,8 @@ impl Entry {
      */
     pub fn value(&self) -> Option<&dyn Any> {
         match self {
-            Entry::BosEos => None,
-            Entry::Middle(entry) => Some(entry.value.as_ref()),
+            Self::BosEos => None,
+            Self::Middle(entry) => Some(entry.value.as_ref()),
         }
     }
 
@@ -100,8 +100,8 @@ impl Entry {
      */
     pub const fn cost(&self) -> i32 {
         match self {
-            Entry::BosEos => 0,
-            Entry::Middle(entry) => entry.cost,
+            Self::BosEos => 0,
+            Self::Middle(entry) => entry.cost,
         }
     }
 }

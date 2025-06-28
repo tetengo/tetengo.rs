@@ -157,7 +157,7 @@ struct Cap {
 
 impl Cap {
     const fn new(tail_path: Vec<Node>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
-        Cap {
+        Self {
             tail_path,
             tail_path_cost,
             whole_path_cost,

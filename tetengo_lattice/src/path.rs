@@ -24,7 +24,7 @@ impl Path {
      * * `cost`  - A cost.
      */
     pub const fn new(nodes: Vec<Node>, cost: i32) -> Self {
-        Path { nodes, cost }
+        Self { nodes, cost }
     }
 
     /**

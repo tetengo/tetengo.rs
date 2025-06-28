@@ -65,7 +65,7 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
     type Object<'a> = Object;
 
     fn new(fe_escape: bool) -> Self {
-        IntegerSerializer {
+        Self {
             fe_escape,
             phantom: PhantomData,
         }
@@ -103,7 +103,7 @@ impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
     type Object = Object;
 
     fn new(fe_escape: bool) -> Self {
-        IntegerDeserializer {
+        Self {
             fe_escape,
             phantom: PhantomData,
         }
