@@ -38,7 +38,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
      */
     pub fn new() -> Self {
         Self {
-            base_check_array: RefCell::new(vec![VACANT_CHECK_VALUE as u32]),
+            base_check_array: RefCell::new(vec![u32::from(VACANT_CHECK_VALUE)]),
             value_array: Vec::new(),
         }
     }
@@ -69,7 +69,10 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         base_check_array: &[u32],
     ) -> Result<(), Error> {
         debug_assert!(base_check_array.len() < u32::MAX as usize);
-        Self::write_u32(writer, base_check_array.len() as u32)?;
+        Self::write_u32(
+            writer,
+            u32::try_from(base_check_array.len()).map_err(|e| Error::InternalError(e.into()))?,
+        )?;
         for v in base_check_array {
             Self::write_u32(writer, *v)?;
         }
@@ -82,10 +85,14 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         value_array: &[ValueArrayElement<Value>],
     ) -> Result<(), Error> {
         debug_assert!(value_array.len() < u32::MAX as usize);
-        Self::write_u32(writer, value_array.len() as u32)?;
+        Self::write_u32(
+            writer,
+            u32::try_from(value_array.len()).map_err(|e| Error::InternalError(e.into()))?,
+        )?;
 
         debug_assert!(value_serializer.fixed_value_size() < u32::MAX as usize);
-        let fixed_value_size = value_serializer.fixed_value_size() as u32;
+        let fixed_value_size = u32::try_from(value_serializer.fixed_value_size())
+            .expect("Fixed value size should fit in u32");
         Self::write_u32(writer, fixed_value_size)?;
 
         if fixed_value_size == 0 {
@@ -93,7 +100,11 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
                 if let Some(v) = v {
                     let serialized = value_serializer.serialize(v);
                     debug_assert!(serialized.len() < u32::MAX as usize);
-                    Self::write_u32(writer, serialized.len() as u32)?;
+                    Self::write_u32(
+                        writer,
+                        u32::try_from(serialized.len())
+                            .expect("Serialized length should fit in u32"),
+                    )?;
                     writer
                         .write_all(&serialized)
                         .map_err(|e| Error::InternalError(e.into()))?;
@@ -210,7 +221,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         if size > self.base_check_array.borrow().len() {
             self.base_check_array
                 .borrow_mut()
-                .resize(size, VACANT_CHECK_VALUE as u32);
+                .resize(size, u32::from(VACANT_CHECK_VALUE));
         }
     }
 }
@@ -222,13 +233,18 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
 
     fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
         self.ensure_base_check_size(base_check_index + 1);
-        Ok(self.base_check_array.borrow()[base_check_index] as i32 >> 8i32)
+        #[allow(clippy::cast_possible_wrap)]
+        let result = self.base_check_array.borrow()[base_check_index] as i32 >> 8i32;
+        Ok(result)
     }
 
     fn set_base_at(&mut self, base_check_index: usize, base: i32) -> Result<(), Error> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0x000000FF;
-        self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
+        #[allow(clippy::cast_sign_loss)]
+        {
+            self.base_check_array.borrow_mut()[base_check_index] |= (base as u32) << 8;
+        }
         Ok(())
     }
 
@@ -240,7 +256,7 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
     fn set_check_at(&mut self, base_check_index: usize, check: u8) -> Result<(), Error> {
         self.ensure_base_check_size(base_check_index + 1);
         self.base_check_array.borrow_mut()[base_check_index] &= 0xFFFFFF00;
-        self.base_check_array.borrow_mut()[base_check_index] |= check as u32;
+        self.base_check_array.borrow_mut()[base_check_index] |= u32::from(check);
         Ok(())
     }
 
@@ -270,7 +286,13 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MemoryStorage<Value> {
             .iter()
             .filter(|&&e| e == 0x000000FFu32)
             .count();
-        Ok(1.0 - (empty_count as f64) / (self.base_check_array.borrow().len() as f64))
+        let empty_count_f64 =
+            f64::from(u32::try_from(empty_count).map_err(|e| Error::InternalError(e.into()))?);
+        let total_count_f64 = f64::from(
+            u32::try_from(self.base_check_array.borrow().len())
+                .map_err(|e| Error::InternalError(e.into()))?,
+        );
+        Ok(1.0 - empty_count_f64 / total_count_f64)
     }
 
     fn serialize(
@@ -357,10 +379,13 @@ mod tests {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(
-                ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | storage.check_at(i).unwrap() as u32,
-            );
+            #[allow(clippy::cast_sign_loss)]
+            {
+                array.push(
+                    ((storage.base_at(i).unwrap() as u32) << 8u32)
+                        | u32::from(storage.check_at(i).unwrap()),
+                );
+            }
         }
         array
     }
@@ -512,8 +537,10 @@ mod tests {
 
         for i in 0..9 {
             if i % 3 == 0 {
-                storage.set_base_at(i, (i * i) as i32).unwrap();
-                storage.set_check_at(i, i as u8).unwrap();
+                storage
+                    .set_base_at(i, i32::try_from(i * i).unwrap())
+                    .unwrap();
+                storage.set_check_at(i, u8::try_from(i).unwrap()).unwrap();
             } else {
                 storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
                 storage

@@ -71,7 +71,7 @@ impl Lattice {
      * # Returns
      * The step count.
      */
-    pub fn step_count(&self) -> usize {
+    pub const fn step_count(&self) -> usize {
         self.graph.len()
     }
 
@@ -109,10 +109,9 @@ impl Lattice {
             self_input.append(input)?;
         } else {
             self.input = Some(input);
-        };
-        let self_input = match &self.input {
-            Some(self_input) => self_input,
-            None => unreachable!(),
+        }
+        let Some(self_input) = &self.input else {
+            unreachable!()
         };
 
         let mut nodes = Vec::new();
@@ -435,7 +434,7 @@ mod tests {
     }
 
     fn entry_hash(entry: &Entry) -> u64 {
-        entry.key().map_or(0, |key| key.hash_value())
+        entry.key().map_or(0, Input::hash_value)
     }
 
     fn entry_equal_to(one: &Entry, other: &Entry) -> bool {

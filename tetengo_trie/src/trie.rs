@@ -8,6 +8,7 @@ use std::any::type_name_of_val;
 use std::cell::RefCell;
 use std::fmt::{self, Debug, Formatter};
 use std::marker::PhantomData;
+use std::num::TryFromIntError;
 use std::rc::Rc;
 
 use crate::double_array::{self, DEFAULT_DENSITY_FACTOR, DoubleArray};
@@ -88,6 +89,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets elements.
      */
+    #[must_use]
     pub fn elements(mut self, elements: Vec<(KeySerializer::Object<'static>, Value)>) -> Self {
         self.elements = elements;
         self
@@ -96,6 +98,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets a key serializer.
      */
+    #[must_use]
     pub fn key_serializer(mut self, key_serializer: KeySerializer) -> Self {
         self.key_serializer = key_serializer;
         self
@@ -104,7 +107,8 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets a double array density factor.
      */
-    pub fn double_array_density_factor(mut self, double_array_density_factor: usize) -> Self {
+    #[must_use]
+    pub const fn double_array_density_factor(mut self, double_array_density_factor: usize) -> Self {
         self.double_array_density_factor = double_array_density_factor;
         self
     }
@@ -143,7 +147,10 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
         }
         let mut double_array_contents = Vec::<(&[u8], i32)>::with_capacity(self.elements.len());
         for (i, _) in self.elements.iter().enumerate() {
-            double_array_contents.push((&double_array_content_keys[i], i as i32));
+            double_array_contents.push((
+                &double_array_content_keys[i],
+                i32::try_from(i).map_err(|e| Error::InternalError(e.into()))?,
+            ));
         }
 
         let building_observer_set_ref_cell = RefCell::new(building_observer_set);
@@ -193,6 +200,7 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer>
     /**
      * Sets a key serializer.
      */
+    #[must_use]
     pub fn key_serializer(mut self, key_serializer: KeySerializer) -> Self {
         self.key_serializer = key_serializer;
         self
@@ -335,7 +343,10 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
             return Ok(None);
         };
 
-        self.double_array.storage().value_at(index as usize)
+        let index: usize = index
+            .try_into()
+            .map_err(|e: TryFromIntError| Error::InternalError(e.into()))?;
+        self.double_array.storage().value_at(index)
     }
 
     /**
@@ -381,6 +392,17 @@ impl<Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone>
      */
     pub fn storage(&self) -> &dyn Storage<Value> {
         self.double_array.storage()
+    }
+}
+
+impl<'a, Key, Value: Clone + Debug + 'static, KeySerializer: Serializer + Clone> IntoIterator
+    for &'a Trie<Key, Value, KeySerializer>
+{
+    type Item = Rc<Value>;
+    type IntoIter = TrieIterator<'a, Value>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

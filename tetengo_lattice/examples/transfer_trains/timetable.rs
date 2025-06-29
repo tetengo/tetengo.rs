@@ -6,6 +6,7 @@
 
 use std::collections::HashMap;
 use std::error;
+use std::fmt::Write;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{BufRead, Lines};
 use std::rc::Rc;
@@ -90,7 +91,7 @@ impl Station {
      * # Returns
      * The name.
      */
-    pub(crate) fn name(&self) -> &str {
+    pub(crate) const fn name(&self) -> &str {
         self.name.as_str()
     }
 
@@ -100,7 +101,7 @@ impl Station {
      * # Returns
      * The telegram code.
      */
-    pub(crate) fn telegram_code(&self) -> &str {
+    pub(crate) const fn telegram_code(&self) -> &str {
         self.telegram_code.as_str()
     }
 }
@@ -145,7 +146,7 @@ impl Stop {
      * # Arguments
      * * `time` - An arrival time.
      */
-    pub(crate) fn set_arrival_time(&mut self, time: usize) {
+    pub(crate) const fn set_arrival_time(&mut self, time: usize) {
         self.arrival_time = Some(time);
     }
 
@@ -165,7 +166,7 @@ impl Stop {
      * # Arguments
      * * `time` - A departure time.
      */
-    pub(crate) fn set_departure_time(&mut self, time: usize) {
+    pub(crate) const fn set_departure_time(&mut self, time: usize) {
         self.departure_time = Some(time);
     }
 }
@@ -203,7 +204,7 @@ impl Train {
      * # Returns
      * The number.
      */
-    pub(crate) fn number(&self) -> &str {
+    pub(crate) const fn number(&self) -> &str {
         self.number.as_str()
     }
 
@@ -213,7 +214,7 @@ impl Train {
      * # Returns
      * The name.
      */
-    pub(crate) fn name(&self) -> &str {
+    pub(crate) const fn name(&self) -> &str {
         self.name.as_str()
     }
 
@@ -223,7 +224,7 @@ impl Train {
      * # Returns
      * The stops.
      */
-    pub(crate) fn stops(&self) -> &[Stop] {
+    pub(crate) const fn stops(&self) -> &[Stop] {
         self.stops.as_slice()
     }
 
@@ -233,7 +234,7 @@ impl Train {
      * # Returns
      * The stops.
      */
-    pub(crate) fn stops_mut(&mut self) -> &mut Vec<Stop> {
+    pub(crate) const fn stops_mut(&mut self) -> &mut Vec<Stop> {
         &mut self.stops
     }
 }
@@ -398,12 +399,12 @@ impl Timetable {
         let stops = line
             .into_iter()
             .skip(2)
-            .map(Self::to_stop)
+            .map(|s| Self::to_stop(&s))
             .collect::<Result<Vec<_>, TimetableError>>()?;
         Ok(Train::new(number, name, stops))
     }
 
-    fn to_stop(element: String) -> Result<Stop, TimetableError> {
+    fn to_stop(element: &str) -> Result<Stop, TimetableError> {
         let string_times = element
             .split('/')
             .map(|e| e.trim().to_string())
@@ -450,13 +451,15 @@ impl Timetable {
                         train.stops_mut()[to].set_arrival_time(Self::add_time(
                             from_departure_time,
                             minimum_duration,
-                        ));
+                        )?);
                     } else if train.stops()[from].departure_time().is_none() {
                         let Some(to_arrival_time) = train.stops()[to].arrival_time() else {
                             return Err(TimetableError::BothArrivalAndDepartureTimeNotFound);
                         };
-                        train.stops_mut()[from]
-                            .set_departure_time(Self::add_time(to_arrival_time, -minimum_duration));
+                        train.stops_mut()[from].set_departure_time(Self::add_time(
+                            to_arrival_time,
+                            -minimum_duration,
+                        )?);
                     }
                 }
             }
@@ -484,7 +487,7 @@ impl Timetable {
             } else {
                 return Err(TimetableError::BothArrivalAndDepartureTimeNotFound);
             };
-            let duration = Self::diff_time(to_time, from_time);
+            let duration = Self::diff_time(to_time, from_time)?;
             if duration < minimum {
                 minimum = duration;
             }
@@ -498,7 +501,7 @@ impl Timetable {
      * # Returns
      * The stations.
      */
-    pub(crate) fn stations(&self) -> &[Station] {
+    pub(crate) const fn stations(&self) -> &[Station] {
         self.value.stations.as_slice()
     }
 
@@ -531,18 +534,23 @@ impl Timetable {
      * # Returns
      * A vocabulary.
      */
-    pub(crate) fn create_vocabulary(&self, departure_time: usize) -> Rc<dyn Vocabulary> {
-        let entries = Self::build_entries(&self.value);
-        let connections = Self::build_connections(&entries, departure_time);
-        Rc::new(HashMapVocabulary::new(
+    pub(crate) fn create_vocabulary(
+        &self,
+        departure_time: usize,
+    ) -> Result<Rc<dyn Vocabulary>, TimetableError> {
+        let entries = Self::build_entries(&self.value)?;
+        let connections = Self::build_connections(&entries, departure_time)?;
+        Ok(Rc::new(HashMapVocabulary::new(
             entries,
             connections,
             &Self::entry_hash_value,
             &Self::entry_equal_to,
-        ))
+        )))
     }
 
-    fn build_entries(timetable: &TimetableValue) -> Vec<(String, Vec<Entry>)> {
+    fn build_entries(
+        timetable: &TimetableValue,
+    ) -> Result<Vec<(String, Vec<Entry>)>, TimetableError> {
         let mut map = HashMap::<String, Vec<Entry>>::new();
         for train in &timetable.trains {
             for from in 0..timetable.stations.len() - 1 {
@@ -554,15 +562,18 @@ impl Timetable {
                     let section_name = Self::make_section_name(&timetable.stations, from, to);
                     let found = map.entry(section_name.clone()).or_default();
                     let section = Section::new(Rc::new(train.clone()), from, to);
+                    let section_duration = Self::make_section_duration(train.stops(), from, to)?;
+                    let cost = i32::try_from(section_duration)
+                        .map_err(|e| TimetableError::InternalError(e.into()))?;
                     found.push(Entry::new(
                         Box::new(StringInput::new(section_name)),
                         Box::new(section),
-                        Self::make_section_duration(train.stops(), from, to) as i32,
+                        cost,
                     ));
                 }
             }
         }
-        map.into_iter().collect::<Vec<_>>()
+        Ok(map.into_iter().collect::<Vec<_>>())
     }
 
     fn all_passing(stops: &[Stop], from: usize, to: usize) -> bool {
@@ -583,7 +594,8 @@ impl Timetable {
     fn make_section_name(stations: &[Station], from: usize, to: usize) -> String {
         let mut name = String::new();
         for i in from..to {
-            name += &format!(
+            let _ = write!(
+                name,
                 "{}-{}/",
                 stations[i].telegram_code(),
                 stations[i + 1].telegram_code()
@@ -592,20 +604,25 @@ impl Timetable {
         name
     }
 
-    fn make_section_duration(stops: &[Stop], from: usize, to: usize) -> usize {
+    fn make_section_duration(
+        stops: &[Stop],
+        from: usize,
+        to: usize,
+    ) -> Result<usize, TimetableError> {
         let departure_time = stops[from].departure_time().unwrap_or_else(|| {
             unreachable!("departure_time must be set.");
         });
         let arrival_time = stops[to].arrival_time().unwrap_or_else(|| {
             unreachable!("arrival_time must be set.");
         });
-        Self::diff_time(arrival_time, departure_time) as usize
+        let diff_result = Self::diff_time(arrival_time, departure_time)?;
+        usize::try_from(diff_result).map_err(|e| TimetableError::InternalError(e.into()))
     }
 
     fn build_connections(
         entries: &[(String, Vec<Entry>)],
         departure_time: usize,
-    ) -> Vec<((Entry, Entry), i32)> {
+    ) -> Result<Vec<((Entry, Entry), i32)>, TimetableError> {
         let mut connections = Vec::<((Entry, Entry), i32)>::new();
 
         for (_, from_entries) in entries {
@@ -638,14 +655,16 @@ impl Timetable {
                             .unwrap_or_else(|| {
                                 unreachable!("to departure_time must be set.");
                             });
-                        let cost = Self::diff_time(to_departure_time, from_arrival_time) as i32;
+                        let time_diff = Self::diff_time(to_departure_time, from_arrival_time)?;
+                        let cost = i32::try_from(time_diff)
+                            .map_err(|e| TimetableError::InternalError(e.into()))?;
                         if cost > 60 {
                             continue;
                         }
-                        if from_value.train().number() != to_value.train().number() {
-                            connections.push(((from_entry.clone(), to_entry.clone()), cost + 1));
-                        } else {
+                        if from_value.train().number() == to_value.train().number() {
                             connections.push(((from_entry.clone(), to_entry.clone()), cost));
+                        } else {
+                            connections.push(((from_entry.clone(), to_entry.clone()), cost + 1));
                         }
                     }
                 }
@@ -664,7 +683,9 @@ impl Timetable {
                     .unwrap_or_else(|| {
                         unreachable!("departure_time() must be set.");
                     });
-                let bos_cost = Self::diff_time(section_departure_time, departure_time) as i32;
+                let time_diff = Self::diff_time(section_departure_time, departure_time)?;
+                let bos_cost = i32::try_from(time_diff)
+                    .map_err(|e| TimetableError::InternalError(e.into()))?;
                 if bos_cost <= 240 {
                     connections.push(((Entry::BosEos, entry.clone()), bos_cost * 9 / 10));
                 }
@@ -672,34 +693,35 @@ impl Timetable {
             }
         }
 
-        connections
+        Ok(connections)
     }
 
-    const fn add_time(time: usize, duration: isize) -> usize {
+    fn add_time(time: usize, duration: isize) -> Result<usize, TimetableError> {
         assert!(time < 1440);
         assert!(-1440 < duration && duration < 1440);
-        (time as isize + 1440 + duration) as usize % 1440
+        let time_isize =
+            isize::try_from(time).map_err(|e| TimetableError::InternalError(e.into()))?;
+        let result = (time_isize + 1440 + duration) % 1440;
+        usize::try_from(result).map_err(|e| TimetableError::InternalError(e.into()))
     }
 
-    const fn diff_time(time1: usize, time2: usize) -> isize {
+    fn diff_time(time1: usize, time2: usize) -> Result<isize, TimetableError> {
         assert!(time1 < 1440);
         assert!(time2 < 1440);
-        (time1 as isize + 1440 - time2 as isize) % 1440
+        let time1_isize =
+            isize::try_from(time1).map_err(|e| TimetableError::InternalError(e.into()))?;
+        let time2_isize =
+            isize::try_from(time2).map_err(|e| TimetableError::InternalError(e.into()))?;
+        Ok((time1_isize + 1440 - time2_isize) % 1440)
     }
 
     fn entry_hash_value(entry: &Entry) -> u64 {
         let mut hasher = DefaultHasher::new();
 
-        hasher.write_u64(if let Some(key) = entry.key() {
-            key.hash_value()
-        } else {
-            0
-        });
-        let section = if let Some(value) = entry.value() {
-            value.downcast_ref::<Section>()
-        } else {
-            None
-        };
+        hasher.write_u64(entry.key().map_or(0, tetengo_lattice::Input::hash_value));
+        let section = entry
+            .value()
+            .and_then(|value| value.downcast_ref::<Section>());
         if let Some(section) = section {
             section.train().number().hash(&mut hasher);
             section.train().name().hash(&mut hasher);
@@ -715,44 +737,42 @@ impl Timetable {
     }
 
     fn entry_equal_to(one: &Entry, another: &Entry) -> bool {
-        if let Some(one_value) = one.value() {
-            if let Some(another_value) = another.value() {
-                let Some(one_section) = one_value.downcast_ref::<Section>() else {
-                    unreachable!("one.value() must be Section.");
-                };
-                let Some(another_section) = another_value.downcast_ref::<Section>() else {
-                    unreachable!("another.value() must be Section.");
-                };
-                let is_equal = if let Some(one_key) = one.key() {
-                    if let Some(another_key) = another.key() {
-                        one_key.equal_to(another_key)
-                    } else {
-                        false
-                    }
-                } else {
-                    another.key().is_none()
-                } && one_section.train().number()
-                    == another_section.train().number()
-                    && one_section.train().name() == another_section.train().name()
-                    && one_section.from() == another_section.from()
-                    && one_section.to() == another_section.to();
-                is_equal
-            } else {
-                false
-            }
-        } else if another.value().is_none() {
-            let is_equal = if let Some(one_key) = one.key() {
-                if let Some(another_key) = another.key() {
-                    one_key.equal_to(another_key)
+        one.value().map_or_else(
+            || {
+                if another.value().is_none() {
+                    one.key().map_or_else(
+                        || another.key().is_none(),
+                        |one_key| {
+                            another
+                                .key()
+                                .is_some_and(|another_key| one_key.equal_to(another_key))
+                        },
+                    )
                 } else {
                     false
                 }
-            } else {
-                another.key().is_none()
-            };
-            is_equal
-        } else {
-            false
-        }
+            },
+            |one_value| {
+                another.value().is_some_and(|another_value| {
+                    let Some(one_section) = one_value.downcast_ref::<Section>() else {
+                        unreachable!("one.value() must be Section.");
+                    };
+                    let Some(another_section) = another_value.downcast_ref::<Section>() else {
+                        unreachable!("another.value() must be Section.");
+                    };
+                    one.key().map_or_else(
+                        || another.key().is_none(),
+                        |one_key| {
+                            another
+                                .key()
+                                .is_some_and(|another_key| one_key.equal_to(another_key))
+                        },
+                    ) && one_section.train().number() == another_section.train().number()
+                        && one_section.train().name() == another_section.train().name()
+                        && one_section.from() == another_section.from()
+                        && one_section.to() == another_section.to()
+                })
+            },
+        )
     }
 }

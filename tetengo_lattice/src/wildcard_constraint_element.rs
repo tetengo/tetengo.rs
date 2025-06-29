@@ -38,7 +38,8 @@ impl ConstraintElement for WildcardConstraintElement {
         } else if node.preceding_step() < self.preceding_step {
             -1
         } else {
-            (node.preceding_step() - self.preceding_step) as i32
+            i32::try_from(node.preceding_step() - self.preceding_step)
+                .expect("Preceding step difference should fit in i32")
         }
     }
 }

@@ -174,10 +174,13 @@ mod tests {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(
-                ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | storage.check_at(i).unwrap() as u32,
-            );
+            #[allow(clippy::cast_sign_loss)]
+            {
+                array.push(
+                    ((storage.base_at(i).unwrap() as u32) << 8u32)
+                        | u32::from(storage.check_at(i).unwrap()),
+                );
+            }
         }
         array
     }
@@ -304,8 +307,10 @@ mod tests {
 
         for i in 0..9 {
             if i % 3 == 0 {
-                storage.set_base_at(i, (i * i) as i32).unwrap();
-                storage.set_check_at(i, i as u8).unwrap();
+                storage
+                    .set_base_at(i, i32::try_from(i * i).unwrap())
+                    .unwrap();
+                storage.set_check_at(i, u8::try_from(i).unwrap()).unwrap();
             } else {
                 storage.set_base_at(i, storage.base_at(i).unwrap()).unwrap();
                 storage
@@ -362,7 +367,7 @@ mod tests {
     }
 
     impl<Value: Clone> SharedStorage<Value> {
-        fn shared_with(&self, another: &SharedStorage<Value>) -> bool {
+        fn shared_with(&self, another: &Self) -> bool {
             Rc::ptr_eq(&self.entity, &another.entity)
         }
     }

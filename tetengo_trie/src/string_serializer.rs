@@ -17,7 +17,7 @@ impl Serializer for StrSerializer {
     type Object<'a> = &'a str;
 
     fn new(_: bool) -> Self {
-        StrSerializer {}
+        Self {}
     }
 
     fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
@@ -35,7 +35,7 @@ impl Serializer for StringSerializer {
     type Object<'a> = String;
 
     fn new(_: bool) -> Self {
-        StringSerializer {}
+        Self {}
     }
 
     fn serialize(&self, object: &Self::Object<'_>) -> Vec<u8> {
@@ -53,7 +53,7 @@ impl Deserializer for StringDeserializer {
     type Object = String;
 
     fn new(_: bool) -> Self {
-        StringDeserializer {}
+        Self {}
     }
 
     fn deserialize(&self, bytes: &[u8]) -> Result<Self::Object, Error> {
@@ -91,7 +91,7 @@ mod tests {
                 std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
                 expected_serialized
             );
-            assert!(!serialized.iter().any(|&b| b == 0x00u8));
+            assert!(!serialized.contains(&0x00u8));
         }
         {
             let serializer = <() as SerializerOf<String>>::Type::new(false);
@@ -103,7 +103,7 @@ mod tests {
                 std::str::from_utf8(serialized.as_slice()).unwrap_or_default(),
                 expected_serialized
             );
-            assert!(!serialized.iter().any(|&b| b == 0x00u8));
+            assert!(!serialized.contains(&0x00u8));
         }
     }
 
@@ -112,7 +112,7 @@ mod tests {
         {
             let deserializer = <() as DeserializerOf<String>>::Type::new(false);
 
-            let serialized = "Sakuramachi".as_bytes();
+            let serialized = b"Sakuramachi";
             let expected_object = "Sakuramachi";
             let object = deserializer.deserialize(serialized).unwrap();
             assert_eq!(object.as_str(), expected_object);

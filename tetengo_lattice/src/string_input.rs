@@ -36,7 +36,7 @@ impl StringInput {
      * # Returns
      * The value.
      */
-    pub fn value(&self) -> &str {
+    pub const fn value(&self) -> &str {
         self.value.as_str()
     }
 
@@ -46,14 +46,14 @@ impl StringInput {
      * # Returns
      * The value.
      */
-    pub fn value_mut(&mut self) -> &mut String {
+    pub const fn value_mut(&mut self) -> &mut String {
         &mut self.value
     }
 }
 
 impl Input for StringInput {
     fn equal_to(&self, other: &dyn Input) -> bool {
-        let Some(other) = other.downcast_ref::<StringInput>() else {
+        let Some(other) = other.downcast_ref::<Self>() else {
             return false;
         };
         self == other
@@ -74,13 +74,13 @@ impl Input for StringInput {
             return Err(Error::RangeOutOfBounds);
         }
 
-        Ok(Box::new(StringInput::new(
+        Ok(Box::new(Self::new(
             self.value[offset..offset + length].to_string(),
         )))
     }
 
     fn append(&mut self, another: Box<dyn Input>) -> Result<(), Error> {
-        let Some(another) = another.downcast_ref::<StringInput>() else {
+        let Some(another) = another.downcast_ref::<Self>() else {
             return Err(Error::MismatchConcreteType);
         };
 

@@ -1,5 +1,5 @@
 /*!
- * The usage of tetengo_lattice
+ * The usage of `tetengo_lattice`
  */
 
 mod usage {
@@ -120,11 +120,7 @@ mod usage {
             connections,
             &|entry| {
                 let mut hasher = DefaultHasher::new();
-                hasher.write_u64(if let Some(key) = entry.key() {
-                    key.hash_value()
-                } else {
-                    0
-                });
+                hasher.write_u64(entry.key().map_or(0, tetengo_lattice::Input::hash_value));
                 value_of_entry(entry).hash(&mut hasher);
                 hasher.finish()
             },
@@ -156,22 +152,22 @@ mod usage {
     }
 
     fn value_of_node(node: &Node, first: bool) -> String {
-        if let Some(value) = node.value() {
-            // The value is stored in the Any object.
-            value.downcast_ref::<String>().unwrap().clone()
-        } else if first {
-            String::from("BOS")
-        } else {
-            String::from("EOS")
-        }
+        node.value().map_or_else(
+            || {
+                if first {
+                    String::from("BOS")
+                } else {
+                    String::from("EOS")
+                }
+            },
+            |value| value.downcast_ref::<String>().unwrap().clone(),
+        )
     }
 
     fn value_of_entry(entry: &Entry) -> String {
         // The value is stored in the Any object.
-        if let Some(value) = entry.value() {
+        entry.value().map_or_else(String::new, |value| {
             value.downcast_ref::<String>().unwrap().clone()
-        } else {
-            String::new()
-        }
+        })
     }
 }

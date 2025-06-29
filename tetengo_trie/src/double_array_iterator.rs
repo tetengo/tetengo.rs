@@ -50,12 +50,15 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
         }
 
         for char_code in (0..=0xFE).rev() {
-            let char_code_as_uint8 = char_code as u8;
-            let next_index = base + char_code_as_uint8 as i32;
+            let char_code_as_uint8 = u8::try_from(char_code).expect("char_code must fit in u8");
+            let next_index = base + i32::from(char_code_as_uint8);
             if next_index < 0 {
                 continue;
             }
-            let check_at_next_index = match self.storage.check_at(next_index as usize) {
+            let Ok(next_index_usize) = next_index.try_into() else {
+                continue;
+            };
+            let check_at_next_index = match self.storage.check_at(next_index_usize) {
                 Ok(check) => check,
                 Err(e) => {
                     debug_assert!(false, "{}", e);
@@ -63,10 +66,10 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
                 }
             };
             if check_at_next_index == char_code_as_uint8 {
-                let mut next_key_tail = if char_code_as_uint8 != double_array::KEY_TERMINATOR {
-                    vec![char_code_as_uint8]
-                } else {
+                let mut next_key_tail = if char_code_as_uint8 == double_array::KEY_TERMINATOR {
                     Vec::new()
+                } else {
+                    vec![char_code_as_uint8]
                 };
                 let next_key = {
                     let mut next_key = key.clone();
@@ -74,7 +77,7 @@ impl<T> Iterator for DoubleArrayIterator<'_, T> {
                     next_key
                 };
                 self.base_check_index_key_stack
-                    .push((next_index as usize, next_key));
+                    .push((next_index_usize, next_key));
             }
         }
 

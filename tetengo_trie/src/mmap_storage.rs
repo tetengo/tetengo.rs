@@ -77,6 +77,7 @@ impl<Value: Clone + Debug + 'static> MmapStorageBuilder<Value> {
      * # Arguments
      * * `value` - A value cache capacity.
      */
+    #[must_use]
     pub const fn value_cache_capacity(mut self, value: usize) -> Self {
         self.value_cache_capacity = value;
         self
@@ -209,7 +210,9 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
 
     fn base_at(&self, base_check_index: usize) -> Result<i32, Error> {
         let base_check = self.read_u32(size_of::<u32>() * (1 + base_check_index))?;
-        Ok((base_check as i32) >> 8)
+        #[allow(clippy::cast_possible_wrap)]
+        let result = (base_check as i32) >> 8;
+        Ok(result)
     }
 
     fn set_base_at(&mut self, _: usize, _: i32) -> Result<(), Error> {
@@ -253,7 +256,11 @@ impl<Value: Clone + Debug + 'static> Storage<Value> for MmapStorage<Value> {
                 empty_count += 1;
             }
         }
-        Ok(1.0 - (empty_count as f64) / (base_check_count as f64))
+        let empty_count_f64 =
+            f64::from(u32::try_from(empty_count).map_err(|e| Error::InternalError(e.into()))?);
+        let base_check_count_f64 =
+            f64::from(u32::try_from(base_check_count).map_err(|e| Error::InternalError(e.into()))?);
+        Ok(1.0 - empty_count_f64 / base_check_count_f64)
     }
 
     fn serialize(
@@ -365,10 +372,13 @@ mod tests {
         let size = storage.base_check_size().unwrap();
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(
-                ((storage.base_at(i).unwrap() as u32) << 8u32)
-                    | storage.check_at(i).unwrap() as u32,
-            );
+            #[allow(clippy::cast_sign_loss)]
+            {
+                array.push(
+                    ((storage.base_at(i).unwrap() as u32) << 8u32)
+                        | u32::from(storage.check_at(i).unwrap()),
+                );
+            }
         }
         array
     }
@@ -389,7 +399,7 @@ mod tests {
         use super::*;
 
         fn file_size_of(file: &File) -> usize {
-            file.metadata().unwrap().len() as usize
+            usize::try_from(file.metadata().unwrap().len()).unwrap()
         }
 
         #[test]

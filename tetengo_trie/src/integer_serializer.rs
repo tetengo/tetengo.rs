@@ -65,7 +65,7 @@ impl<Object: Integer<Object>> Serializer for IntegerSerializer<Object> {
     type Object<'a> = Object;
 
     fn new(fe_escape: bool) -> Self {
-        IntegerSerializer {
+        Self {
             fe_escape,
             phantom: PhantomData,
         }
@@ -103,7 +103,7 @@ impl<Object: Integer<Object>> Deserializer for IntegerDeserializer<Object> {
     type Object = Object;
 
     fn new(fe_escape: bool) -> Self {
-        IntegerDeserializer {
+        Self {
             fe_escape,
             phantom: PhantomData,
         }
@@ -141,8 +141,7 @@ fn to_bytes_without_escape<Object: Integer<Object>>(object: &Object) -> Vec<u8> 
     let mut object = *object;
     for _ in 0..size_of::<Object>() {
         let byte_object = object & Object::from(0xFFu8);
-        let u128_object: i128 = byte_object.into();
-        let u8_object = u128_object as u8;
+        let u8_object = u8::try_from(byte_object.into()).expect("byte_object must fit in u8");
         bytes.push(u8_object);
         object >>= 8;
     }
@@ -299,7 +298,7 @@ mod tests {
             let expected_serialized = vec![nul_byte(), 0x12u8, 0x34u8, 0xABu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
-            assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
+            assert!(!serialized.contains(&KEY_TERMINATOR));
         }
         {
             let serializer = <() as SerializerOf<u32>>::Type::new(false);
@@ -316,7 +315,7 @@ mod tests {
             let expected_serialized = vec![0xFCu8, 0xFDu8, 0xFDu8, 0xFDu8, 0xFEu8, 0xFFu8];
             let serialized = serializer.serialize(&object);
             assert_eq!(serialized, expected_serialized);
-            assert!(!serialized.iter().any(|&b| b == KEY_TERMINATOR));
+            assert!(!serialized.contains(&KEY_TERMINATOR));
         }
     }
 

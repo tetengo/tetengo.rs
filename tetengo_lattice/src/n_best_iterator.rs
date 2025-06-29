@@ -157,14 +157,14 @@ struct Cap {
 
 impl Cap {
     const fn new(tail_path: Vec<Node>, tail_path_cost: i32, whole_path_cost: i32) -> Self {
-        Cap {
+        Self {
             tail_path,
             tail_path_cost,
             whole_path_cost,
         }
     }
 
-    fn tail_path(&self) -> &[Node] {
+    const fn tail_path(&self) -> &[Node] {
         self.tail_path.as_slice()
     }
 
@@ -409,7 +409,7 @@ mod tests {
     }
 
     fn entry_hash(entry: &Entry) -> u64 {
-        entry.key().map_or(0, |key| key.hash_value())
+        entry.key().map_or(0, Input::hash_value)
     }
 
     fn entry_equal_to(one: &Entry, other: &Entry) -> bool {
@@ -854,8 +854,7 @@ mod tests {
                     ];
                     let constraint = Box::new(Constraint::new_with_pattern(pattern));
 
-                    let constrained_iterator =
-                        NBestIterator::new(&lattice, eos_node.clone(), constraint);
+                    let constrained_iterator = NBestIterator::new(&lattice, eos_node, constraint);
 
                     assert_eq!(constrained_iterator.collect::<Vec<_>>().len(), 9);
                 }

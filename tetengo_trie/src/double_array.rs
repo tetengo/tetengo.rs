@@ -143,8 +143,9 @@ impl<Value: Clone + Debug + 'static> DoubleArray<Value> {
     fn traverse(&self, key: &[u8]) -> Result<Option<usize>, Error> {
         let mut base_check_index = self.root_base_check_index;
         for c in key {
-            let next_base_check_index =
-                (self.storage.base_at(base_check_index)? + *c as i32) as usize;
+            let base_plus_char = self.storage.base_at(base_check_index)? + i32::from(*c);
+            #[allow(clippy::cast_sign_loss)]
+            let next_base_check_index: usize = base_plus_char as usize;
             if next_base_check_index >= self.storage.base_check_size()?
                 || self.storage.check_at(next_base_check_index)? != *c
             {
@@ -303,7 +304,10 @@ mod tests {
         let size = storage.base_check_size()?;
         let mut array = Vec::<u32>::with_capacity(size);
         for i in 0..size {
-            array.push(((storage.base_at(i)? as u32) << 8) | storage.check_at(i)? as u32);
+            #[allow(clippy::cast_sign_loss)]
+            {
+                array.push(((storage.base_at(i)? as u32) << 8) | u32::from(storage.check_at(i)?));
+            }
         }
         Ok(array)
     }

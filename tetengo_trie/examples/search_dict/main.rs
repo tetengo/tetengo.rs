@@ -44,12 +44,9 @@ fn main_core() -> Result<(), Error> {
         }
 
         line = line.trim_end().to_string();
-        let found = match trie.find(&line)? {
-            Some(found) => found,
-            None => {
-                println!("ERROR: Not found.");
-                continue;
-            }
+        let Some(found) = trie.find(&line)? else {
+            println!("ERROR: Not found.");
+            continue;
         };
 
         found.iter().for_each(|e| {
@@ -72,7 +69,7 @@ fn load_lex_csv(lex_csv_path: &Path) -> Result<String, Error> {
     let read_length = file
         .read_to_string(&mut buffer)
         .map_err(|e| Error::InternalError(e.into()))?;
-    if read_length != lex_csv_size as usize {
+    if read_length != usize::try_from(lex_csv_size).map_err(|e| Error::InternalError(e.into()))? {
         return Err(Error::UnexpectedEof);
     }
     Ok(buffer)
