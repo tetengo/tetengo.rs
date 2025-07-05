@@ -339,7 +339,7 @@ mod tests {
             Box::new(|value| {
                 static STR_SERIALIZER: LazyLock<StrSerializer> =
                     LazyLock::new(|| StrSerializer::new(false));
-                STR_SERIALIZER.serialize(&value.as_str())
+                Ok(STR_SERIALIZER.serialize(&value.as_str()))
             }),
             0,
         );

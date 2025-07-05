@@ -178,7 +178,7 @@ fn serialize_trie(trie: &DictTrie, trie_bin_path: &Path) -> Result<(), DictMakin
 }
 
 #[allow(clippy::ptr_arg)]
-fn serialize_value(vpus: &Vec<(usize, usize)>) -> Vec<u8> {
+fn serialize_value(vpus: &Vec<(usize, usize)>) -> Result<Vec<u8>, Error> {
     let mut serialized = Vec::with_capacity(SERIALIZED_VALUE_SIZE);
 
     let serialized_size = serialize_usize(vpus.len());
@@ -194,7 +194,7 @@ fn serialize_value(vpus: &Vec<(usize, usize)>) -> Vec<u8> {
         }
     });
 
-    serialized
+    Ok(serialized)
 }
 
 fn serialize_pair_of_usize(pus: &(usize, usize)) -> Vec<u8> {
