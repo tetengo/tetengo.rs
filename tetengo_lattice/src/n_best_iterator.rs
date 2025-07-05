@@ -117,7 +117,7 @@ impl<'a> NBestIterator<'a> {
             }
 
             if !nonconforming_path {
-                assert!(constraint.matches(&next_path));
+                debug_assert!(constraint.matches(&next_path));
                 let reversed_next_path = next_path.iter().rev().cloned().collect();
                 path = Some(Path::new(reversed_next_path, opened.whole_path_cost()));
                 break;
@@ -435,14 +435,14 @@ mod tests {
 
     fn preceding_edge_cost(path: &Path, node_index: usize) -> i32 {
         let nodes = path.nodes();
-        assert!(!nodes.is_empty());
-        assert!(0 < node_index && node_index < nodes.len());
+        debug_assert!(!nodes.is_empty());
+        debug_assert!(0 < node_index && node_index < nodes.len());
         nodes[node_index].preceding_edge_costs()[nodes[node_index - 1].index_in_step()]
     }
 
     fn recalc_path_cost(path: &Path) -> i32 {
         let nodes = path.nodes();
-        assert!(!nodes.is_empty());
+        debug_assert!(!nodes.is_empty());
         let mut cost = nodes[0].node_cost();
         for (i, node) in nodes.iter().enumerate().skip(1) {
             cost += preceding_edge_cost(path, i);
