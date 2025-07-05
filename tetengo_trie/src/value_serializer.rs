@@ -12,7 +12,7 @@ use crate::error::Error;
 /**
  * A serialize function type
  */
-pub type Serialize<'a, Value> = Box<dyn FnMut(&Value) -> Vec<u8> + 'a>;
+pub type Serialize<'a, Value> = Box<dyn FnMut(&Value) -> Result<Vec<u8>, Error> + 'a>;
 
 /**
  * A value serializer.
@@ -48,8 +48,11 @@ impl<'a, Value: ?Sized> ValueSerializer<'a, Value> {
      *
      * # Returns
      * The serialized value.
+     *
+     * # Errors
+     * * When it fails to serialize the value.
      */
-    pub fn serialize(&mut self, value: &Value) -> Vec<u8> {
+    pub fn serialize(&mut self, value: &Value) -> Result<Vec<u8>, Error> {
         (self.serialize)(value)
     }
 
@@ -138,12 +141,12 @@ mod tests {
         fn new() {
             {
                 let _serializer = ValueSerializer::new(
-                    Box::new(|value: &i32| IntegerSerializer::new(false).serialize(value)),
+                    Box::new(|value: &i32| Ok(IntegerSerializer::new(false).serialize(value))),
                     size_of::<i32>(),
                 );
             }
             {
-                let _serializer = ValueSerializer::new(Box::new(|_: &str| vec![3, 1, 4]), 0);
+                let _serializer = ValueSerializer::new(Box::new(|_: &str| Ok(vec![3, 1, 4])), 0);
             }
         }
 
@@ -151,19 +154,19 @@ mod tests {
         fn serialize() {
             {
                 let mut serializer = ValueSerializer::new(
-                    Box::new(|value: &i32| IntegerSerializer::new(false).serialize(value)),
+                    Box::new(|value: &i32| Ok(IntegerSerializer::new(false).serialize(value))),
                     size_of::<i32>(),
                 );
 
                 let expected = IntegerSerializer::new(false).serialize(&42);
-                let serialized = serializer.serialize(&42);
+                let serialized = serializer.serialize(&42).unwrap();
                 assert_eq!(serialized, expected);
             }
             {
-                let mut serializer = ValueSerializer::new(Box::new(|_: &str| vec![3, 1, 4]), 0);
+                let mut serializer = ValueSerializer::new(Box::new(|_: &str| Ok(vec![3, 1, 4])), 0);
 
                 let expected = vec![3, 1, 4];
-                let serialized = serializer.serialize("hoge");
+                let serialized = serializer.serialize("hoge").unwrap();
                 assert_eq!(serialized, expected);
             }
             {
@@ -171,15 +174,28 @@ mod tests {
                 let mut serializer = ValueSerializer::new(
                     Box::new(|_: &str| {
                         *modified_in_closure.borrow_mut() = 42;
-                        vec![4, 2]
+                        Ok(vec![4, 2])
                     }),
                     0,
                 );
 
                 let expected = vec![4, 2];
-                let serialized = serializer.serialize("hoge");
+                let serialized = serializer.serialize("hoge").unwrap();
                 assert_eq!(serialized, expected);
                 assert_eq!(*modified_in_closure.borrow(), 42);
+            }
+            {
+                let mut serializer = ValueSerializer::new(
+                    Box::new(|_| {
+                        Err(Error::InvalidSerializedBytes(String::from(
+                            "test serialization error",
+                        )))
+                    }),
+                    size_of::<i32>(),
+                );
+
+                let result = serializer.serialize(&42);
+                assert!(result.is_err());
             }
         }
 
@@ -187,14 +203,14 @@ mod tests {
         fn fixed_value_size() {
             {
                 let serializer = ValueSerializer::new(
-                    Box::new(|value: &i32| IntegerSerializer::new(false).serialize(value)),
+                    Box::new(|value: &i32| Ok(IntegerSerializer::new(false).serialize(value))),
                     size_of::<i32>(),
                 );
 
                 assert_eq!(serializer.fixed_value_size(), size_of::<i32>());
             }
             {
-                let serializer = ValueSerializer::new(Box::new(|_: &str| vec![3, 1, 4]), 0);
+                let serializer = ValueSerializer::new(Box::new(|_: &str| Ok(vec![3, 1, 4])), 0);
 
                 assert_eq!(serializer.fixed_value_size(), 0);
             }
@@ -239,6 +255,16 @@ mod tests {
                 let serialized = vec![3, 1, 4];
                 let deserialized = deserializer.deserialize(&serialized).unwrap();
                 assert_eq!(deserialized, expected);
+            }
+            {
+                let mut deserializer = ValueDeserializer::<String>::new(Box::new(|_| {
+                    Err(Error::InvalidSerializedBytes(String::from(
+                        "test deserialization error",
+                    )))
+                }));
+
+                let result = deserializer.deserialize(&[1, 2, 3, 4]);
+                assert!(result.is_err());
             }
         }
     }

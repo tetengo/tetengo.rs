@@ -760,7 +760,7 @@ mod tests {
                 Box::new(|value| {
                     static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
                         LazyLock::new(|| IntegerSerializer::new(false));
-                    INTEGER_SERIALIZER.serialize(value)
+                    Ok(INTEGER_SERIALIZER.serialize(value))
                 }),
                 size_of::<u32>(),
             );

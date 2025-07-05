@@ -98,7 +98,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         if fixed_value_size == 0 {
             for v in value_array {
                 if let Some(v) = v {
-                    let serialized = value_serializer.serialize(v);
+                    let serialized = value_serializer.serialize(v)?;
                     debug_assert!(serialized.len() < u32::MAX as usize);
                     Self::write_u32(
                         writer,
@@ -115,7 +115,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
         } else {
             for v in value_array {
                 if let Some(v) = v {
-                    let serialized = value_serializer.serialize(v);
+                    let serialized = value_serializer.serialize(v)?;
                     debug_assert!(serialized.len() == fixed_value_size as usize);
                     writer
                         .write_all(&serialized)
@@ -570,7 +570,7 @@ mod tests {
                 Box::new(|value: &String| {
                     static STR_SERIALIZER: LazyLock<StrSerializer> =
                         LazyLock::new(|| StrSerializer::new(false));
-                    STR_SERIALIZER.serialize(&value.as_str())
+                    Ok(STR_SERIALIZER.serialize(&value.as_str()))
                 }),
                 0,
             );
@@ -612,7 +612,7 @@ mod tests {
                 Box::new(|value| {
                     static INTEGER_SERIALIZER: LazyLock<IntegerSerializer<u32>> =
                         LazyLock::new(|| IntegerSerializer::new(false));
-                    INTEGER_SERIALIZER.serialize(value)
+                    Ok(INTEGER_SERIALIZER.serialize(value))
                 }),
                 size_of::<u32>(),
             );
