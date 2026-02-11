@@ -1,5 +1,5 @@
 # GitHub Actions Workflow
-# Build on Windows
+# Build on Linux
 # Copyright (C) 2023-2026 kaoru  https://www.tetengo.org/
 
 name: Linux
