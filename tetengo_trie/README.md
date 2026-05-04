@@ -16,10 +16,10 @@ The trie in this library is implemented using double arrays.
 How to Use
 ----------
 
-Execute the `cargo add` command to add the "tetengo_trie" library to your cargo
+Execute the `cargo add` command to add the `tetengo_trie` library to your cargo
 package.
 
-An entry for "tetengo_trie" will be added to the "dependencies" section of
+An entry for `tetengo_trie` will be added to the "dependencies" section of
 Cargo.toml.
 
 - On Windows:
