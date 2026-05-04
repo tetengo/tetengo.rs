@@ -191,7 +191,7 @@ impl PartialEq for Cap {
 
 impl PartialOrd for Cap {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.whole_path_cost.cmp(&other.whole_path_cost))
+        Some(self.cmp(other))
     }
 }
 
