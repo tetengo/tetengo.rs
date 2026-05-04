@@ -416,10 +416,10 @@ mod tests {
         if one.key().is_none() && other.key().is_none() {
             return true;
         }
-        if let Some(one_key) = one.key() {
-            if let Some(other_key) = other.key() {
-                return one_key.equal_to(other_key);
-            }
+        if let Some(one_key) = one.key()
+            && let Some(other_key) = other.key()
+        {
+            return one_key.equal_to(other_key);
         }
         false
     }
