@@ -7,7 +7,7 @@ mod usage {
 
     use tetengo_trie::{BuildingObserverSet, Serializer, StrSerializer, Trie};
 
-    #[test]
+    #[cfg_attr(all(test, not(doctest)), test)]
     fn usage() {
         // Prepares a trie building observer set.
         // The observer set records the inserted keys and the end.
