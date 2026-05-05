@@ -14,10 +14,10 @@ the Viterbi search.
 How to Use
 ----------
 
-Execute the `cargo add` command to add the "tetengo_lattice" library to your
+Execute the `cargo add` command to add the `tetengo_lattice` library to your
 cargo package.
 
-An entry for "tetengo_lattice" will be added to the "dependencies" section of
+An entry for `tetengo_lattice` will be added to the "dependencies" section of
 Cargo.toml.
 
 - On Windows:

@@ -152,7 +152,7 @@ fn build_trie(word_offset_map: WordOffsetMap) -> Result<DictTrie, Error> {
         .key_serializer(StringSerializer::new(true))
         .build_with_observer_set(&mut BuildingObserverSet::new(
             &mut |key| {
-                if index % 10000 == 0 {
+                if index.is_multiple_of(10000) {
                     eprint!("{:8}: {}    \r", index, String::from_utf8_lossy(key));
                 }
                 index += 1;

@@ -10,7 +10,7 @@ mod usage {
         Constraint, Entry, HashMapVocabulary, NBestIterator, Node, Path, StringInput, Vocabulary,
     };
 
-    #[test]
+    #[cfg_attr(all(test, not(doctest)), test)]
     fn viterbi() {
         /*
             Makes the following lattice and searches it.
