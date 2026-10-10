@@ -198,7 +198,7 @@ impl Lattice {
         step: &GraphStep,
         next_entry: &Entry,
     ) -> Result<Rc<Vec<i32>>, Error> {
-        assert!(!step.nodes().is_empty());
+        assert_ne!(step.nodes(), []);
         let mut costs = Vec::with_capacity(step.nodes().len());
         for node in step.nodes() {
             let cost = self.vocabulary.find_connection(node, next_entry)?.cost();
@@ -208,7 +208,7 @@ impl Lattice {
     }
 
     fn best_preceding_node_index(step: &GraphStep, edge_costs: &[i32]) -> usize {
-        assert!(!step.nodes().is_empty());
+        assert_ne!(step.nodes(), []);
         let mut min_index = 0;
         for i in 1..step.nodes().len() {
             if Self::add_cost(step.nodes()[i].path_cost(), edge_costs[i])
