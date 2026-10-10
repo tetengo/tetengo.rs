@@ -162,7 +162,7 @@ fn children_firsts(elements: &[DoubleArrayElement<'_>], key_offset: usize) -> Ve
 
         child_first = child_last;
     }
-    debug_assert!(!firsts.is_empty());
+    debug_assert_ne!(firsts, []);
     firsts
 }
 

@@ -134,7 +134,7 @@ mod tests {
     fn nodes() {
         {
             let path = Path::new(Vec::new(), 0);
-            assert!(path.nodes().is_empty());
+            assert_eq!(path.nodes(), []);
         }
         {
             let path = Path::new(make_nodes(), 42);

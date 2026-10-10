@@ -116,7 +116,7 @@ impl<Value: Clone + 'static> MemoryStorage<Value> {
             for v in value_array {
                 if let Some(v) = v {
                     let serialized = value_serializer.serialize(v)?;
-                    debug_assert!(serialized.len() == fixed_value_size as usize);
+                    debug_assert_eq!(serialized.len(), fixed_value_size as usize);
                     writer
                         .write_all(&serialized)
                         .map_err(|e| Error::InternalError(e.into()))?;
