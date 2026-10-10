@@ -435,14 +435,14 @@ mod tests {
 
     fn preceding_edge_cost(path: &Path, node_index: usize) -> i32 {
         let nodes = path.nodes();
-        debug_assert!(!nodes.is_empty());
+        debug_assert_ne!(nodes, []);
         debug_assert!(0 < node_index && node_index < nodes.len());
         nodes[node_index].preceding_edge_costs()[nodes[node_index - 1].index_in_step()]
     }
 
     fn recalc_path_cost(path: &Path) -> i32 {
         let nodes = path.nodes();
-        debug_assert!(!nodes.is_empty());
+        debug_assert_ne!(nodes, []);
         let mut cost = nodes[0].node_cost();
         for (i, node) in nodes.iter().enumerate().skip(1) {
             cost += preceding_edge_cost(path, i);
@@ -856,7 +856,7 @@ mod tests {
 
                     let constrained_iterator = NBestIterator::new(&lattice, eos_node, constraint);
 
-                    assert_eq!(constrained_iterator.collect::<Vec<_>>().len(), 9);
+                    assert_eq!(constrained_iterator.count(), 9);
                 }
             }
         }
@@ -890,7 +890,7 @@ mod tests {
             let nodes3 = vec![node3];
             let cap3 = Cap::new(nodes3, 12, 4242);
 
-            assert!(cap1 == cap2);
+            assert_eq!(cap1, cap2);
             assert!(cap1 < cap3);
         }
 
